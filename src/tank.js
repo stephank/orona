@@ -73,6 +73,6 @@ Tank.prototype.draw = function() {
   var x = Math.round(this.x / PIXEL_SIZE_WORLD);
   var y = Math.round(this.y / PIXEL_SIZE_WORLD);
 
-  c.drawImage(tiles, col * TILE_SIZE_PIXEL, row * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+  c.drawImage(tilemap, col * TILE_SIZE_PIXEL, row * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
       x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL);
 };

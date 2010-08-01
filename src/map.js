@@ -1,12 +1,3 @@
-// Globals.
-// A two-dimensional array of MapCells. Indexed as map[y][x].
-var map = null;
-// Arrays of objects describing map attributes.
-var pills = [];
-var bases = [];
-var starts = [];
-
-
 // Constructor.
 var MapCell = function(x, y) {
   this.x = x;
@@ -480,7 +471,7 @@ map.draw = function(sx, sy, ex, ey) {
   map.each(function() {
     var sx = this.tile[0] * TILE_SIZE_PIXEL, sy = this.tile[1] * TILE_SIZE_PIXEL;
     var dx = this.x * TILE_SIZE_PIXEL, dy = this.y * TILE_SIZE_PIXEL;
-    c.drawImage(tiles, sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+    c.drawImage(tilemap, sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
         dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL);
   }, stx, sty, etx, ety);
 };
@@ -516,12 +507,12 @@ map.load = function(data) {
   // Read the various sections on map attributes.
   var re, matches;
 
-  pills = [];
+  map.pills = [];
   re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
   eachInSection('Pills', function(pillDesc) {
     if (!(matches = re.exec(pillDesc))) throw 'Corrupt map.';
     // FIXME: check input
-    pills.push({
+    map.pills.push({
       x: parseInt(matches[1]),
       y: parseInt(matches[2]),
       owner: parseInt(matches[3]),
@@ -530,12 +521,12 @@ map.load = function(data) {
     });
   });
 
-  bases = [];
+  map.bases = [];
   re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+shells:(\d+)\s+mines:(\d+)$/
   eachInSection('Bases', function(baseDesc) {
     if (!(matches = re.exec(baseDesc))) throw 'Corrupt map.';
     // FIXME: check input
-    bases.push({
+    map.bases.push({
       x: parseInt(matches[1]),
       y: parseInt(matches[2]),
       owner: parseInt(matches[3]),
@@ -545,12 +536,12 @@ map.load = function(data) {
     });
   });
 
-  starts = []
+  map.starts = []
   re = /^@(\d+),(\d+)\s+direction:(\d+)$/
   eachInSection('Starting positions', function(startDesc) {
     if (!(matches = re.exec(startDesc))) throw 'Corrupt map.';
     // FIXME: check input
-    starts.push({
+    map.starts.push({
       x: parseInt(matches[1]),
       y: parseInt(matches[2]),
       direction: parseInt(matches[3])
@@ -572,13 +563,13 @@ map.load = function(data) {
   }
 
   // Link pills and bases to their cells.
-  for (i = 0; i < pills.length; i++) {
-    var pill = pills[i];
+  for (i = 0; i < map.pills.length; i++) {
+    var pill = map.pills[i];
     pill.cell = map[pill.y][pill.x];
     pill.cell.pill = pill;
   }
-  for (i = 0; i < bases.length; i++) {
-    var base = bases[i];
+  for (i = 0; i < map.bases.length; i++) {
+    var base = map.bases[i];
     base.cell = map[base.y][base.x];
     base.cell.base = base;
     // Override cell type.
