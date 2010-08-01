@@ -6,35 +6,40 @@ var player = null;
 
 
 var Bolo = {
-  gameTimer: null,
-  lastTick: null,
-
   start: function() {
+    // First, make sure the tilemap is loaded.
     if (tiles === null) {
       tiles = new Image();
       $(tiles).load(Bolo.start);
+      // FIXME: Handle errors
       tiles.src = 'img/tiles2x.png';
       return;
     }
 
+    // Create the canvas.
     canvas = $('<canvas/>').appendTo('body');
     Bolo.handleResize();
     $(window).resize(Bolo.handleResize);
     c = canvas[0].getContext('2d');
 
+    // Install key handlers.
     $(document).keydown(Bolo.handleKeydown).keyup(Bolo.handleKeyup);
 
+    // Fetch and load the map.
     $.ajax({url: 'maps/everard-island.txt', dataType: 'text', success: function(data) {
       map.load(data);
 
+      // Create a player tank.
       var start = starts[Math.round(Math.random() * (starts.length - 1))];
       player = new Tank(start.x, start.y, start.direction);
 
-      Bolo.tick();
-      Bolo.lastTick = Date.now();
-      Bolo.gameTimer = window.setInterval(Bolo.timerCallback, TICK_LENGTH_MS);
+      // Start the game loop.
+      Bolo.startLoop();
     }});
   },
+
+
+  // Event handlers.
 
   handleResize: function() {
     canvas[0].width = window.innerWidth; canvas[0].height = window.innerHeight;
@@ -65,6 +70,26 @@ var Bolo = {
     e.preventDefault();
   },
 
+
+  // Game loop.
+
+  gameTimer: null,
+  lastTick: null,
+
+  startLoop: function() {
+    Bolo.tick();
+    Bolo.lastTick = Date.now();
+
+    Bolo.gameTimer = window.setInterval(Bolo.timerCallback, TICK_LENGTH_MS);
+  },
+
+  stopLoop: function() {
+    window.clearInterval(Bolo.gameTimer);
+
+    Bolo.gameTimer = null;
+    Bolo.lastTick = null;
+  },
+
   timerCallback: function() {
     var now = Date.now();
     while (now - Bolo.lastTick >= TICK_LENGTH_MS) {
@@ -74,9 +99,15 @@ var Bolo = {
     Bolo.draw();
   },
 
+
+  // Simulation.
+
   tick: function() {
     player.update();
   },
+
+
+  // Graphics.
 
   draw: function() {
     var sx = Math.round(player.x / PIXEL_SIZE_WORLD - canvas[0].width  / 2);
