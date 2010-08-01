@@ -1,3 +1,4 @@
+var tiles = null;
 var canvas = null;
 var c = null;
 
@@ -9,6 +10,13 @@ var Bolo = {
   lastTick: null,
 
   start: function() {
+    if (tiles === null) {
+      tiles = new Image();
+      $(tiles).load(Bolo.start);
+      tiles.src = 'img/tiles.png';
+      return;
+    }
+
     // FIXME: canvas should be fullscreen and update with window resizes.
     canvas = $('<canvas/>', {'width': 800, 'height': 600}).appendTo('body');
     c = canvas[0].getContext('2d');
