@@ -1,17 +1,1 @@
-* { margin: 0; border: 0; padding: 0; overflow: visible }
-
-body, #map, #overlay { width: 4096px; height: 4096px }
-
-body { background: black }
-#map, #overlay, #hud { background: transparent }
-
-#map, #overlay { position: absolute; top: 0; left: 0 }
-#hud { position: fixed; top: 0; left: 0; bottom: 0; right: 0 }
-
-#map td, .mine, .tile { width: 16px; height: 16px; background-image: url(img/tiles.png) }
-
-#map { table-layout: fixed; border-spacing: 0; empty-cells: show }
-.mine { background-position: -304px -48px }
-
-#overlay div { position: absolute }
-#reticle { background-position: -272px -64px }
+* { margin: 0; border: 0; padding: 0; overflow: hidden }

@@ -12,6 +12,8 @@ var MapCell = function(x, y) {
   this.x = x;
   this.y = y;
   this.type = '^';
+  this.tile = [0, 0];
+  this.mine = true;
 };
 
 // Get the cell at offset +dx+,+dy+ from this cell.
@@ -27,11 +29,9 @@ MapCell.prototype.neigh = function(dx, dy) {
   return cell;
 };
 
-// Set this cell's style to use the tile index +tx+,+ty+.
+// Cache the tile index to use for drawing this cell.
 MapCell.prototype.setTile = function(tx, ty) {
-  this.node.style.backgroundPosition = (
-      (-tx * TILE_SIZE_PIXEL) + 'px ' +
-      (-ty * TILE_SIZE_PIXEL) + 'px');
+  this.tile = [tx, ty];
 };
 
 // Retile this cell. See map#retile.
@@ -433,22 +433,10 @@ map = new Array(MAP_SIZE_TILES);
 
 // Initialization of the game map; to be called once, after page load.
 map.init = function() {
-  map.node = $('#map');
-
-  // Build the HTML and add it all in one shot. It's way faster than creating the individual
-  // DOM elements. Array#join is also a dirty way to do faster string concatenation.
-  var rowHtml = ['<tr>', (new Array(MAP_SIZE_TILES + 1).join('<td></td>')), '</tr>'].join('')
-  map.node.html(new Array(MAP_SIZE_TILES + 1).join(rowHtml));
-
-  var rowNodes = map.node.find('tr');
   for (var y = 0; y < MAP_SIZE_TILES; y++) {
     var row = map[y] = new Array(MAP_SIZE_TILES);
-    var rowNode = $(rowNodes[y]);
-
-    var cellNodes = rowNode.find('td');
     for (var x = 0; x < MAP_SIZE_TILES; x++) {
-      var cell = row[x] = new MapCell(x, y);
-      cell.node = cellNodes[x];
+      row[x] = new MapCell(x, y);
     }
   }
 };
@@ -473,19 +461,20 @@ map.each = function(cb, sx, sy, ex, ey) {
 map.clear = function(sx, sy, ex, ey) {
   this.each(function() {
     this.type = '^';
-    if (this.mine) {
-      this.mine.remove();
-      delete this.mine;
-    }
+    this.mine = false;
   }, sx, sy, ex, ey);
 };
 
-// Update the DOM to reflect the map state, thus putting the state on-screen so to say.
-// A specific area to update can be specified, but a full update is done if omitted.
+// Recalculate the tile cache for each cell, or for a specific area.
 map.retile = function(sx, sy, ex, ey) {
   this.each(function() {
     this.retile();
   }, sx, sy, ex, ey);
+};
+
+// Draw the map area at the given pixel coordinates to the canvas.
+map.draw = function(sx, sy, ex, ey) {
+  // FIXME
 };
 
 // Load the map from the string in +data+.
@@ -570,7 +559,7 @@ map.load = function(data) {
       cell.type = line.charAt(x * 2);
       if (line.charAt(x * 2 + 1) === '*')
         // FIXME: check if the specific terrain can even have a mine
-        cell.mine = $('<div/>', {'class': 'mine'}).appendTo(cell.node);
+        cell.mine = true;
     }
   }
 
@@ -586,10 +575,7 @@ map.load = function(data) {
     base.cell.base = base;
     // Override cell type.
     base.cell.type = '=';
-    if (base.cell.mine) {
-      base.cell.mine.remove();
-      delete base.cell.mine;
-    }
+    base.cell.mine = false;
   }
 
   // Update DOM.

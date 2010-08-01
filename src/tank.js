@@ -13,16 +13,9 @@ var Tank = function(x, y, direction) {
   this.turnSpeedup = 0;
 
   this.onBoat = true;
-
-  this.node = $('<div/>', {'class': 'tile'}).appendTo(overlay);
 };
 
 Tank.prototype.update = function() {
-  this.updatePosition();
-  this.updateTile();
-};
-
-Tank.prototype.updatePosition = function() {
   // FIXME: terrain dependant.
   var maxSpeed = 16.00;
   // Determine acceleration.
@@ -71,14 +64,14 @@ Tank.prototype.updatePosition = function() {
   this.tile = map[ty][tx];
 };
 
-Tank.prototype.updateTile = function() {
+Tank.prototype.draw = function() {
   var col = Math.round((this.direction - 1) / 16) % 16;
   var row = 12;
   // FIXME: allegiance
   if (this.onBoat) row += 1;
 
-  var s = this.node[0].style;
-  s.left = Math.round(this.x / PIXEL_SIZE_WORLD - TILE_SIZE_PIXEL / 2) + 'px';
-  s.top  = Math.round(this.y / PIXEL_SIZE_WORLD - TILE_SIZE_PIXEL / 2) + 'px';
-  s.backgroundPosition = (-col * TILE_SIZE_PIXEL) + 'px ' + (-row * TILE_SIZE_PIXEL) + 'px';
+  var x = Math.round(this.x / PIXEL_SIZE_WORLD - TILE_SIZE_PIXEL / 2);
+  var y = Math.round(this.y / PIXEL_SIZE_WORLD - TILE_SIZE_PIXEL / 2);
+
+  // FIXME: Draw tile col,row at x,y
 };
