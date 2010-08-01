@@ -18,7 +18,9 @@ var Bolo = {
     }
 
     // FIXME: canvas should be fullscreen and update with window resizes.
-    canvas = $('<canvas/>', {'width': 800, 'height': 600}).appendTo('body');
+    canvas = $('<canvas/>').appendTo('body');
+    Bolo.handleResize();
+    $(window).resize(Bolo.handleResize);
     c = canvas[0].getContext('2d');
 
     map.init();
@@ -34,6 +36,11 @@ var Bolo = {
       Bolo.lastTick = Date.now();
       Bolo.gameTimer = window.setInterval(Bolo.timerCallback, TICK_LENGTH_MS);
     }});
+  },
+
+  handleResize: function() {
+    canvas[0].width = window.innerWidth; canvas[0].height = window.innerHeight;
+    canvas.css({'width': window.innerWidth + 'px', 'height': window.innerHeight + 'px'});
   },
 
   handleKeydown: function(e) {
@@ -74,10 +81,10 @@ var Bolo = {
   },
 
   draw: function() {
-    var sx = Math.round(player.x / PIXEL_SIZE_WORLD) - 400;
-    var sy = Math.round(player.y / PIXEL_SIZE_WORLD) - 300;
+    var sx = Math.round(player.x / PIXEL_SIZE_WORLD - canvas[0].width  / 2);
+    var sy = Math.round(player.y / PIXEL_SIZE_WORLD - canvas[0].height / 2);
 
-    map.draw(sx, sy, sx + 800, sy + 600);
+    map.draw(sx, sy, sx + canvas[0].width, sy + canvas[0].height);
     Bolo.updateHud();
   },
 
