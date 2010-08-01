@@ -70,8 +70,9 @@ Tank.prototype.draw = function() {
   // FIXME: allegiance
   if (this.onBoat) row += 1;
 
-  var x = Math.round(this.x / PIXEL_SIZE_WORLD - TILE_SIZE_PIXEL / 2);
-  var y = Math.round(this.y / PIXEL_SIZE_WORLD - TILE_SIZE_PIXEL / 2);
+  var x = Math.round(this.x / PIXEL_SIZE_WORLD);
+  var y = Math.round(this.y / PIXEL_SIZE_WORLD);
 
-  // FIXME: Draw tile col,row at x,y
+  c.drawImage(tiles, col * TILE_SIZE_PIXEL, row * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+      x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL);
 };

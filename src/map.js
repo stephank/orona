@@ -479,15 +479,12 @@ map.draw = function(sx, sy, ex, ey) {
   var etx = Math.ceil(ex / TILE_SIZE_PIXEL);
   var ety = Math.ceil(ey / TILE_SIZE_PIXEL);
 
-  c.save();
-  c.translate(-sx, -sy);
   map.each(function() {
     var sx = this.tile[0] * TILE_SIZE_PIXEL, sy = this.tile[1] * TILE_SIZE_PIXEL;
     var dx = this.x * TILE_SIZE_PIXEL, dy = this.y * TILE_SIZE_PIXEL;
     c.drawImage(tiles, sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
         dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL);
   }, stx, sty, etx, ety);
-  c.restore();
 };
 
 // Load the map from the string in +data+.

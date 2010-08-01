@@ -88,11 +88,15 @@ var Bolo = {
     var sx = Math.round(player.x / PIXEL_SIZE_WORLD - canvas[0].width  / 2);
     var sy = Math.round(player.y / PIXEL_SIZE_WORLD - canvas[0].height / 2);
 
-    map.draw(sx, sy, sx + canvas[0].width, sy + canvas[0].height);
-    Bolo.updateHud();
+    c.save();
+      c.translate(-sx, -sy);
+      map.draw(sx, sy, sx + canvas[0].width, sy + canvas[0].height);
+      player.draw();
+      Bolo.updateMapOverlayHud();
+    c.restore();
   },
 
-  updateHud: function() {
+  updateMapOverlayHud: function() {
     // FIXME: variable firing distance
     // FIXME: hide when dead
     var distance = 7 * TILE_SIZE_PIXEL;
@@ -100,6 +104,7 @@ var Bolo = {
     var x = Math.round(player.x / PIXEL_SIZE_WORLD + Math.cos(rad) * distance);
     var y = Math.round(player.y / PIXEL_SIZE_WORLD + Math.sin(rad) * distance);
 
-    // FIXME: draw reticle at x,y
+    c.drawImage(tiles, 17 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+        x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL);
   }
 };
