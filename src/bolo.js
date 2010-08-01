@@ -58,10 +58,18 @@ var Bolo = {
       Bolo.tick();
       Bolo.lastTick += TICK_LENGTH_MS;
     }
+    Bolo.draw();
   },
 
   tick: function() {
     player.update();
+  },
+
+  draw: function() {
+    var sx = Math.round(player.x / PIXEL_SIZE_WORLD) - 400;
+    var sy = Math.round(player.y / PIXEL_SIZE_WORLD) - 300;
+
+    map.draw(sx, sy, sx + 800, sy + 600);
     Bolo.updateHud();
   },
 
