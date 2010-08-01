@@ -17,7 +17,6 @@ var Bolo = {
       return;
     }
 
-    // FIXME: canvas should be fullscreen and update with window resizes.
     canvas = $('<canvas/>').appendTo('body');
     Bolo.handleResize();
     $(window).resize(Bolo.handleResize);
