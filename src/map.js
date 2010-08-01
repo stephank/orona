@@ -428,18 +428,16 @@ MapCell.prototype.retileBoat = function() {
 };
 
 
-// In order to add methods to the map object, we initialize it early here.
-map = new Array(MAP_SIZE_TILES);
-
-// Initialization of the game map; to be called once, after page load.
-map.init = function() {
+// Initialize the map array.
+(function() {
+  map = new Array(MAP_SIZE_TILES);
   for (var y = 0; y < MAP_SIZE_TILES; y++) {
     var row = map[y] = new Array(MAP_SIZE_TILES);
     for (var x = 0; x < MAP_SIZE_TILES; x++) {
       row[x] = new MapCell(x, y);
     }
   }
-};
+}());
 
 // Iterate over the map cells, either the complete map or a specific area.
 // The callback function will have each cell available as +this+.

@@ -22,7 +22,6 @@ var Bolo = {
     $(window).resize(Bolo.handleResize);
     c = canvas[0].getContext('2d');
 
-    map.init();
     $(document).keydown(Bolo.handleKeydown).keyup(Bolo.handleKeyup);
 
     $.ajax({url: 'maps/everard-island.txt', dataType: 'text', success: function(data) {
