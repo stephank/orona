@@ -8,6 +8,7 @@ var player = null;
 var Bolo = {
   gameTimer: null,
   lastTick: null,
+  skipFrame: false,
 
   start: function() {
     if (tiles === null) {
@@ -73,7 +74,10 @@ var Bolo = {
       Bolo.tick();
       Bolo.lastTick += TICK_LENGTH_MS;
     }
-    Bolo.draw();
+
+    // Draw every other frame.
+    if (this.skipFrame) { this.skipFrame = false; }
+    else { Bolo.draw(); this.skipFrame = true; }
   },
 
   tick: function() {
