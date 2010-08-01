@@ -1,3 +1,6 @@
+var canvas = null;
+var c = null;
+
 var player = null;
 
 
@@ -6,6 +9,10 @@ var Bolo = {
   lastTick: null,
 
   start: function() {
+    // FIXME: canvas should be fullscreen and update with window resizes.
+    canvas = $('<canvas/>', {'width': 800, 'height': 600}).appendTo('body');
+    c = canvas[0].getContext('2d');
+
     map.init();
     $(document).keydown(Bolo.handleKeydown).keyup(Bolo.handleKeyup);
 
