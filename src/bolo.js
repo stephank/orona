@@ -13,7 +13,7 @@ var Bolo = {
     if (tiles === null) {
       tiles = new Image();
       $(tiles).load(Bolo.start);
-      tiles.src = 'img/tiles.png';
+      tiles.src = 'img/tiles2x.png';
       return;
     }
 
