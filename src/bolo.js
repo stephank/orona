@@ -103,15 +103,17 @@ var Bolo = {
   // Graphics.
 
   draw: function() {
-    var sx = Math.round(player.x / PIXEL_SIZE_WORLD - canvas[0].width  / 2);
-    var sy = Math.round(player.y / PIXEL_SIZE_WORLD - canvas[0].height / 2);
+    var w = canvas[0].width, h = canvas[0].height;
+    var sx = Math.round(player.x / PIXEL_SIZE_WORLD - w / 2);
+    var sy = Math.round(player.y / PIXEL_SIZE_WORLD - h / 2);
 
     c.save();
       c.translate(-sx, -sy);
-      map.draw(sx, sy, sx + canvas[0].width, sy + canvas[0].height);
+      map.draw(sx, sy, sx + w, sy + h);
       player.draw();
       Bolo.updateMapOverlayHud();
     c.restore();
+    Bolo.updateScreenOverlayHud(w, h);
   },
 
   updateMapOverlayHud: function() {
@@ -124,5 +126,46 @@ var Bolo = {
 
     c.drawImage(tilemap, 17 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
         x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL);
+  },
+
+  updateScreenOverlayHud: function(w, h) {
+    c.save();
+
+    // Pillbox and base status indicators.
+    var i, x, y;
+
+    // Background.
+    var sy = h - 66;
+    c.beginPath(); c.rect(-5, sy, 130, 71); c.rect(125, sy, 125, 71);
+    c.globalAlpha = 0.8; c.fillStyle   = '#404060'; c.fill();
+    c.globalAlpha = 1.0; c.strokeStyle = '#c0c0f0'; c.lineWidth = 2; c.stroke();
+
+    // Pillboxes
+    for (i = 0; i < map.pills.length; i++) {
+      x = 6 + 20 * (i % 6) + 6;
+      y = sy + 6 + Math.floor(i / 6) * 20 + 6;
+      c.beginPath(); c.arc(x, y, 7, 0, 2 * Math.PI, false);
+      // FIXME: allegiance
+      c.fillStyle = '#a0a0a0'; c.fill();
+      c.strokeStyle = '#f0f0f0'; c.lineWidth = 2; c.stroke();
+    }
+    // FIXME: graphic needs transparency
+    c.drawImage(tilemap, 15 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+        104, sy + 44, 16, 16);
+
+    // Bases
+    for (i = 0; i < map.bases.length; i++) {
+      x = 131 + 20 * (i % 6);
+      y = sy + 5 + Math.floor(i / 6) * 20;
+      c.beginPath(); c.rect(x, y, 14, 14);
+      // FIXME: allegiance
+      c.fillStyle = '#a0a0a0'; c.fill();
+      c.strokeStyle = '#f0f0f0'; c.lineWidth = 2; c.stroke();
+    }
+    // FIXME: graphic needs transparency
+    c.drawImage(tilemap, 16 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+        229, sy + 44, 16, 16);
+
+    c.restore();
   }
 };
