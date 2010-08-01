@@ -509,7 +509,7 @@ map.load = function(data) {
 
   map.pills = [];
   re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
-  eachInSection('Pills', function(pillDesc) {
+  eachInSection('Pillboxes', function(pillDesc) {
     if (!(matches = re.exec(pillDesc))) throw 'Corrupt map.';
     // FIXME: check input
     map.pills.push({

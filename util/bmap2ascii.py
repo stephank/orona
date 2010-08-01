@@ -71,7 +71,7 @@ while True:
 print "Bolo map, version 0"
 print
 
-print "Pills:"
+print "Pillboxes:"
 for pill in pills:
   print "  @%d,%d owner:%d armour:%d speed:%d" % pill
 print

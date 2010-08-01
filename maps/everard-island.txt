@@ -1,6 +1,6 @@
 Bolo map, version 0
 
-Pills:
+Pillboxes:
   @91,145 owner:255 armour:15 speed:101
   @99,110 owner:255 armour:15 speed:101
   @95,116 owner:255 armour:15 speed:101
