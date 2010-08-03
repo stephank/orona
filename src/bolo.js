@@ -42,6 +42,7 @@ var Bolo = {
   handleKeydown: function(e) {
     if (!player) return;
     switch (e.which) {
+      case 32: player.shooting = true; break;
       case 37: player.turningCounterClockwise = true; break;
       case 38: player.accelerating = true; break;
       case 39: player.turningClockwise = true; break;
@@ -54,6 +55,7 @@ var Bolo = {
   handleKeyup: function(e) {
     if (!player) return;
     switch (e.which) {
+      case 32: player.shooting = false; break;
       case 37: player.turningCounterClockwise = false; break;
       case 38: player.accelerating = false; break;
       case 39: player.turningClockwise = false; break;

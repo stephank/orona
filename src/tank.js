@@ -12,10 +12,22 @@ var Tank = function(x, y, direction) {
   this.turningCounterClockwise = false;
   this.turnSpeedup = 0;
 
+  this.shells = 40;
+  this.reload = 0;
+  this.shooting = false;
+
   this.onBoat = true;
 };
 
 Tank.prototype.update = function() {
+  if (this.reload > 0) this.reload--;
+  if (this.shooting && this.reload === 0 && this.shells > 0) {
+    this.reload = 13;
+    this.shells--;
+    // FIXME: fire a projectile, play a sound
+    console.debug('BAM!');
+  }
+
   // FIXME: terrain dependant.
   var maxSpeed = 16.00;
   // Determine acceleration.
