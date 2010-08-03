@@ -12,7 +12,12 @@ var Tank = function(x, y, direction) {
   this.turningCounterClockwise = false;
   this.turnSpeedup = 0;
 
+  // FIXME: gametype dependant.
   this.shells = 40;
+  this.mines = 0;
+  this.armour = 40;
+  this.trees = 0;
+
   this.reload = 0;
   this.shooting = false;
 
