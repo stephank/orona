@@ -139,8 +139,8 @@ var Bolo = {
     // Background.
     var sy = h - 66;
     c.beginPath(); c.rect(-5, sy, 130, 71); c.rect(125, sy, 125, 71);
-    c.globalAlpha = 0.8; c.fillStyle   = '#404060'; c.fill();
-    c.globalAlpha = 1.0; c.strokeStyle = '#c0c0f0'; c.lineWidth = 2; c.stroke();
+    c.fillStyle   = '#000000'; c.fill();
+    c.strokeStyle = '#c0c0f0'; c.lineWidth = 2; c.stroke();
 
     // Pillboxes
     for (i = 0; i < map.pills.length; i++) {
@@ -151,7 +151,6 @@ var Bolo = {
       c.fillStyle = '#a0a0a0'; c.fill();
       c.strokeStyle = '#f0f0f0'; c.lineWidth = 2; c.stroke();
     }
-    // FIXME: graphic needs transparency
     c.drawImage(tilemap, 15 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
         104, sy + 44, 16, 16);
 
@@ -164,7 +163,6 @@ var Bolo = {
       c.fillStyle = '#a0a0a0'; c.fill();
       c.strokeStyle = '#f0f0f0'; c.lineWidth = 2; c.stroke();
     }
-    // FIXME: graphic needs transparency
     c.drawImage(tilemap, 16 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
         229, sy + 44, 16, 16);
 
