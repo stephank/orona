@@ -90,12 +90,19 @@ Tank.prototype.update = function() {
 }
 
 Tank.prototype.moveOnBoat = function(newx, newy) {
-  // FIXME: check if we're running into land.
-  // Winbolo checks ahead 64 world units on each axis.
-  // Tank speed must be a minimum of 16 to exit water.
+  var actualx = newx;
+  var actualy = newy;
 
-  this.x = newx;
-  this.y = newy;
+  // Check if we're running into land in either axis direction.
+  var aheadx = map.cellAtWorld((newx > this.x) ? newx + 64 : newx - 64, newy);
+  if (!aheadx.isType(' ', '^') && this.speed < 16) // FIXME: check for an obstacle
+    actualx = this.x;
+  var aheady = map.cellAtWorld(newx, (newy > this.y) ? newy + 64 : newy - 64);
+  if (!aheady.isType(' ', '^') && this.speed < 16) // FIXME: check for an obstacle
+    actualy = this.y;
+
+  this.x = actualx;
+  this.y = actualy;
 
   // FIXME: check if we just left water.
   // This is easy, check if the new square is land.
