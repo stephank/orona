@@ -1,7 +1,7 @@
 var Tank = function(x, y, direction) {
   this.x = (x + 0.5) * TILE_SIZE_WORLD;
   this.y = (y + 0.5) * TILE_SIZE_WORLD;
-  this.tile = map[y][x];
+  this.cell = map[y][x];
 
   this.speed = 0.00;
   this.accelerating = false;
@@ -83,8 +83,8 @@ Tank.prototype.update = function() {
   else
     this.moveOnLand(newx, newy);
 
-  // Update the tile reference.
-  this.tile = map.cellAtWorld(this.x, this.y);
+  // Update the cell reference.
+  this.cell = map.cellAtWorld(this.x, this.y);
 
   // FIXME: Reveal hidden mines nearby
 }
@@ -100,7 +100,7 @@ Tank.prototype.moveOnBoat = function(newx, newy) {
   // FIXME: check if we just left water.
   // This is easy, check if the new square is land.
   // If it is a boat, explode it, replace with river, and play a sound.
-  // If it ain't, replace the old tile with a boat if it was a river.
+  // If it ain't, replace the old cell with a boat if it was a river.
 
   // FIXME: check for mine impact
 }
