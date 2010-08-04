@@ -33,6 +33,8 @@ Tank.prototype.update = function() {
     console.debug('BAM!');
   }
 
+  // FIXME: check if the terrain is clear, or if someone built underneath us.
+
   // FIXME: terrain dependant.
   var maxSpeed = 16.00;
   // Determine acceleration.
@@ -73,12 +75,40 @@ Tank.prototype.update = function() {
   // Reposition.
   // FIXME: UGLY, and probably incorrect too.
   var rad = (256 - ((Math.round((this.direction - 1) / 16) % 16) * 16)) * 2 * Math.PI / 256;
-  this.x += Math.round(Math.cos(rad) * Math.round(this.speed));
-  this.y += Math.round(Math.sin(rad) * Math.round(this.speed));
+  var newx = this.x + Math.round(Math.cos(rad) * Math.round(this.speed));
+  var newy = this.y + Math.round(Math.sin(rad) * Math.round(this.speed));
+
+  if (this.onBoat)
+    this.moveOnBoat(newx, newy);
+  else
+    this.moveOnLand(newx, newy);
 
   // Update the tile reference.
-  var tx = Math.round(this.x / TILE_SIZE_WORLD), ty = Math.round(this.y / TILE_SIZE_WORLD);
+  var tx = Math.round(this.x / TILE_SIZE_WORLD);
+  var ty = Math.round(this.y / TILE_SIZE_WORLD);
   this.tile = map[ty][tx];
+
+  // FIXME: Reveal hidden mines nearby
+}
+
+Tank.prototype.moveOnBoat = function(newx, newy) {
+  // FIXME: check if we're running into land.
+  // Winbolo checks ahead 64 world units on each axis.
+  // Tank speed must be a minimum of 16 to exit water.
+
+  this.x = newx;
+  this.y = newy;
+
+  // FIXME: check if we just left water.
+  // This is easy, check if the new square is land.
+  // If it is a boat, explode it, replace with river, and play a sound.
+  // If it ain't, replace the old tile with a boat if it was a river.
+
+  // FIXME: check for mine impact
+}
+
+Tank.prototype.moveOnLand = function(newx, newy) {
+  // FIXME
 };
 
 Tank.prototype.draw = function() {
