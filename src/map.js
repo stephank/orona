@@ -13,11 +13,7 @@ var MapCell = function(x, y) {
 MapCell.prototype.neigh = function(dx, dy) {
   var x = this.x + dx,
       y = this.y + dy;
-  var row = map[y];
-  if (row === undefined) return new MapCell(x, y);
-  var cell = row[x];
-  if (cell === undefined) return new MapCell(x, y);
-  return cell;
+  return map.cellAtTile(x, y);
 };
 
 // Cache the tile index to use for drawing this cell.
@@ -430,18 +426,23 @@ MapCell.prototype.retileBoat = function() {
   }
 }());
 
-// Get the cell at the given pixel coordinates.
-map.cellAtPixel = function(x, y) {
-  var tx = Math.round(this.x / TILE_SIZE_PIXEL);
-  var ty = Math.round(this.y / TILE_SIZE_PIXEL);
-  return map[ty][tx];
+// Get the cell at the given tile coordinates, or return a dummy cell.
+map.cellAtTile = function(x, y) {
+  var row = map[y];
+  if (row === undefined) return new MapCell(x, y);
+  var cell = row[x];
+  if (cell === undefined) return new MapCell(x, y);
+  return cell;
 };
 
-// Get the cell at the given world coordinates.
+// Get the cell at the given pixel coordinates, or return a dummy cell.
+map.cellAtPixel = function(x, y) {
+  return map.cellAtTile(Math.round(this.x / TILE_SIZE_PIXEL), Math.round(this.y / TILE_SIZE_PIXEL));
+};
+
+// Get the cell at the given world coordinates, or return a dummy cell.
 map.cellAtWorld = function(x, y) {
-  var tx = Math.round(this.x / TILE_SIZE_WORLD);
-  var ty = Math.round(this.y / TILE_SIZE_WORLD);
-  return map[ty][tx];
+  return map.cellAtTile(Math.round(this.x / TILE_SIZE_WORLD), Math.round(this.y / TILE_SIZE_WORLD));
 };
 
 // Iterate over the map cells, either the complete map or a specific area.
