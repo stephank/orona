@@ -446,12 +446,12 @@ map.cellAtTile = function(x, y) {
 
 // Get the cell at the given pixel coordinates, or return a dummy cell.
 map.cellAtPixel = function(x, y) {
-  return map.cellAtTile(Math.round(this.x / TILE_SIZE_PIXEL), Math.round(this.y / TILE_SIZE_PIXEL));
+  return map.cellAtTile(Math.round(x / TILE_SIZE_PIXEL), Math.round(y / TILE_SIZE_PIXEL));
 };
 
 // Get the cell at the given world coordinates, or return a dummy cell.
 map.cellAtWorld = function(x, y) {
-  return map.cellAtTile(Math.round(this.x / TILE_SIZE_WORLD), Math.round(this.y / TILE_SIZE_WORLD));
+  return map.cellAtTile(Math.round(x / TILE_SIZE_WORLD), Math.round(y / TILE_SIZE_WORLD));
 };
 
 // Iterate over the map cells, either the complete map or a specific area.
