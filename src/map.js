@@ -16,6 +16,15 @@ MapCell.prototype.neigh = function(dx, dy) {
   return map.cellAtTile(x, y);
 };
 
+// Check whether the cell is one of the give types.
+MapCell.prototype.isType = function() {
+  for (var i = 0; i < arguments.length; i++) {
+    if (arguments[i] === this.type)
+      return true;
+  }
+  return false;
+};
+
 // Cache the tile index to use for drawing this cell.
 MapCell.prototype.setTile = function(tx, ty) {
   this.tile = [tx, ty];
@@ -56,8 +65,8 @@ MapCell.prototype.retileDeepSea = function() {
   // We only care if our neighbours are deep sea, water or land.
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
-    if (n.type == '^') return 'd';
-    if ([' ', 'b'].indexOf(n.type) !== -1) return 'w';
+    if (n.isType('^')) return 'd';
+    if (n.isType(' ', 'b')) return 'w';
     return 'l';
   };
 
@@ -96,7 +105,7 @@ MapCell.prototype.retileBuilding = function() {
   // We only care if our neighbours are buildings or not.
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
-    if (['|', '}'].indexOf(n.type) !== -1) return 'b';
+    if (n.isType('|', '}')) return 'b';
     return 'o';
   };
 
@@ -220,7 +229,7 @@ MapCell.prototype.retileRiver = function() {
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
     if (n.type == '=') return 'r';
-    if (['^', ' ', 'b'].indexOf(n.type) !== -1) return 'w';
+    if (n.isType('^', ' ', 'b')) return 'w';
     return 'l';
   };
 
@@ -272,7 +281,7 @@ MapCell.prototype.retileRoad = function() {
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
     if (n.type === '=') return 'r';
-    if (['^', ' ', 'b'].indexOf(n.type) !== -1) return 'w';
+    if (n.isType('^', ' ', 'b')) return 'w';
     return 'l';
   };
 
@@ -387,7 +396,7 @@ MapCell.prototype.retileBoat = function() {
   // We only care if our neighbours are water or land.
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
-    if (['^', ' ', 'b'].indexOf(n.type) !== -1) return 'w';
+    if (n.isType('^', ' ', 'b')) return 'w';
     return 'l';
   };
 
