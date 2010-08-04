@@ -430,6 +430,20 @@ MapCell.prototype.retileBoat = function() {
   }
 }());
 
+// Get the cell at the given pixel coordinates.
+map.cellAtPixel = function(x, y) {
+  var tx = Math.round(this.x / TILE_SIZE_PIXEL);
+  var ty = Math.round(this.y / TILE_SIZE_PIXEL);
+  return map[ty][tx];
+};
+
+// Get the cell at the given world coordinates.
+map.cellAtWorld = function(x, y) {
+  var tx = Math.round(this.x / TILE_SIZE_WORLD);
+  var ty = Math.round(this.y / TILE_SIZE_WORLD);
+  return map[ty][tx];
+};
+
 // Iterate over the map cells, either the complete map or a specific area.
 // The callback function will have each cell available as +this+.
 map.each = function(cb, sx, sy, ex, ey) {

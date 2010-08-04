@@ -84,9 +84,7 @@ Tank.prototype.update = function() {
     this.moveOnLand(newx, newy);
 
   // Update the tile reference.
-  var tx = Math.round(this.x / TILE_SIZE_WORLD);
-  var ty = Math.round(this.y / TILE_SIZE_WORLD);
-  this.tile = map[ty][tx];
+  this.tile = map.cellAtWorld(this.x, this.y);
 
   // FIXME: Reveal hidden mines nearby
 }
