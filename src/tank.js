@@ -35,9 +35,8 @@ Tank.prototype.update = function() {
 
   // FIXME: check if the terrain is clear, or if someone built underneath us.
 
-  // FIXME: terrain dependant.
-  var maxSpeed = 16.00;
   // Determine acceleration.
+  var maxSpeed = this.cell.getTankSpeed(this.onBoat);
   var acceleration = (this.speed > maxSpeed) ? -0.25 : 0.00;
   if (acceleration === 0.00 && this.accelerating !== this.braking) {
     if (this.accelerating)       acceleration =  0.25;
@@ -49,8 +48,8 @@ Tank.prototype.update = function() {
   else if (acceleration < 0.00 && this.speed > 0.00)
     this.speed = Math.max(0.00, this.speed + acceleration);
 
-  // FIXME: terrain dependant.
-  var maxTurn = 1.00;
+  // Determine turn rate.
+  var maxTurn = this.cell.getTankTurn(this.onBoat);
   if (this.turningClockwise === this.turningCounterClockwise) {
     this.turnSpeedup = 0;
   }
@@ -93,10 +92,10 @@ Tank.prototype.moveOnBoat = function(newx, newy) {
 
   // Check if we're running into land in either axis direction.
   var aheadx = map.cellAtWorld((newx > this.x) ? newx + 64 : newx - 64, newy);
-  if (!aheadx.isType(' ', '^') && this.speed < 16) // FIXME: check for an obstacle
+  if (!aheadx.isType(' ', '^') && (this.speed < 16 || aheadx.getTankSpeed() === 0))
     actualx = this.x;
   var aheady = map.cellAtWorld(newx, (newy > this.y) ? newy + 64 : newy - 64);
-  if (!aheady.isType(' ', '^') && this.speed < 16) // FIXME: check for an obstacle
+  if (!aheady.isType(' ', '^') && (this.speed < 16 || aheady.getTankSpeed() === 0))
     actualy = this.y;
 
   this.x = actualx;

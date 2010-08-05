@@ -22,6 +22,27 @@ var MapCell = function(x, y) {
   this.mine = true;
 };
 
+MapCell.prototype.getTankSpeed = function(onBoat) {
+  if (this.pill && this.pill.armour > 0) return 0;
+  // FIXME: check for an enemy base, otherwise fall through. The tile is road any way.
+  if (onBoat && this.isType('^', ' ')) return 16;
+  return this.type.tankSpeed;
+};
+
+MapCell.prototype.getTankTurn = function(onBoat) {
+  if (this.pill && this.pill.armour > 0) return 0.00;
+  // FIXME: check for an enemy base, otherwise fall through. The tile is road any way.
+  if (onBoat && this.isType('^', ' ')) return 1.00;
+  return this.type.tankTurn;
+};
+
+MapCell.prototype.getManSpeed = function(onBoat) {
+  if (this.pill && this.pill.armour > 0) return 0;
+  // FIXME: check for an enemy base, otherwise fall through. The tile is road any way.
+  if (onBoat && this.isType('^', ' ')) return 16;
+  return this.type.manSpeed;
+};
+
 // Get the cell at offset +dx+,+dy+ from this cell.
 // Most commonly used to get one of the neighbouring cells.
 // Will return a dummy deep sea cell if the location is off the map.
