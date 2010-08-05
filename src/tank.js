@@ -83,13 +83,11 @@ Tank.prototype.update = function() {
   else
     this.moveOnLand(newx, newy);
 
-  // Update the cell reference.
-  this.cell = map.cellAtWorld(this.x, this.y);
-
   // FIXME: Reveal hidden mines nearby
 }
 
 Tank.prototype.moveOnBoat = function(newx, newy) {
+  var oldcell = this.cell;
   var actualx = newx;
   var actualy = newy;
 
@@ -104,16 +102,37 @@ Tank.prototype.moveOnBoat = function(newx, newy) {
   this.x = actualx;
   this.y = actualy;
 
-  // FIXME: check if we just left water.
-  // This is easy, check if the new square is land.
-  // If it is a boat, explode it, replace with river, and play a sound.
-  // If it ain't, replace the old cell with a boat if it was a river.
+  // Update the cell reference.
+  this.cell = map.cellAtWorld(this.x, this.y);
+
+  // Check if we just left the water.
+  if (!this.cell.isType(' ', '^')) {
+    // Check if we're running over another boat; destroy it if so.
+    if (this.cell.isType('b')) {
+      // Don't need to retile surrounding cells for this.
+      this.cell.setType(' ', 0);
+      // FIXME: create a small explosion, play a sound.
+    }
+    else {
+      // Leave a boat if we were on a river.
+      if (oldcell.isType(' '))
+        // Don't need to retile surrounding cells for this.
+        oldcell.setType('b', 0);
+      this.onBoat = false;
+    }
+  }
 
   // FIXME: check for mine impact
 }
 
 Tank.prototype.moveOnLand = function(newx, newy) {
-  // FIXME
+  // FIXME: all sorts of checks should be here.
+
+  this.x = newx;
+  this.y = newy;
+
+  // Update the cell reference.
+  this.cell = map.cellAtWorld(this.x, this.y);
 };
 
 Tank.prototype.draw = function() {

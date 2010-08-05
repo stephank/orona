@@ -25,6 +25,16 @@ MapCell.prototype.isType = function() {
   return false;
 };
 
+MapCell.prototype.setType = function(newType, retileRadius) {
+  if (retileRadius === undefined) retileRadius = 1;
+
+  this.type = newType;
+  map.retile(
+    this.x - retileRadius, this.y - retileRadius,
+    this.x + retileRadius, this.y + retileRadius
+  );
+};
+
 // Cache the tile index to use for drawing this cell.
 MapCell.prototype.setTile = function(tx, ty) {
   this.tile = [tx, ty];
