@@ -25,6 +25,9 @@ var canvas = null;
 // The canvas 2D drawing context.
 var c = null;
 
+// Structure that holds the different terrain types and their properties.
+// The ASCII character is mapped to an object.
+var terrainTypes = null;
 // The singleton terrain map. Besides an object with methods, it is also a two-dimensional
 // array of MapCells, indexed as map[y][x].
 var map = null;

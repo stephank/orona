@@ -1,8 +1,23 @@
+terrainTypes = {
+  '^': { ascii: '^', tankSpeed:  3, tankTurn: 0.50, manSpeed:  0, description: 'deep sea'        },
+  '|': { ascii: '|', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'building'        },
+  ' ': { ascii: ' ', tankSpeed:  3, tankTurn: 0.25, manSpeed:  0, description: 'river'           },
+  '~': { ascii: '~', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'swamp'           },
+  '%': { ascii: '%', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'crater'          },
+  '=': { ascii: '=', tankSpeed: 16, tankTurn: 1.00, manSpeed: 16, description: 'road'            },
+  '#': { ascii: '#', tankSpeed:  6, tankTurn: 0.50, manSpeed:  8, description: 'forest'          },
+  ':': { ascii: ':', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'rubble'          },
+  '.': { ascii: '.', tankSpeed: 12, tankTurn: 1.00, manSpeed: 16, description: 'grass'           },
+  '}': { ascii: '}', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'shot building'   },
+  'b': { ascii: 'b', tankSpeed: 16, tankTurn: 1.00, manSpeed: 16, description: 'river with boat' }
+};
+
+
 // Constructor.
 var MapCell = function(x, y) {
   this.x = x;
   this.y = y;
-  this.type = '^';
+  this.type = terrainTypes['^'];
   this.tile = [0, 0];
   this.mine = true;
 };
@@ -19,7 +34,7 @@ MapCell.prototype.neigh = function(dx, dy) {
 // Check whether the cell is one of the give types.
 MapCell.prototype.isType = function() {
   for (var i = 0; i < arguments.length; i++) {
-    if (arguments[i] === this.type)
+    if (arguments[i] === this.type || arguments[i] === this.type.ascii)
       return true;
   }
   return false;
@@ -28,7 +43,14 @@ MapCell.prototype.isType = function() {
 MapCell.prototype.setType = function(newType, retileRadius) {
   if (retileRadius === undefined) retileRadius = 1;
 
-  this.type = newType;
+  if (typeof(newType) === 'string') {
+    this.type = terrainTypes[newType];
+    if (newType.length !== 1 || this.type === undefined)
+      throw 'Invalid terrain type: ' + newType;
+  }
+  else
+    this.type = newType;
+
   map.retile(
     this.x - retileRadius, this.y - retileRadius,
     this.x + retileRadius, this.y + retileRadius
@@ -51,7 +73,7 @@ MapCell.prototype.retile = function() {
     this.setTile(16, 4);
   }
   else {
-    switch (this.type) {
+    switch (this.type.ascii) {
       case '^': this.retileDeepSea(); break;
       case '|': this.retileBuilding(); break;
       case ' ': this.retileRiver(); break;
@@ -238,7 +260,7 @@ MapCell.prototype.retileRiver = function() {
   // We only care if our neighbours are road, water, or land.
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
-    if (n.type == '=') return 'r';
+    if (n.isType('=')) return 'r';
     if (n.isType('^', ' ', 'b')) return 'w';
     return 'l';
   };
@@ -290,7 +312,7 @@ MapCell.prototype.retileRoad = function() {
   // We only care if our neighbours are road, water, or land.
   var neighbourSignificance = function(dx, dy) {
     var n = self.neigh(dx, dy);
-    if (n.type === '=') return 'r';
+    if (n.isType('=')) return 'r';
     if (n.isType('^', ' ', 'b')) return 'w';
     return 'l';
   };
@@ -373,28 +395,29 @@ MapCell.prototype.retileRoad = function() {
 };
 
 MapCell.prototype.retileForest = function() {
-  var above = this.neigh( 0, -1).type;
-  var right = this.neigh( 1,  0).type;
-  var below = this.neigh( 0,  1).type;
-  var left  = this.neigh(-1,  0).type;
+  // Check in which directions we have adjoining forest.
+  var above = this.neigh( 0, -1).isType('#');
+  var right = this.neigh( 1,  0).isType('#');
+  var below = this.neigh( 0,  1).isType('#');
+  var left  = this.neigh(-1,  0).isType('#');
 
-  if (above !== '#' && left !== '#' && right === '#' && below === '#')
+  if (!above && !left && right && below)
     this.setTile(9, 9);
-  else if (above !== '#' && left === '#' && right !== '#' && below === '#')
+  else if (!above && left && !right && below)
     this.setTile(10, 9);
-  else if (above === '#' && left === '#' && right !== '#' && below !== '#')
+  else if (above && left && !right && !below)
     this.setTile(11, 9);
-  else if (above === '#' && left !== '#' && right === '#' && below !== '#')
+  else if (above && !left && right && !below)
     this.setTile(12, 9);
-  else if (above === '#' && left !== '#' && right !== '#' && below !== '#')
+  else if (above && !left && !right && !below)
     this.setTile(16, 9);
-  else if (above !== '#' && left !== '#' && right !== '#' && below === '#')
+  else if (!above && !left && !right && below)
     this.setTile(15, 9);
-  else if (above !== '#' && left === '#' && right !== '#' && below !== '#')
+  else if (!above && left && !right && !below)
     this.setTile(14, 9);
-  else if (above !== '#' && left !== '#' && right === '#' && below !== '#')
+  else if (!above && !left && right && !below)
     this.setTile(13, 9);
-  else if (above !== '#' && below !== '#' && left !== '#' && right !== '#')
+  else if (!above && !below && !left && !right)
     this.setTile(8, 9);
   else
     this.setTile(3, 1);
@@ -483,7 +506,7 @@ map.each = function(cb, sx, sy, ex, ey) {
 // Clear the map, or a specific area, by filling it with deep sea tiles.
 map.clear = function(sx, sy, ex, ey) {
   this.each(function() {
-    this.type = '^';
+    this.type = terrainTypes['^'];
     this.mine = false;
   }, sx, sy, ex, ey);
 };
@@ -589,7 +612,9 @@ map.load = function(data) {
     for (var x = 0; x < MAP_SIZE_TILES; x++) {
       var cell = row[x];
       // FIXME: check input
-      cell.type = line.charAt(x * 2);
+      cell.type = terrainTypes[line.charAt(x * 2)];
+      if (cell.type === undefined)
+        throw 'Corrupt map, invalid terrain type: ' + line.charAt(x * 2)
       if (line.charAt(x * 2 + 1) === '*')
         // FIXME: check if the specific terrain can even have a mine
         cell.mine = true;
@@ -607,7 +632,7 @@ map.load = function(data) {
     base.cell = map[base.y][base.x];
     base.cell.base = base;
     // Override cell type.
-    base.cell.type = '=';
+    base.cell.type = terrainTypes['='];
     base.cell.mine = false;
   }
 
