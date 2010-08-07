@@ -120,21 +120,29 @@ class Tank
     oldcell = @cell
     @cell = map.cellAtWorld(@x, @y)
 
-    # Check if we just left the water.
-    @leaveBoat(oldcell) if @onBoat and !@cell.isType(' ', '^')
+    # Check if we just entered or left the water.
+    if @onBoat
+      @leaveBoat(oldcell) unless @cell.isType(' ', '^')
+    else
+      @enterBoat() if @cell.isType('b')
 
   leaveBoat: (oldcell) ->
     # Check if we're running over another boat; destroy it if so.
     if @cell.isType('b')
-      # Don't need to retile surrounding cells for @
+      # Don't need to retile surrounding cells for this.
       @cell.setType(' ', 0)
       # FIXME: create a small explosion, play a sound.
     else
       # Leave a boat if we were on a river.
       if oldcell.isType(' ')
-        # Don't need to retile surrounding cells for @
+        # Don't need to retile surrounding cells for this.
         oldcell.setType('b', 0)
       @onBoat = no
+
+  enterBoat: ->
+    # Don't need to retile surrounding cells for this.
+    @cell.setType(' ', 0)
+    @onBoat = yes
 
   draw: () ->
     col = round((@direction - 1) / 16) % 16
