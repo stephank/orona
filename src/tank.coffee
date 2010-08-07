@@ -101,16 +101,16 @@ class Tank
     unless dx == 0
       aheadx = if dx > 0 then newx + 64 else newx - 64
       aheadx = map.cellAtWorld(aheadx, newy)
-      unless (@onBoat and !aheadx.isType(' ', '^') and @speed < 16) or aheadx.getTankSpeed(@onBoat) == 0
-        @x = newx
+      unless aheadx.getTankSpeed(@onBoat) == 0
         slowDown = no
+        @x = newx unless @onBoat and !aheadx.isType(' ', '^') and @speed < 16
 
     unless dy == 0
       aheady = if dy > 0 then newy + 64 else newy - 64
       aheady = map.cellAtWorld(newx, aheady)
-      unless (@onBoat and !aheady.isType(' ', '^') and @speed < 16) or aheady.getTankSpeed(@onBoat) == 0
-        @y = newy
+      unless aheady.getTankSpeed(@onBoat) == 0
         slowDown = no
+        @y = newy unless @onBoat and !aheady.isType(' ', '^') and @speed < 16
 
     # If we're completely obstructed, reduce our speed.
     if slowDown
