@@ -1,5 +1,5 @@
-# Short hands
 {round, floor, random, cos, sin, PI} = Math
+
 
 window.Bolo =
   start: ->
@@ -22,8 +22,8 @@ window.Bolo =
 
     # Fetch and load the map.
     $.ajax(
-      url: 'maps/everard-island.txt',
-      dataType: 'text',
+      url: 'maps/everard-island.txt'
+      dataType: 'text'
       success: (data) ->
         map.load data
 
