@@ -1,4 +1,4 @@
-{round, min, max, sin, cos, PI} = Math
+{round, ceil, min, max, sin, cos, PI} = Math
 
 
 class Tank
@@ -92,17 +92,29 @@ class Tank
   move: ->
     # FIXME: UGLY, and probably incorrect too.
     rad = (256 - ((round((@direction - 1) / 16) % 16) * 16)) * 2 * PI / 256
-    newx = @x + round(cos(rad) * round(@speed))
-    newy = @y + round(sin(rad) * round(@speed))
+    newx = @x + (dx = round(cos(rad) * ceil(@speed)))
+    newy = @y + (dy = round(sin(rad) * ceil(@speed)))
+
+    slowDown = yes
 
     # Check if we're running into land in either axis direction.
-    aheadx = if newx > @x then newx + 64 else newx - 64
-    aheadx = map.cellAtWorld(aheadx, newy)
-    @x = newx unless (@onBoat and !aheadx.isType(' ', '^') and @speed < 16) or aheadx.getTankSpeed(@onBoat) == 0
+    unless dx == 0
+      aheadx = if dx > 0 then newx + 64 else newx - 64
+      aheadx = map.cellAtWorld(aheadx, newy)
+      unless (@onBoat and !aheadx.isType(' ', '^') and @speed < 16) or aheadx.getTankSpeed(@onBoat) == 0
+        @x = newx
+        slowDown = no
 
-    aheady = if newy > @y then newy + 64 else newy - 64
-    aheady = map.cellAtWorld(newx, aheady)
-    @y = newy unless (@onBoat and !aheady.isType(' ', '^') and @speed < 16) or aheady.getTankSpeed(@onBoat) == 0
+    unless dy == 0
+      aheady = if dy > 0 then newy + 64 else newy - 64
+      aheady = map.cellAtWorld(newx, aheady)
+      unless (@onBoat and !aheady.isType(' ', '^') and @speed < 16) or aheady.getTankSpeed(@onBoat) == 0
+        @y = newy
+        slowDown = no
+
+    # If we're completely obstructed, reduce our speed.
+    if slowDown
+      @speed = max(0.00, @speed - 1)
 
     # Update the cell reference.
     oldcell = @cell
