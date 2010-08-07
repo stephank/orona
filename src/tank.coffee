@@ -97,7 +97,7 @@ class Tank
 
     slowDown = yes
 
-    # Check if we're running into land in either axis direction.
+    # Check if we're running into an obstacle in either axis direction.
     unless dx == 0
       aheadx = if dx > 0 then newx + 64 else newx - 64
       aheadx = map.cellAtWorld(aheadx, newy)
