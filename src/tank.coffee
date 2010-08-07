@@ -27,99 +27,102 @@ class Tank
 
     @onBoat = yes
 
-  update: () ->
-    @reload-- if @reload > 0
-    if @shooting and @reload == 0 and @shells > 0
-      @reload = 13
-      @shells--
-      # FIXME: fire a projectile, play a sound
-      console.debug 'BAM!'
-
+  update: ->
+    @shootOrReload()
+    @turn()
+    @accelerate()
     # FIXME: check if the terrain is clear, or if someone built underneath us.
+    @move() if @speed > 0
+    # FIXME: check for mine impact
+    # FIXME: Reveal hidden mines nearby
 
+  shootOrReload: ->
+    @reload-- if @reload > 0
+    return unless @shooting and @reload == 0 and @shells > 0
+    # We're clear to fire a shot.
+
+    @reload = 13
+    @shells--
+    # FIXME: fire a projectile, play a sound.
+    console.debug 'BAM!'
+
+  turn: ->
+    # Determine turn rate.
+    maxTurn = @cell.getTankTurn @onBoat
+
+    # Are the key presses cancelling eachother out?
+    if @turningClockwise == @turningCounterClockwise
+      @turnSpeedup = 0
+      return
+
+    # Determine angular acceleration, and apply speed-up.
+    if @turningCounterClockwise
+      acceleration = maxTurn
+      if @turnSpeedup < 10 then acceleration /= 2
+      if @turnSpeedup < 0 then @turnSpeedup = 0
+      @turnSpeedup++
+    else # if @turningClockwise
+      acceleration = -maxTurn
+      if @turnSpeedup > -10 then acceleration /= 2
+      if @turnSpeedup > 0 then @turnSpeedup = 0
+      @turnSpeedup--
+
+    # Turn the tank.
+    @direction += acceleration
+    # Normalize direction.
+    @direction += 256 while @direction < 0
+    @direction %= 256 if @direction >= 256
+
+  accelerate: ->
     # Determine acceleration.
     maxSpeed = @cell.getTankSpeed @onBoat
-    acceleration = if @speed > maxSpeed then -0.25 else 0.00
-    if acceleration == 0.00 and @accelerating != @braking
-      acceleration = if @accelerating then 0.25 else -0.25
-    # Adjust speed, and clip only on the 'side' we're accelerating towards.
+    # Is terrain forcing us to slow down?
+    if @speed > maxSpeed then acceleration = -0.25
+    # Are key presses cancelling eachother out?
+    else if @accelerating == @braking then acceleration = 0.00
+    # What's does the player want to do?
+    else if @accelerating then acceleration = 0.25
+    else acceleration = -0.25 # if @breaking
+    # Adjust speed, and clip as necessary.
     if acceleration > 0.00 and @speed < maxSpeed
       @speed = min(maxSpeed, @speed + acceleration)
     else if acceleration < 0.00 and @speed > 0.00
       @speed = max(0.00, @speed + acceleration)
 
-    # Determine turn rate.
-    maxTurn = @cell.getTankTurn @onBoat
-    if @turningClockwise == @turningCounterClockwise
-      @turnSpeedup = 0
-    else
-      if @turningCounterClockwise
-        acceleration = maxTurn
-        if @turnSpeedup < 10 then acceleration /= 2
-        if @turnSpeedup < 0 then @turnSpeedup = 0
-        @turnSpeedup++
-      else # if @turningClockwise
-        acceleration = -maxTurn
-        if @turnSpeedup > -10 then acceleration /= 2
-        if @turnSpeedup > 0 then @turnSpeedup = 0
-        @turnSpeedup--
-      @direction += acceleration
-      @direction += 256 while @direction < 0
-      @direction %= 256 if @direction >= 256
-
-    # Reposition.
+  move: ->
     # FIXME: UGLY, and probably incorrect too.
     rad = (256 - ((round((@direction - 1) / 16) % 16) * 16)) * 2 * PI / 256
     newx = @x + round(cos(rad) * round(@speed))
     newy = @y + round(sin(rad) * round(@speed))
 
-    if @onBoat then @moveOnBoat(newx, newy) else @moveOnLand(newx, newy)
-
-    # FIXME: Reveal hidden mines nearby
-
-  moveOnBoat: (newx, newy) ->
-    oldcell = @cell
-    actualx = newx
-    actualy = newy
-
     # Check if we're running into land in either axis direction.
     aheadx = if newx > @x then newx + 64 else newx - 64
     aheadx = map.cellAtWorld(aheadx, newy)
-    actualx = @x if !aheadx.isType(' ', '^') and (@speed < 16 or aheadx.getTankSpeed() == 0)
+    @x = newx unless (@onBoat and !aheadx.isType(' ', '^') and @speed < 16) or aheadx.getTankSpeed(@onBoat) == 0
+
     aheady = if newy > @y then newy + 64 else newy - 64
     aheady = map.cellAtWorld(newx, aheady)
-    actualy = @y if !aheady.isType(' ', '^') and (@speed < 16 or aheady.getTankSpeed() == 0)
-
-    @x = actualx
-    @y = actualy
+    @y = newy unless (@onBoat and !aheady.isType(' ', '^') and @speed < 16) or aheady.getTankSpeed(@onBoat) == 0
 
     # Update the cell reference.
+    oldcell = @cell
     @cell = map.cellAtWorld(@x, @y)
 
     # Check if we just left the water.
-    unless @cell.isType(' ', '^')
-      # Check if we're running over another boat; destroy it if so.
-      if @cell.isType('b')
+    @leaveBoat(oldcell) if @onBoat and !@cell.isType(' ', '^')
+
+  leaveBoat: (oldcell) ->
+    # Check if we're running over another boat; destroy it if so.
+    if @cell.isType('b')
+      # Don't need to retile surrounding cells for @
+      @cell.setType(' ', 0)
+      # FIXME: create a small explosion, play a sound.
+    else
+      # Leave a boat if we were on a river.
+      if oldcell.isType(' ')
         # Don't need to retile surrounding cells for @
-        @cell.setType(' ', 0)
-        # FIXME: create a small explosion, play a sound.
-      else
-        # Leave a boat if we were on a river.
-        if oldcell.isType(' ')
-          # Don't need to retile surrounding cells for @
-          oldcell.setType('b', 0)
-        @onBoat = no
-
-    # FIXME: check for mine impact
-
-  moveOnLand: (newx, newy) ->
-    # FIXME: all sorts of checks should be here.
-
-    @x = newx
-    @y = newy
-
-    # Update the cell reference.
-    @cell = map.cellAtWorld(@x, @y)
+        oldcell.setType('b', 0)
+      @onBoat = no
 
   draw: () ->
     col = round((@direction - 1) / 16) % 16
