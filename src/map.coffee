@@ -246,7 +246,7 @@ class MapCell
       n = @neigh dx, dy
       return 'r' if n.isType('=')
       return 'w' if n.isType('^', ' ', 'b')
-      return 'l';
+      return 'l'
 
     above      = neighbourSignificance( 0, -1)
     aboveRight = neighbourSignificance( 1, -1)
@@ -399,9 +399,9 @@ map.draw = (sx, sy, ex, ey) ->
 
   map.each (cell) ->
     sx = cell.tile[0] * TILE_SIZE_PIXEL
-    sy = cell.tile[1] * TILE_SIZE_PIXEL;
+    sy = cell.tile[1] * TILE_SIZE_PIXEL
     dx = cell.x * TILE_SIZE_PIXEL
-    dy = cell.y * TILE_SIZE_PIXEL;
+    dy = cell.y * TILE_SIZE_PIXEL
     c.drawImage tilemap,
       sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
       dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
