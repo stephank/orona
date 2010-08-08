@@ -165,6 +165,10 @@ window.Bolo =
         'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
         'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
       ).appendTo(hud);
+      $('<a href="http://github.com/stephank/orona"></a>')
+        .css('position': 'absolute', 'top': '0px', 'right': '0px')
+        .html('<img src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub">')
+        .appendTo(hud);
 
     # One-shot update to set all the real-time attributes.
     Bolo.updateHud()
