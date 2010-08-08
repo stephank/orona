@@ -1,2 +1,73 @@
-* { margin: 0; border: 0; padding: 0; overflow: hidden }
-body { background: black }
+/*
+Orona, © 2010 Stéphan Kochen
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+*/
+
+* {
+  margin: 0; border: 0; padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background: black;
+}
+
+#hud {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+}
+
+#pillStatus, #baseStatus {
+  position: absolute;
+  width: 129px; height: 66px;
+  border: 2px solid #c0c0f0;
+  background: black;
+}
+
+#pillStatus .deco, #baseStatus .deco {
+  position: absolute;
+  bottom: 3px; right: 4px;
+  width: 16px; height: 16px;
+  background: url(img/tiles.png);
+}
+
+#pillStatus .pill, #baseStatus .base {
+  float: left;
+  width: 14px; height: 14px;
+  margin: 3px 0 0 3px;
+  border: 2px solid;
+}
+
+#pillStatus {
+  bottom: 8px; left: 8px;
+}
+
+#pillStatus .deco {
+  background-position: -240px -64px;
+}
+
+/* FIXME: this slows down things a bit. Perhaps just use images? */
+/*
+#pillStatus .pill {
+  -moz-border-radius: 8px;
+  -webkit-border-radius: 8px;
+  border-radius: 8px;
+}
+*/
+
+#baseStatus {
+  bottom: 8px; left: 149px;
+}
+
+#baseStatus .deco {
+  background-position: -256px -64px;
+}
+
+#pillStatus .pill[status='neutral'], #baseStatus .base[status='neutral'] {
+  border-color: #f0f0f0;
+  background: #a0a0a0;
+}

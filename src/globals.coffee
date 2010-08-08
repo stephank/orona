@@ -34,6 +34,8 @@ window.TICK_LENGTH_MS = 20
 window.tilemap = null
 # The jQuery object referring to the canvas.
 window.canvas = null
+# The jQuery object referring to the HUD.
+window.hud = null
 # The canvas 2D drawing context.
 window.c = null
 

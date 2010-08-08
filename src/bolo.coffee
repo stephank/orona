@@ -20,10 +20,9 @@ window.Bolo =
       tilemap.src = 'img/tiles2x.png'
       return
 
-    # Create the canvas.
-    window.canvas = $('<canvas/>').appendTo('body')
-    Bolo.handleResize()
-    $(window).resize(Bolo.handleResize)
+    # Initialize the canvas.
+    window.canvas = $('#game')
+    Bolo.handleResize(); $(window).resize(Bolo.handleResize)
     window.c = canvas[0].getContext('2d')
 
     # Install key handlers.
@@ -39,6 +38,10 @@ window.Bolo =
         # Create a player tank.
         start = map.starts[round(random() * (map.starts.length - 1))]
         window.player = new Tank(start.x, start.y, start.direction)
+
+        # Initialize the HUD.
+        window.hud = $('#hud')
+        Bolo.initHud()
 
         # Start the game loop.
         Bolo.startLoop()
@@ -112,19 +115,24 @@ window.Bolo =
   # Graphics.
 
   draw: ->
+    c.save()
+
+    # Apply a translation that centers everything around the player.
     {width, height} = canvas[0]
     left = round(player.x / PIXEL_SIZE_WORLD - width  / 2)
     top =  round(player.y / PIXEL_SIZE_WORLD - height / 2)
-
-    c.save()
     c.translate(-left, -top)
+
+    # Draw all canvas elements.
     map.draw(left, top, left + width, top + height)
     player.draw()
-    Bolo.updateMapOverlayHud()
-    c.restore()
-    Bolo.updateScreenOverlayHud(width, height)
+    Bolo.drawOverlay()
 
-  updateMapOverlayHud: ->
+    c.restore()
+
+    Bolo.updateHud()
+
+  drawOverlay: ->
     # FIXME: variable firing distance
     # FIXME: hide when dead
     # FIXME: just use the DOM for this?
@@ -137,37 +145,30 @@ window.Bolo =
       17 * TILE_SIZE_PIXEL,    4 * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
       x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
 
-  updateScreenOverlayHud: (w, h) ->
-    c.save()
+  initHud: ->
+    # Clear all existing contents
+    hud.html('')
 
-    # Background.
-    sy = h - 66
-    c.beginPath(); c.rect(-5, sy, 130, 71); c.rect(125, sy, 125, 71)
-    c.fillStyle   = '#000000'; c.fill()
-    c.strokeStyle = '#c0c0f0'; c.lineWidth = 2; c.stroke()
+    # Create the pillbox status indicator.
+    container = $('<div/>', id: 'pillStatus').appendTo(hud)
+    $('<div/>', class: 'deco').appendTo(container)
+    $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in map.pills
 
-    # Pillboxes
-    for pill, i in map.pills
-      x = 6 + 20 * (i % 6) + 6
-      y = sy + 6 + floor(i / 6) * 20 + 6
-      c.beginPath(); c.arc(x, y, 7, 0, 2 * PI, no)
+    # Create the base status indicator.
+    container = $('<div/>', id: 'baseStatus').appendTo(hud)
+    $('<div/>', class: 'deco').appendTo(container)
+    $('<div/>', class: 'base').appendTo(container).data('base', base) for base in map.bases
+
+    # One-shot update to set all the real-time attributes.
+    Bolo.updateHud()
+
+  updateHud: ->
+    # Pillboxes.
+    $('#pillStatus .pill').each (i, node) =>
       # FIXME: allegiance
-      c.fillStyle   = '#a0a0a0'; c.fill()
-      c.strokeStyle = '#f0f0f0'; c.lineWidth = 2; c.stroke()
-    c.drawImage tilemap,
-      15 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      104, sy + 44, 16, 16
+      $(node).attr('status', 'neutral')
 
-    # Bases
-    for base, i in map.bases
-      x = 131 + 20 * (i % 6)
-      y = sy + 5 + floor(i / 6) * 20
-      c.beginPath(); c.rect(x, y, 14, 14)
+    # Bases.
+    $('#baseStatus .base').each (i, node) =>
       # FIXME: allegiance
-      c.fillStyle   = '#a0a0a0'; c.fill()
-      c.strokeStyle = '#f0f0f0'; c.lineWidth = 2; c.stroke()
-    c.drawImage tilemap,
-      16 * TILE_SIZE_PIXEL, 4 * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      229, sy + 44, 16, 16
-
-    c.restore()
+      $(node).attr('status', 'neutral')
