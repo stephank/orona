@@ -159,6 +159,13 @@ window.Bolo =
     $('<div/>', class: 'deco').appendTo(container)
     $('<div/>', class: 'base').appendTo(container).data('base', base) for base in map.bases
 
+    # Show WIP notice. This is really a temporary hack, so FIXME someday.
+    unless location.host == 'localhost'
+      $('<div/>').text('This is a work-in-progress; less than alpha quality!').css(
+        'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
+        'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
+      ).appendTo(hud);
+
     # One-shot update to set all the real-time attributes.
     Bolo.updateHud()
 
