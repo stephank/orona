@@ -8,8 +8,8 @@
 <script src="bolo-bundle.js"></script>
 <script>
 $(function() {
-  require.ensure(['bolo/bolo'], function(require) {
-    require('bolo/bolo').Bolo.start();
+  require.ensure(['bolo/client'], function(require) {
+    require('bolo/client').init();
   })
 });
 </script>
