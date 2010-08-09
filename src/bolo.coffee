@@ -7,10 +7,28 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, floor, random, cos, sin, PI} = Math
+{round, floor, random, cos, sin, PI}                = Math
+{Tank}                                              = require './tank'
+{MapCell, map}                                      = require './map'
+{TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD, TICK_LENGTH_MS} = require './constants'
 
 
-window.Bolo =
+# Global variables.
+
+# The tilemap Image object.
+# FIXME: make this an export somewhere somehow.
+window.tilemap = null
+# The jQuery object referring to the canvas.
+canvas = null
+# The jQuery object referring to the HUD.
+hud = null
+# The canvas 2D drawing context.
+c = null
+# The Tank object controlled by the player.
+player = null
+
+
+Bolo =
   start: ->
     # First, make sure the tilemap is loaded.
     unless window.tilemap?
@@ -21,9 +39,9 @@ window.Bolo =
       return
 
     # Initialize the canvas.
-    window.canvas = $('#game')
+    canvas = $('#game')
     Bolo.handleResize(); $(window).resize(Bolo.handleResize)
-    window.c = canvas[0].getContext('2d')
+    c = canvas[0].getContext('2d')
 
     # Install key handlers.
     $(document).keydown(Bolo.handleKeydown).keyup(Bolo.handleKeyup)
@@ -37,10 +55,10 @@ window.Bolo =
 
         # Create a player tank.
         start = map.starts[round(random() * (map.starts.length - 1))]
-        window.player = new Tank(start.x, start.y, start.direction)
+        player = new Tank(start.x, start.y, start.direction)
 
         # Initialize the HUD.
-        window.hud = $('#hud')
+        hud = $('#hud')
         Bolo.initHud()
 
         # Start the game loop.
@@ -124,8 +142,8 @@ window.Bolo =
     c.translate(-left, -top)
 
     # Draw all canvas elements.
-    map.draw(left, top, left + width, top + height)
-    player.draw()
+    map.draw(c, left, top, left + width, top + height)
+    player.draw(c)
     Bolo.drawOverlay()
 
     c.restore()
@@ -183,3 +201,7 @@ window.Bolo =
     $('#baseStatus .base').each (i, node) =>
       # FIXME: allegiance
       $(node).attr('status', 'neutral')
+
+
+# Exports.
+exports.Bolo = Bolo

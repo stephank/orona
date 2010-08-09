@@ -7,7 +7,9 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, ceil, min, max, sin, cos, PI} = Math
+{round, ceil, min, max, sin, cos, PI}                = Math
+{MapCell, map}                                       = require './map'
+{TILE_SIZE_WORLD, TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD} = require './constants'
 
 
 class Tank
@@ -153,7 +155,7 @@ class Tank
     @cell.setType(' ', 0)
     @onBoat = yes
 
-  draw: () ->
+  draw: (c) ->
     col = round((@direction - 1) / 16) % 16
     row = 12
     # FIXME: allegiance
@@ -168,4 +170,4 @@ class Tank
 
 
 # Exports.
-window.Tank = Tank
+exports.Tank = Tank

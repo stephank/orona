@@ -7,7 +7,8 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor, ceil} = Math
+{floor, ceil}                                      = Math
+{TILE_SIZE_WORLD, TILE_SIZE_PIXEL, MAP_SIZE_TILES} = require './constants'
 
 
 terrainTypes = {}
@@ -400,7 +401,7 @@ map.retile = (sx, sy, ex, ey) ->
   , sx, sy, ex, ey
 
 # Draw the map area at the given pixel coordinates to the canvas.
-map.draw = (sx, sy, ex, ey) ->
+map.draw = (c, sx, sy, ex, ey) ->
   stx = floor(sx / TILE_SIZE_PIXEL)
   sty = floor(sy / TILE_SIZE_PIXEL)
   etx =  ceil(ex / TILE_SIZE_PIXEL)
@@ -508,6 +509,5 @@ map.load = (data) ->
 
 
 # Exports.
-window.terrainTypes = terrainTypes
-window.MapCell = MapCell
-window.map = map
+exports.MapCell = MapCell
+exports.map = map
