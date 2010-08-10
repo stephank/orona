@@ -7,10 +7,11 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, floor, ceil, cos, sin, PI}                  = Math
-{Tank}                                              = require './tank'
-{MapCell, MapView, Map}                             = require './map'
-{TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD, TICK_LENGTH_MS} = require './constants'
+{round, floor, ceil, cos, sin, PI}  = Math
+{Tank}                              = require './tank'
+{MapCell, MapView, Map}             = require './map'
+{TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD,
+ TICK_LENGTH_MS, MAP_SIZE_TILES}    = require './constants'
 
 
 # Global variables.
@@ -55,7 +56,7 @@ init = ->
       game = {}
 
       # Initialize the map.
-      mapview = new CanvasMapView()
+      mapview = new OffscreenMapView()
       game.map = new Map(mapview)
 
       # Load the data we received into the map.
@@ -154,7 +155,7 @@ draw = ->
   c.translate(-left, -top)
 
   # Draw all canvas elements.
-  mapview.draw(left, top, left + width, top + height)
+  mapview.draw(left, top, width, height)
   drawTank(game.player)
   drawOverlay()
 
@@ -162,26 +163,19 @@ draw = ->
 
   updateHud()
 
-class CanvasMapView extends MapView
+class OffscreenMapView extends MapView
+  constructor: ->
+    @canvas = $('<canvas/>')[0]
+    @canvas.width = @canvas.height = MAP_SIZE_TILES * TILE_SIZE_PIXEL
+    @ctx = @canvas.getContext('2d')
+
   onRetile: (cell, tx, ty) ->
-    # Simply cache the tile index.
-    cell.tile = [tx, ty]
+    @ctx.drawImage tilemap,
+      tx * TILE_SIZE_PIXEL,     ty * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+      cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
 
-  draw: (sx, sy, ex, ey) ->
-    stx = floor(sx / TILE_SIZE_PIXEL)
-    sty = floor(sy / TILE_SIZE_PIXEL)
-    etx =  ceil(ex / TILE_SIZE_PIXEL)
-    ety =  ceil(ey / TILE_SIZE_PIXEL)
-
-    game.map.each (cell) ->
-      sx = cell.tile[0] * TILE_SIZE_PIXEL
-      sy = cell.tile[1] * TILE_SIZE_PIXEL
-      dx = cell.x * TILE_SIZE_PIXEL
-      dy = cell.y * TILE_SIZE_PIXEL
-      c.drawImage tilemap,
-        sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-        dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
-    , stx, sty, etx, ety
+  draw: (sx, sy, w, h) ->
+    c.drawImage @canvas, sx, sy, w, h, sx, sy, w, h
 
 drawTank = (tank) ->
   tile = tank.getTile()
