@@ -11,6 +11,7 @@ the Free Software Foundation; either version 2 of the License, or
 {TILE_SIZE_WORLD, TILE_SIZE_PIXEL, MAP_SIZE_TILES} = require './constants'
 
 
+# All the different terrain types we know about.
 terrainTypes = {}
 for type in [
   { ascii: '^', tankSpeed:  3, tankTurn: 0.50, manSpeed:  0, description: 'deep sea'        }
@@ -28,11 +29,10 @@ for type in [
   terrainTypes[type.ascii] = type
 
 
-# Constructor.
+# A class to represent a cell on the map.
 class MapCell
   constructor: (@map, @x, @y) ->
     @type = terrainTypes['^']
-    @tile = [0, 0]
     @mine = no
 
   getTankSpeed: (onBoat) ->
@@ -86,9 +86,9 @@ class MapCell
       @x + retileRadius, @y + retileRadius
     )
 
-  # Cache the tile index to use for drawing this cell.
+  # Short-hand for notifying the view of a retile.
   setTile: (tx, ty) ->
-    @tile = [tx, ty]
+    @map.view.onRetile this, tx, ty
 
   # Retile this cell. See map#retile.
   retile: ->
@@ -350,9 +350,21 @@ class MapCell
     else @setTile 11, 6
 
 
+# This is an interface and base class for map views. Map views are responsible
+# for actually displaying the map on the screen.
+class MapView
+  # Called every time a tile changes, with the tile reference and the new
+  # tile coordinates to use. This is also called on map load, once for every tile.
+  onRetile: (cell, tx, ty) ->
+    # Default is to do nothing.
+
+
+# This class holds a complete map.
 class Map
   # Initialize the map array.
-  constructor: ->
+  constructor: (@view) ->
+    @view ||= new MapView()
+
     @pills = []
     @bases = []
     @starts = []
@@ -395,6 +407,7 @@ class Map
     return this
 
   # Clear the map, or a specific area, by filling it with deep sea tiles.
+  # Note: this will not do any retiling!
   clear: (sx, sy, ex, ey) ->
     @each (cell) ->
       cell.type = terrainTypes['^']
@@ -499,5 +512,7 @@ class Map
 
 
 # Exports.
+exports.terrainTypes = terrainTypes
 exports.MapCell = MapCell
+exports.MapView = MapView
 exports.Map = Map

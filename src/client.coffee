@@ -9,7 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 {round, floor, ceil, cos, sin, PI}                  = Math
 {Tank}                                              = require './tank'
-{MapCell, Map}                                      = require './map'
+{MapCell, MapView, Map}                             = require './map'
 {TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD, TICK_LENGTH_MS} = require './constants'
 
 
@@ -23,6 +23,8 @@ canvas = null
 hud = null
 # The canvas 2D drawing context.
 c = null
+# The map view we use to draw the map.
+mapview = null
 # The game state object.
 game = null
 
@@ -52,8 +54,11 @@ init = ->
       # Initialize the game state object.
       game = {}
 
-      # Load the map.
-      game.map = new Map()
+      # Initialize the map.
+      mapview = new CanvasMapView()
+      game.map = new Map(mapview)
+
+      # Load the data we received into the map.
       game.map.load data
 
       # Create a player tank.
@@ -149,7 +154,7 @@ draw = ->
   c.translate(-left, -top)
 
   # Draw all canvas elements.
-  drawMap(left, top, left + width, top + height)
+  mapview.draw(left, top, left + width, top + height)
   drawTank(game.player)
   drawOverlay()
 
@@ -157,21 +162,26 @@ draw = ->
 
   updateHud()
 
-drawMap = (sx, sy, ex, ey) ->
-  stx = floor(sx / TILE_SIZE_PIXEL)
-  sty = floor(sy / TILE_SIZE_PIXEL)
-  etx =  ceil(ex / TILE_SIZE_PIXEL)
-  ety =  ceil(ey / TILE_SIZE_PIXEL)
+class CanvasMapView extends MapView
+  onRetile: (cell, tx, ty) ->
+    # Simply cache the tile index.
+    cell.tile = [tx, ty]
 
-  game.map.each (cell) ->
-    sx = cell.tile[0] * TILE_SIZE_PIXEL
-    sy = cell.tile[1] * TILE_SIZE_PIXEL
-    dx = cell.x * TILE_SIZE_PIXEL
-    dy = cell.y * TILE_SIZE_PIXEL
-    c.drawImage tilemap,
-      sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
-  , stx, sty, etx, ety
+  draw: (sx, sy, ex, ey) ->
+    stx = floor(sx / TILE_SIZE_PIXEL)
+    sty = floor(sy / TILE_SIZE_PIXEL)
+    etx =  ceil(ex / TILE_SIZE_PIXEL)
+    ety =  ceil(ey / TILE_SIZE_PIXEL)
+
+    game.map.each (cell) ->
+      sx = cell.tile[0] * TILE_SIZE_PIXEL
+      sy = cell.tile[1] * TILE_SIZE_PIXEL
+      dx = cell.x * TILE_SIZE_PIXEL
+      dy = cell.y * TILE_SIZE_PIXEL
+      c.drawImage tilemap,
+        sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+        dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+    , stx, sty, etx, ety
 
 drawTank = (tank) ->
   tile = tank.getTile()
