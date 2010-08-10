@@ -7,22 +7,22 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, ceil, min, max, sin, cos, PI}                = Math
-{MapCell, map}                                       = require './map'
-{TILE_SIZE_WORLD, TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD} = require './constants'
+{round, ceil, min, max, sin, cos, PI} = Math
+{TILE_SIZE_WORLD}                     = require './constants'
 
 
 class Tank
-  constructor: (x, y, direction) ->
-    @x = (x + 0.5) * TILE_SIZE_WORLD
-    @y = (y + 0.5) * TILE_SIZE_WORLD
-    @cell = map[y][x]
+  constructor: (@game, startingPos) ->
+    @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
+    @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
+    @direction = startingPos.direction * 16
+
+    @cell = @game.map.cells[startingPos.y][startingPos.x]
 
     @speed = 0.00
     @accelerating = no
     @braking = no
 
-    @direction = direction * 16
     @turningClockwise = no
     @turningCounterClockwise = no
     @turnSpeedup = 0
@@ -37,6 +37,18 @@ class Tank
     @shooting = no
 
     @onBoat = yes
+
+  getDirection16th: ->
+    round((@direction - 1) / 16) % 16
+
+  getTile: ->
+    tx = @getDirection16th()
+
+    ty = 12
+    # FIXME: allegiance
+    ty += 1 if @onBoat
+
+    [tx, ty]
 
   update: ->
     @shootOrReload()
@@ -102,7 +114,7 @@ class Tank
 
   move: ->
     # FIXME: UGLY, and probably incorrect too.
-    rad = (256 - ((round((@direction - 1) / 16) % 16) * 16)) * 2 * PI / 256
+    rad = (256 - @getDirection16th() * 16) * 2 * PI / 256
     newx = @x + (dx = round(cos(rad) * ceil(@speed)))
     newy = @y + (dy = round(sin(rad) * ceil(@speed)))
 
@@ -111,14 +123,14 @@ class Tank
     # Check if we're running into an obstacle in either axis direction.
     unless dx == 0
       aheadx = if dx > 0 then newx + 64 else newx - 64
-      aheadx = map.cellAtWorld(aheadx, newy)
+      aheadx = @game.map.cellAtWorld(aheadx, newy)
       unless aheadx.getTankSpeed(@onBoat) == 0
         slowDown = no
         @x = newx unless @onBoat and !aheadx.isType(' ', '^') and @speed < 16
 
     unless dy == 0
       aheady = if dy > 0 then newy + 64 else newy - 64
-      aheady = map.cellAtWorld(newx, aheady)
+      aheady = @game.map.cellAtWorld(newx, aheady)
       unless aheady.getTankSpeed(@onBoat) == 0
         slowDown = no
         @y = newy unless @onBoat and !aheady.isType(' ', '^') and @speed < 16
@@ -129,7 +141,7 @@ class Tank
 
     # Update the cell reference.
     oldcell = @cell
-    @cell = map.cellAtWorld(@x, @y)
+    @cell = @game.map.cellAtWorld(@x, @y)
 
     # Check if we just entered or left the water.
     if @onBoat
@@ -154,19 +166,6 @@ class Tank
     # Don't need to retile surrounding cells for this.
     @cell.setType(' ', 0)
     @onBoat = yes
-
-  draw: (c) ->
-    col = round((@direction - 1) / 16) % 16
-    row = 12
-    # FIXME: allegiance
-    row += 1 if @onBoat
-
-    x = round(@x / PIXEL_SIZE_WORLD)
-    y = round(@y / PIXEL_SIZE_WORLD)
-
-    c.drawImage tilemap,
-      col * TILE_SIZE_PIXEL,   row * TILE_SIZE_PIXEL,   TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
 
 
 # Exports.

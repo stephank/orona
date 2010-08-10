@@ -7,7 +7,7 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor, ceil}                                      = Math
+{round, random, floor}                             = Math
 {TILE_SIZE_WORLD, TILE_SIZE_PIXEL, MAP_SIZE_TILES} = require './constants'
 
 
@@ -30,7 +30,7 @@ for type in [
 
 # Constructor.
 class MapCell
-  constructor: (@x, @y) ->
+  constructor: (@map, @x, @y) ->
     @type = terrainTypes['^']
     @tile = [0, 0]
     @mine = no
@@ -57,7 +57,7 @@ class MapCell
   # Most commonly used to get one of the neighbouring cells.
   # Will return a dummy deep sea cell if the location is off the map.
   neigh: (dx, dy) ->
-    map.cellAtTile(@x + dx, @y + dy)
+    @map.cellAtTile(@x + dx, @y + dy)
 
   # Check whether the cell is one of the give types.
   # FIXME: The splat variant is significantly slower
@@ -81,7 +81,7 @@ class MapCell
     else
       @type = newType
 
-    map.retile(
+    @map.retile(
       @x - retileRadius, @y - retileRadius,
       @x + retileRadius, @y + retileRadius
     )
@@ -91,7 +91,7 @@ class MapCell
     @tile = [tx, ty]
 
   # Retile this cell. See map#retile.
-  retile: () ->
+  retile: ->
     if @pill?
       # FIXME: allegiance
       @setTile @pill.armour, 4
@@ -350,164 +350,154 @@ class MapCell
     else @setTile 11, 6
 
 
-# Initialize the map array.
-map = new Array(MAP_SIZE_TILES)
-for y in [0...MAP_SIZE_TILES]
-  row = map[y] = new Array(MAP_SIZE_TILES)
-  for x in [0...MAP_SIZE_TILES]
-    row[x] = new MapCell(x, y)
+class Map
+  # Initialize the map array.
+  constructor: ->
+    @pills = []
+    @bases = []
+    @starts = []
 
-# Get the cell at the given tile coordinates, or return a dummy cell.
-map.cellAtTile = (x, y) ->
-  if cell = map[y]?[x] then cell
-  else new MapCell(x, y)
+    @cells = new Array(MAP_SIZE_TILES)
+    for y in [0...MAP_SIZE_TILES]
+      row = @cells[y] = new Array(MAP_SIZE_TILES)
+      for x in [0...MAP_SIZE_TILES]
+        row[x] = new MapCell(this, x, y)
 
-# Get the cell at the given pixel coordinates, or return a dummy cell.
-map.cellAtPixel = (x, y) ->
-  map.cellAtTile floor(x / TILE_SIZE_PIXEL), floor(y / TILE_SIZE_PIXEL)
+  getRandomStart: ->
+    @starts[round(random() * (@starts.length - 1))]
 
-# Get the cell at the given world coordinates, or return a dummy cell.
-map.cellAtWorld = (x, y) ->
-  map.cellAtTile floor(x / TILE_SIZE_WORLD), floor(y / TILE_SIZE_WORLD)
+  # Get the cell at the given tile coordinates, or return a dummy cell.
+  cellAtTile: (x, y) ->
+    if cell = @cells[y]?[x] then cell
+    else new MapCell(x, y)
 
-# Iterate over the map cells, either the complete map or a specific area.
-# The callback function will have each cell available as +this+.
-map.each = (cb, sx, sy, ex, ey) ->
-  sx = 0                  unless sx? and sx >= 0
-  sy = 0                  unless sy? and sy >= 0
-  ex = MAP_SIZE_TILES - 1 unless ex? and ex < MAP_SIZE_TILES
-  ey = MAP_SIZE_TILES - 1 unless ey? and ey < MAP_SIZE_TILES
+  # Get the cell at the given pixel coordinates, or return a dummy cell.
+  cellAtPixel: (x, y) ->
+    @cellAtTile floor(x / TILE_SIZE_PIXEL), floor(y / TILE_SIZE_PIXEL)
 
-  for y in [sy..ey]
-    row = map[y]
-    for x in [sx..ex]
-      cb row[x]
+  # Get the cell at the given world coordinates, or return a dummy cell.
+  cellAtWorld: (x, y) ->
+    @cellAtTile floor(x / TILE_SIZE_WORLD), floor(y / TILE_SIZE_WORLD)
 
-  # Prevent implict return of the array comprehension.
-  # Without this, we would behave more like map than each.
-  map
+  # Iterate over the map cells, either the complete map or a specific area.
+  # The callback function will have each cell available as +this+.
+  each: (cb, sx, sy, ex, ey) ->
+    sx = 0                  unless sx? and sx >= 0
+    sy = 0                  unless sy? and sy >= 0
+    ex = MAP_SIZE_TILES - 1 unless ex? and ex < MAP_SIZE_TILES
+    ey = MAP_SIZE_TILES - 1 unless ey? and ey < MAP_SIZE_TILES
 
-# Clear the map, or a specific area, by filling it with deep sea tiles.
-map.clear = (sx, sy, ex, ey) ->
-  map.each (cell) ->
-    cell.type = terrainTypes['^']
-    cell.mine = no
-  , sx, sy, ex, ey
+    for y in [sy..ey]
+      row = @cells[y]
+      for x in [sx..ex]
+        cb row[x]
 
-# Recalculate the tile cache for each cell, or for a specific area.
-map.retile = (sx, sy, ex, ey) ->
-  map.each (cell) ->
-    cell.retile()
-  , sx, sy, ex, ey
+    return this
 
-# Draw the map area at the given pixel coordinates to the canvas.
-map.draw = (c, sx, sy, ex, ey) ->
-  stx = floor(sx / TILE_SIZE_PIXEL)
-  sty = floor(sy / TILE_SIZE_PIXEL)
-  etx =  ceil(ex / TILE_SIZE_PIXEL)
-  ety =  ceil(ey / TILE_SIZE_PIXEL)
+  # Clear the map, or a specific area, by filling it with deep sea tiles.
+  clear: (sx, sy, ex, ey) ->
+    @each (cell) ->
+      cell.type = terrainTypes['^']
+      cell.mine = no
+    , sx, sy, ex, ey
 
-  map.each (cell) ->
-    sx = cell.tile[0] * TILE_SIZE_PIXEL
-    sy = cell.tile[1] * TILE_SIZE_PIXEL
-    dx = cell.x * TILE_SIZE_PIXEL
-    dy = cell.y * TILE_SIZE_PIXEL
-    c.drawImage tilemap,
-      sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
-  , stx, sty, etx, ety
+  # Recalculate the tile cache for each cell, or for a specific area.
+  retile: (sx, sy, ex, ey) ->
+    @each (cell) ->
+      cell.retile()
+    , sx, sy, ex, ey
 
-# Load the map from the string in +data+.
-map.load = (data) ->
-  map.clear()
+  # Load the map from the string in +data+.
+  load: (data) ->
+    @clear()
 
-  # Determine which kind of newline we're dealing with.
-  i = data.indexOf '\n'
-  throw 'Not a Bolo map.' if i < 19
-  newline = if data.charAt(i - 1) == '\r' then '\r\n' else '\n'
+    # Determine which kind of newline we're dealing with.
+    i = data.indexOf '\n'
+    throw 'Not a Bolo map.' if i < 19
+    newline = if data.charAt(i - 1) == '\r' then '\r\n' else '\n'
 
-  # Read the version line.
-  lines = data.split(newline)
-  throw 'Not a Bolo map.' if lines[0] != 'Bolo map, version 0'
-  throw 'Not a Bolo map.' if lines[1] != ''
+    # Read the version line.
+    lines = data.split(newline)
+    throw 'Not a Bolo map.' if lines[0] != 'Bolo map, version 0'
+    throw 'Not a Bolo map.' if lines[1] != ''
 
-  # Iteration helpers
-  line = lines[i = 2]
-  eachInSection = (section, cb) ->
-    throw 'Corrupt map.' if line != (section + ':')
-    line = lines[++i]
-    until line == ''
-      throw 'Corrupt map.' if line.substr(0, 2) != '  '
-      cb line.substr(2)
+    # Iteration helpers
+    line = lines[i = 2]
+    eachInSection = (section, cb) ->
+      throw 'Corrupt map.' if line != (section + ':')
       line = lines[++i]
-    line = lines[++i]
+      until line == ''
+        throw 'Corrupt map.' if line.substr(0, 2) != '  '
+        cb line.substr(2)
+        line = lines[++i]
+      line = lines[++i]
 
-  # Read the various sections on map attributes.
-  map.pills = []
-  re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
-  eachInSection 'Pillboxes', (pillDesc) ->
-    throw 'Corrupt map.' unless matches = re.exec(pillDesc)
-    # FIXME: check input
-    map.pills.push(
-      x:      parseInt matches[1]
-      y:      parseInt matches[2]
-      owner:  parseInt matches[3]
-      armour: parseInt matches[4]
-      speed:  parseInt matches[5]
-    )
-
-  map.bases = []
-  re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+shells:(\d+)\s+mines:(\d+)$/
-  eachInSection 'Bases', (baseDesc) ->
-    throw 'Corrupt map.' unless matches = re.exec(baseDesc)
-    # FIXME: check input
-    map.bases.push(
-      x:      parseInt matches[1]
-      y:      parseInt matches[2]
-      owner:  parseInt matches[3]
-      armour: parseInt matches[4]
-      shells: parseInt matches[5]
-      mines:  parseInt matches[6]
-    )
-
-  map.starts = []
-  re = /^@(\d+),(\d+)\s+direction:(\d+)$/
-  eachInSection 'Starting positions', (startDesc) ->
-    throw 'Corrupt map.' unless matches = re.exec(startDesc)
-    # FIXME: check input
-    map.starts.push(
-      x:         parseInt matches[1]
-      y:         parseInt matches[2]
-      direction: parseInt matches[3]
-    )
-
-  # Process the terrain.
-  for y in [0...MAP_SIZE_TILES]
-    line = lines[i + y]
-    row = map[y]
-    for x in [0...MAP_SIZE_TILES]
-      cell = row[x]
+    # Read the various sections on map attributes.
+    @pills = []
+    re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
+    eachInSection 'Pillboxes', (pillDesc) =>
+      throw 'Corrupt map.' unless matches = re.exec(pillDesc)
       # FIXME: check input
-      unless cell.type = terrainTypes[line.charAt(x * 2)]
-        throw 'Corrupt map, invalid terrain type: ' + line.charAt(x * 2)
-      # FIXME: check if the specific terrain can even have a mine
-      cell.mine = yes if line.charAt(x * 2 + 1) == '*'
+      @pills.push(
+        x:      parseInt matches[1]
+        y:      parseInt matches[2]
+        owner:  parseInt matches[3]
+        armour: parseInt matches[4]
+        speed:  parseInt matches[5]
+      )
 
-  # Link pills and bases to their cells.
-  for pill in map.pills
-    pill.cell = map[pill.y][pill.x]
-    pill.cell.pill = pill
-  for base in map.bases
-    base.cell = map[base.y][base.x]
-    base.cell.base = base
-    # Override cell type.
-    base.cell.type = terrainTypes['=']
-    base.cell.mine = no
+    @bases = []
+    re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+shells:(\d+)\s+mines:(\d+)$/
+    eachInSection 'Bases', (baseDesc) =>
+      throw 'Corrupt map.' unless matches = re.exec(baseDesc)
+      # FIXME: check input
+      @bases.push(
+        x:      parseInt matches[1]
+        y:      parseInt matches[2]
+        owner:  parseInt matches[3]
+        armour: parseInt matches[4]
+        shells: parseInt matches[5]
+        mines:  parseInt matches[6]
+      )
 
-  # Update DOM.
-  map.retile()
+    @starts = []
+    re = /^@(\d+),(\d+)\s+direction:(\d+)$/
+    eachInSection 'Starting positions', (startDesc) =>
+      throw 'Corrupt map.' unless matches = re.exec(startDesc)
+      # FIXME: check input
+      @starts.push(
+        x:         parseInt matches[1]
+        y:         parseInt matches[2]
+        direction: parseInt matches[3]
+      )
+
+    # Process the terrain.
+    for y in [0...MAP_SIZE_TILES]
+      line = lines[i + y]
+      row = @cells[y]
+      for x in [0...MAP_SIZE_TILES]
+        cell = row[x]
+        # FIXME: check input
+        unless cell.type = terrainTypes[line.charAt(x * 2)]
+          throw 'Corrupt map, invalid terrain type: ' + line.charAt(x * 2)
+        # FIXME: check if the specific terrain can even have a mine
+        cell.mine = yes if line.charAt(x * 2 + 1) == '*'
+
+    # Link pills and bases to their cells.
+    for pill in @pills
+      pill.cell = @cells[pill.y][pill.x]
+      pill.cell.pill = pill
+    for base in @bases
+      base.cell = @cells[base.y][base.x]
+      base.cell.base = base
+      # Override cell type.
+      base.cell.type = terrainTypes['=']
+      base.cell.mine = no
+
+    # Recalculate tiles.
+    @retile()
 
 
 # Exports.
 exports.MapCell = MapCell
-exports.map = map
+exports.Map = Map

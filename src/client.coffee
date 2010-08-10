@@ -7,31 +7,30 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, floor, random, cos, sin, PI}                = Math
+{round, floor, ceil, cos, sin, PI}                  = Math
 {Tank}                                              = require './tank'
-{MapCell, map}                                      = require './map'
+{MapCell, Map}                                      = require './map'
 {TILE_SIZE_PIXEL, PIXEL_SIZE_WORLD, TICK_LENGTH_MS} = require './constants'
 
 
 # Global variables.
 
 # The tilemap Image object.
-# FIXME: make this an export somewhere somehow.
-window.tilemap = null
+tilemap = null
 # The jQuery object referring to the canvas.
 canvas = null
 # The jQuery object referring to the HUD.
 hud = null
 # The canvas 2D drawing context.
 c = null
-# The Tank object controlled by the player.
-player = null
+# The game state object.
+game = null
 
 
 init = ->
   # First, make sure the tilemap is loaded.
-  unless window.tilemap?
-    window.tilemap = new Image()
+  unless tilemap?
+    tilemap = new Image()
     $(tilemap).load(init)
     # FIXME: Handle errors
     tilemap.src = 'img/tiles2x.png'
@@ -50,11 +49,16 @@ init = ->
     url: 'maps/everard-island.txt'
     dataType: 'text'
     success: (data) ->
-      map.load data
+      # Initialize the game state object.
+      game = {}
+
+      # Load the map.
+      game.map = new Map()
+      game.map.load data
 
       # Create a player tank.
-      startingPos = map.starts[round(random() * (map.starts.length - 1))]
-      player = new Tank(startingPos.x, startingPos.y, startingPos.direction)
+      startingPos = game.map.getRandomStart()
+      game.player = new Tank(game, startingPos)
 
       # Initialize the HUD.
       hud = $('#hud')
@@ -76,24 +80,24 @@ handleResize = ->
   )
 
 handleKeydown = (e) ->
-  return unless player?
+  return unless game?
   switch e.which
-    when 32 then player.shooting = yes
-    when 37 then player.turningCounterClockwise = yes
-    when 38 then player.accelerating = yes
-    when 39 then player.turningClockwise = yes
-    when 40 then player.braking = yes
+    when 32 then game.player.shooting = yes
+    when 37 then game.player.turningCounterClockwise = yes
+    when 38 then game.player.accelerating = yes
+    when 39 then game.player.turningClockwise = yes
+    when 40 then game.player.braking = yes
     else return
   e.preventDefault()
 
 handleKeyup = (e) ->
-  return unless player?
+  return unless game?
   switch e.which
-    when 32 then player.shooting = no
-    when 37 then player.turningCounterClockwise = no
-    when 38 then player.accelerating = no
-    when 39 then player.turningClockwise = no
-    when 40 then player.braking = no
+    when 32 then game.player.shooting = no
+    when 37 then game.player.turningCounterClockwise = no
+    when 38 then game.player.accelerating = no
+    when 39 then game.player.turningClockwise = no
+    when 40 then game.player.braking = no
     else return
   e.preventDefault()
 
@@ -130,7 +134,7 @@ timerCallback = ->
 # Simulation.
 
 tick = ->
-  player.update()
+  game.player.update()
 
 
 # Graphics.
@@ -140,27 +144,52 @@ draw = ->
 
   # Apply a translation that centers everything around the player.
   {width, height} = canvas[0]
-  left = round(player.x / PIXEL_SIZE_WORLD - width  / 2)
-  top =  round(player.y / PIXEL_SIZE_WORLD - height / 2)
+  left = round(game.player.x / PIXEL_SIZE_WORLD - width  / 2)
+  top =  round(game.player.y / PIXEL_SIZE_WORLD - height / 2)
   c.translate(-left, -top)
 
   # Draw all canvas elements.
-  map.draw(c, left, top, left + width, top + height)
-  player.draw(c)
+  drawMap(left, top, left + width, top + height)
+  drawTank(game.player)
   drawOverlay()
 
   c.restore()
 
   updateHud()
 
+drawMap = (sx, sy, ex, ey) ->
+  stx = floor(sx / TILE_SIZE_PIXEL)
+  sty = floor(sy / TILE_SIZE_PIXEL)
+  etx =  ceil(ex / TILE_SIZE_PIXEL)
+  ety =  ceil(ey / TILE_SIZE_PIXEL)
+
+  game.map.each (cell) ->
+    sx = cell.tile[0] * TILE_SIZE_PIXEL
+    sy = cell.tile[1] * TILE_SIZE_PIXEL
+    dx = cell.x * TILE_SIZE_PIXEL
+    dy = cell.y * TILE_SIZE_PIXEL
+    c.drawImage tilemap,
+      sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+      dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+  , stx, sty, etx, ety
+
+drawTank = (tank) ->
+  tile = tank.getTile()
+  px = round(tank.x / PIXEL_SIZE_WORLD)
+  py = round(tank.y / PIXEL_SIZE_WORLD)
+
+  c.drawImage tilemap,
+    tile[0] * TILE_SIZE_PIXEL, tile[1] * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
+    px - TILE_SIZE_PIXEL / 2,  py - TILE_SIZE_PIXEL / 2,  TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+
 drawOverlay = ->
   # FIXME: variable firing distance
   # FIXME: hide when dead
   # FIXME: just use the DOM for this?
   distance = 7 * TILE_SIZE_PIXEL
-  rad = (256 - player.direction) * 2 * PI / 256
-  x = round(player.x / PIXEL_SIZE_WORLD + cos(rad) * distance)
-  y = round(player.y / PIXEL_SIZE_WORLD + sin(rad) * distance)
+  rad = (256 - game.player.direction) * 2 * PI / 256
+  x = round(game.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance)
+  y = round(game.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance)
 
   c.drawImage tilemap,
     17 * TILE_SIZE_PIXEL,    4 * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
@@ -173,12 +202,12 @@ initHud = ->
   # Create the pillbox status indicator.
   container = $('<div/>', id: 'pillStatus').appendTo(hud)
   $('<div/>', class: 'deco').appendTo(container)
-  $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in map.pills
+  $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in game.map.pills
 
   # Create the base status indicator.
   container = $('<div/>', id: 'baseStatus').appendTo(hud)
   $('<div/>', class: 'deco').appendTo(container)
-  $('<div/>', class: 'base').appendTo(container).data('base', base) for base in map.bases
+  $('<div/>', class: 'base').appendTo(container).data('base', base) for base in game.map.bases
 
   # Show WIP notice. This is really a temporary hack, so FIXME someday.
   unless location.host == 'localhost'
