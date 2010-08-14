@@ -13,7 +13,8 @@ the Free Software Foundation; either version 2 of the License, or
 
 
 # This is probably the simplest possible map view there is. It simply
-# draws the map tile for tile each frame.
+# draws the map tile for tile each frame. This method appears to be
+# fairly slow, at the time of writing.
 
 class Direct2dMapView extends MapView
   constructor: (@tilemap, @map) ->

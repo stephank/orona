@@ -12,11 +12,26 @@ the Free Software Foundation; either version 2 of the License, or
 {TILE_SIZE_PIXEL,
  MAP_SIZE_TILES}  = require '../constants'
 
+
+# This view builds on the Direct2dMapView, but caches segments of the map,
+# and then blits these larger segments rather than individual tiles. The
+# idea is to reduce the large amount of drawImage calls.
+
+# At the time of writing, this doesn't appear to increase performance in
+# Chromium at all, compared to Direct2dMapView. However, Firefox does get
+# a really nice speed boost out of it.
+
+
+# The width and height of segments. The total map size in tiles should be
+# divisible by this number.
 SEGMENT_SIZE_TILES = 16
+# The width and height of the map in segments.
 MAP_SIZE_SEGMENTS = MAP_SIZE_TILES / SEGMENT_SIZE_TILES
+# The width and height of a segment in pixels.
 SEGMENT_SIZE_PIXEL = SEGMENT_SIZE_TILES * TILE_SIZE_PIXEL
 
 
+# This class represents a single segment.
 class CachedSegment
   constructor: (@view, x, y) ->
     # Tile bounds
