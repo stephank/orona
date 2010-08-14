@@ -8,7 +8,6 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {floor}           = Math
-{MapView}         = require '../map'
 {TILE_SIZE_PIXEL,
  MAP_SIZE_TILES}  = require '../constants'
 
@@ -79,7 +78,7 @@ class CachedSegment
       tx * TILE_SIZE_PIXEL,     ty * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
       cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
 
-class Offscreen2dMapView extends MapView
+class Offscreen2dMapView
   constructor: (@tilemap, @map) ->
     # Build a 2D array of map segments.
     @cache = new Array(MAP_SIZE_SEGMENTS)

@@ -352,8 +352,10 @@ class MapCell
     else @setTile 11, 6
 
 
-# This is an interface and base class for map views. Map views are responsible
-# for actually displaying the map on the screen.
+# This is an interface for map views. Map views are responsible for actually
+# displaying the map on the screen. This class also functions as the
+# do-nothing dummy implementation. You need not inherit from this class, just
+# make sure whatever view object you use responds to the methods declared here.
 class MapView
   # Called every time a tile changes, with the tile reference and the new
   # tile coordinates to use. This is also called on map load, once for every tile.

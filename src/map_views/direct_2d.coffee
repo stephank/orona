@@ -8,7 +8,6 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {floor, ceil}     = Math
-{MapView}         = require '../map'
 {TILE_SIZE_PIXEL} = require '../constants'
 
 
@@ -16,7 +15,7 @@ the Free Software Foundation; either version 2 of the License, or
 # draws the map tile for tile each frame. This method appears to be
 # fairly slow, at the time of writing.
 
-class Direct2dMapView extends MapView
+class Direct2dMapView
   constructor: (@tilemap, @map) ->
 
   onRetile: (cell, tx, ty) ->
