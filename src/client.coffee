@@ -10,7 +10,7 @@ the Free Software Foundation; either version 2 of the License, or
 {round, cos, sin, PI}  = Math
 {Tank}                 = require './tank'
 {Map}                  = require './map'
-{Offscreen2dMapView}   = require './map_views/offscreen_2d'
+{Offscreen2dRenderer}  = require './renderers/offscreen_2d'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
  TICK_LENGTH_MS}       = require './constants'
@@ -20,14 +20,12 @@ the Free Software Foundation; either version 2 of the License, or
 
 # The tilemap Image object.
 tilemap = null
-# The jQuery object referring to the canvas.
-canvas = null
 # The jQuery object referring to the HUD.
 hud = null
-# The canvas 2D drawing context.
-c = null
 # The game state object.
 game = null
+# The renderer instance to use.
+renderer = null
 
 
 init = ->
@@ -39,12 +37,11 @@ init = ->
     tilemap.src = 'img/tiles2x.png'
     return
 
-  # Initialize the canvas.
-  canvas = $('#game')
-  handleResize(); $(window).resize(handleResize)
-  c = canvas[0].getContext('2d')
-
-  # Install key handlers.
+  # Initialize all the basics.
+  game = {}
+  game.map = new Map()
+  game.map.view = renderer = new Offscreen2dRenderer(tilemap, game.map)
+  hud = $('<div/>').appendTo('body')
   $(document).keydown(handleKeydown).keyup(handleKeyup)
 
   # Fetch and load the map.
@@ -52,14 +49,6 @@ init = ->
     url: 'maps/everard-island.txt'
     dataType: 'text'
     success: (data) ->
-      # Initialize the game state object.
-      game = {}
-
-      # Initialize the map.
-      game.map = new Map()
-      game.map.view = new Offscreen2dMapView(tilemap, game.map)
-
-      # Load the data we received into the map.
       game.map.load data
 
       # Create a player tank.
@@ -67,7 +56,6 @@ init = ->
       game.player = new Tank(game, startingPos)
 
       # Initialize the HUD.
-      hud = $('#hud')
       initHud()
 
       # Start the game loop.
@@ -77,16 +65,8 @@ init = ->
 
 # Event handlers.
 
-handleResize = ->
-  canvas[0].width  = window.innerWidth
-  canvas[0].height = window.innerHeight
-  canvas.css(
-    width:  window.innerWidth + 'px'
-    height: window.innerHeight + 'px'
-  )
-
 handleKeydown = (e) ->
-  return unless game?
+  return unless game?.player?
   switch e.which
     when 32 then game.player.shooting = yes
     when 37 then game.player.turningCounterClockwise = yes
@@ -97,7 +77,7 @@ handleKeydown = (e) ->
   e.preventDefault()
 
 handleKeyup = (e) ->
-  return unless game?
+  return unless game?.player?
   switch e.which
     when 32 then game.player.shooting = no
     when 37 then game.player.turningCounterClockwise = no
@@ -146,44 +126,31 @@ tick = ->
 # Graphics.
 
 draw = ->
-  c.save()
+  renderer.centerOnObject game.player, (left, top, width, height) ->
+    # Draw all canvas elements.
+    renderer.drawMap(left, top, width, height)
+    drawTank(game.player)
+    drawOverlay()
 
-  # Apply a translation that centers everything around the player.
-  {width, height} = canvas[0]
-  left = round(game.player.x / PIXEL_SIZE_WORLD - width  / 2)
-  top =  round(game.player.y / PIXEL_SIZE_WORLD - height / 2)
-  c.translate(-left, -top)
-
-  # Draw all canvas elements.
-  game.map.view.draw(c, left, top, width, height)
-  drawTank(game.player)
-  drawOverlay()
-
-  c.restore()
-
+  # Update all DOM HUD elements.
   updateHud()
 
 drawTank = (tank) ->
   tile = tank.getTile()
-  px = round(tank.x / PIXEL_SIZE_WORLD)
-  py = round(tank.y / PIXEL_SIZE_WORLD)
+  x = round(tank.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXEL / 2
+  y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXEL / 2
 
-  c.drawImage tilemap,
-    tile[0] * TILE_SIZE_PIXEL, tile[1] * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-    px - TILE_SIZE_PIXEL / 2,  py - TILE_SIZE_PIXEL / 2,  TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+  renderer.drawTile tile[0], tile[1], x, y
 
 drawOverlay = ->
   # FIXME: variable firing distance
   # FIXME: hide when dead
-  # FIXME: just use the DOM for this?
   distance = 7 * TILE_SIZE_PIXEL
   rad = (256 - game.player.direction) * 2 * PI / 256
-  x = round(game.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance)
-  y = round(game.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance)
+  x = round(game.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXEL / 2
+  y = round(game.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXEL / 2
 
-  c.drawImage tilemap,
-    17 * TILE_SIZE_PIXEL,    4 * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-    x - TILE_SIZE_PIXEL / 2, y - TILE_SIZE_PIXEL / 2, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+  renderer.drawTile 17, 4, x, y
 
 initHud = ->
   # Clear all existing contents

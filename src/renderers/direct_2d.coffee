@@ -7,22 +7,21 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor, ceil}     = Math
-{TILE_SIZE_PIXEL} = require '../constants'
+{floor, ceil}      = Math
+{TILE_SIZE_PIXEL}  = require '../constants'
+{Common2dRenderer} = require './common_2d'
 
 
-# This is probably the simplest possible map view there is. It simply
-# draws the map tile for tile each frame. This method appears to be
+# This is probably the simplest possible renderer there is. It simply
+# draws the map tile-for-tile each frame. This method appears to be
 # fairly slow, at the time of writing.
 
-class Direct2dMapView
-  constructor: (@tilemap, @map) ->
-
+class Direct2dRenderer extends Common2dRenderer
   onRetile: (cell, tx, ty) ->
     # Simply cache the tile index.
     cell.tile = [tx, ty]
 
-  draw: (c, sx, sy, w, h) ->
+  drawMap: (sx, sy, w, h) ->
     # Calculate pixel boundaries.
     ex = sx + w - 1
     ey = sy + h - 1
@@ -35,20 +34,9 @@ class Direct2dMapView
 
     # Iterate each tile in view.
     @map.each (cell) =>
-      # Calculate tilemap coordinates.
-      sx = cell.tile[0] * TILE_SIZE_PIXEL
-      sy = cell.tile[1] * TILE_SIZE_PIXEL
-
-      # Calculate pixel boundaries of this tile on the map.
-      dx = cell.x * TILE_SIZE_PIXEL
-      dy = cell.y * TILE_SIZE_PIXEL
-      
-      # Draw.
-      c.drawImage @tilemap,
-        sx, sy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-        dx, dy, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+      @drawTile cell.tile[0], cell.tile[1], cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL
     , stx, sty, etx, ety
 
 
 # Exports
-exports.Direct2dMapView = Direct2dMapView
+exports.Direct2dRenderer = Direct2dRenderer

@@ -7,17 +7,18 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor}           = Math
+{floor}            = Math
 {TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}  = require '../constants'
+ MAP_SIZE_TILES}   = require '../constants'
+{Common2dRenderer} = require './common_2d'
 
 
-# This view builds on the Direct2dMapView, but caches segments of the map,
-# and then blits these larger segments rather than individual tiles. The
-# idea is to reduce the large amount of drawImage calls.
+# This renderer builds on the Direct2dRenderr, but caches segments of the
+# map, and then blits these larger segments rather than individual tiles.
+# The idea is to reduce the large amount of drawImage calls.
 
 # At the time of writing, this doesn't appear to increase performance in
-# Chromium at all, compared to Direct2dMapView. However, Firefox does get
+# Chromium at all, compared to Direct2dRenderer. However, Firefox does get
 # a really nice speed boost out of it.
 
 
@@ -32,7 +33,7 @@ SEGMENT_SIZE_PIXEL = SEGMENT_SIZE_TILES * TILE_SIZE_PIXEL
 
 # This class represents a single segment.
 class CachedSegment
-  constructor: (@view, x, y) ->
+  constructor: (@renderer, x, y) ->
     # Tile bounds
     @sx = x * SEGMENT_SIZE_TILES
     @sy = y * SEGMENT_SIZE_TILES
@@ -65,7 +66,7 @@ class CachedSegment
     @ctx.translate(-@psx, -@psy)
 
     # Iterate the map tiles in this segment, and draw them.
-    @view.map.each (cell) =>
+    @renderer.map.each (cell) =>
       @onRetile(cell, cell.tile[0], cell.tile[1])
     , @sx, @sy, @ex, @ey
 
@@ -74,12 +75,14 @@ class CachedSegment
 
   onRetile: (cell, tx, ty) ->
     return unless @canvas
-    @ctx.drawImage @view.tilemap,
+    @ctx.drawImage @renderer.tilemap,
       tx * TILE_SIZE_PIXEL,     ty * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
       cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
 
-class Offscreen2dMapView
-  constructor: (@tilemap, @map) ->
+class Offscreen2dRenderer extends Common2dRenderer
+  constructor: (tilemap, map) ->
+    super
+
     # Build a 2D array of map segments.
     @cache = new Array(MAP_SIZE_SEGMENTS)
     for y in [0...MAP_SIZE_SEGMENTS]
@@ -96,7 +99,7 @@ class Offscreen2dMapView
     segy = floor(cell.y / SEGMENT_SIZE_TILES)
     @cache[segy][segx].onRetile(cell, tx, ty)
 
-  draw: (c, sx, sy, w, h) ->
+  drawMap: (sx, sy, w, h) ->
     ex = sx + w - 1
     ey = sy + h - 1
 
@@ -117,7 +120,7 @@ class Offscreen2dMapView
           alreadyBuiltOne = yes
 
         # Blit the segment to the screen.
-        c.drawImage segment.canvas,
+        @ctx.drawImage segment.canvas,
           0,           0,           SEGMENT_SIZE_PIXEL, SEGMENT_SIZE_PIXEL,
           segment.psx, segment.psy, SEGMENT_SIZE_PIXEL, SEGMENT_SIZE_PIXEL
 
@@ -125,4 +128,4 @@ class Offscreen2dMapView
 
 
 # Exports
-exports.Offscreen2dMapView = Offscreen2dMapView
+exports.Offscreen2dRenderer = Offscreen2dRenderer
