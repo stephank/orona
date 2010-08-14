@@ -7,8 +7,10 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, random, floor}                             = Math
-{TILE_SIZE_WORLD, TILE_SIZE_PIXEL, MAP_SIZE_TILES} = require './constants'
+{round, random, floor} = Math
+{TILE_SIZE_WORLD,
+ TILE_SIZE_PIXEL,
+ MAP_SIZE_TILES}       = require './constants'
 
 
 # All the different terrain types we know about.

@@ -7,8 +7,9 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, ceil, min, max, sin, cos, PI} = Math
-{TILE_SIZE_WORLD}                     = require './constants'
+{round, ceil, min,
+ max, sin, cos, PI} = Math
+{TILE_SIZE_WORLD}   = require './constants'
 
 
 class Tank
