@@ -231,7 +231,7 @@ class WebglRenderer
 
     # Draw.
     gl = @ctx
-    gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.STATIC_DRAW)
+    gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
   onRetile: (cell, tx, ty) ->
