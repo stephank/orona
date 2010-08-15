@@ -77,7 +77,7 @@ class WebglRenderer
     gl = @ctx
 
     # We use 2D textures and blending.
-    gl.enable(gl.TEXTURE_2D)
+    # gl.enable(gl.TEXTURE_2D)  # Illegal and not required in WebGL / GLES 2.0.
     gl.enable(gl.BLEND)
 
     # When blending, apply the source's alpha channel.
