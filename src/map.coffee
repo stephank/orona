@@ -380,6 +380,9 @@ class Map
       for x in [0...MAP_SIZE_TILES]
         row[x] = new MapCell(this, x, y)
 
+  setView: (@view) ->
+    @retile()
+
   getRandomStart: ->
     @starts[round(random() * (@starts.length - 1))]
 
@@ -425,95 +428,98 @@ class Map
       cell.retile()
     , sx, sy, ex, ey
 
-  # Load the map from the string in +data+.
-  load: (data) ->
-    @clear()
 
-    # Determine which kind of newline we're dealing with.
-    i = data.indexOf '\n'
-    throw 'Not a Bolo map.' if i < 19
-    newline = if data.charAt(i - 1) == '\r' then '\r\n' else '\n'
+# Load the map from the string in +data+.
+load = (data) ->
+  retval = new Map()
 
-    # Read the version line.
-    lines = data.split(newline)
-    throw 'Not a Bolo map.' if lines[0] != 'Bolo map, version 0'
-    throw 'Not a Bolo map.' if lines[1] != ''
+  # Determine which kind of newline we're dealing with.
+  i = data.indexOf '\n'
+  throw 'Not a Bolo map.' if i < 19
+  newline = if data.charAt(i - 1) == '\r' then '\r\n' else '\n'
 
-    # Iteration helpers
-    line = lines[i = 2]
-    eachInSection = (section, cb) ->
-      throw 'Corrupt map.' if line != (section + ':')
+  # Read the version line.
+  lines = data.split(newline)
+  throw 'Not a Bolo map.' if lines[0] != 'Bolo map, version 0'
+  throw 'Not a Bolo map.' if lines[1] != ''
+
+  # Iteration helpers
+  line = lines[i = 2]
+  eachInSection = (section, cb) ->
+    throw 'Corrupt map.' if line != (section + ':')
+    line = lines[++i]
+    until line == ''
+      throw 'Corrupt map.' if line.substr(0, 2) != '  '
+      cb line.substr(2)
       line = lines[++i]
-      until line == ''
-        throw 'Corrupt map.' if line.substr(0, 2) != '  '
-        cb line.substr(2)
-        line = lines[++i]
-      line = lines[++i]
+    line = lines[++i]
 
-    # Read the various sections on map attributes.
-    @pills = []
-    re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
-    eachInSection 'Pillboxes', (pillDesc) =>
-      throw 'Corrupt map.' unless matches = re.exec(pillDesc)
+  # Read the various sections on map attributes.
+  retval.pills = []
+  re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
+  eachInSection 'Pillboxes', (pillDesc) =>
+    throw 'Corrupt map.' unless matches = re.exec(pillDesc)
+    # FIXME: check input
+    retval.pills.push(
+      x:      parseInt matches[1]
+      y:      parseInt matches[2]
+      owner:  parseInt matches[3]
+      armour: parseInt matches[4]
+      speed:  parseInt matches[5]
+    )
+
+  retval.bases = []
+  re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+shells:(\d+)\s+mines:(\d+)$/
+  eachInSection 'Bases', (baseDesc) =>
+    throw 'Corrupt map.' unless matches = re.exec(baseDesc)
+    # FIXME: check input
+    retval.bases.push(
+      x:      parseInt matches[1]
+      y:      parseInt matches[2]
+      owner:  parseInt matches[3]
+      armour: parseInt matches[4]
+      shells: parseInt matches[5]
+      mines:  parseInt matches[6]
+    )
+
+  retval.starts = []
+  re = /^@(\d+),(\d+)\s+direction:(\d+)$/
+  eachInSection 'Starting positions', (startDesc) =>
+    throw 'Corrupt map.' unless matches = re.exec(startDesc)
+    # FIXME: check input
+    retval.starts.push(
+      x:         parseInt matches[1]
+      y:         parseInt matches[2]
+      direction: parseInt matches[3]
+    )
+
+  # Process the terrain.
+  for y in [0...MAP_SIZE_TILES]
+    line = lines[i + y]
+    row = retval.cells[y]
+    for x in [0...MAP_SIZE_TILES]
+      cell = row[x]
       # FIXME: check input
-      @pills.push(
-        x:      parseInt matches[1]
-        y:      parseInt matches[2]
-        owner:  parseInt matches[3]
-        armour: parseInt matches[4]
-        speed:  parseInt matches[5]
-      )
+      unless cell.type = terrainTypes[line.charAt(x * 2)]
+        throw 'Corrupt map, invalid terrain type: ' + line.charAt(x * 2)
+      # FIXME: check if the specific terrain can even have a mine
+      cell.mine = yes if line.charAt(x * 2 + 1) == '*'
 
-    @bases = []
-    re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+shells:(\d+)\s+mines:(\d+)$/
-    eachInSection 'Bases', (baseDesc) =>
-      throw 'Corrupt map.' unless matches = re.exec(baseDesc)
-      # FIXME: check input
-      @bases.push(
-        x:      parseInt matches[1]
-        y:      parseInt matches[2]
-        owner:  parseInt matches[3]
-        armour: parseInt matches[4]
-        shells: parseInt matches[5]
-        mines:  parseInt matches[6]
-      )
+  # Link pills and bases to their cells.
+  for pill in retval.pills
+    pill.cell = retval.cells[pill.y][pill.x]
+    pill.cell.pill = pill
+  for base in retval.bases
+    base.cell = retval.cells[base.y][base.x]
+    base.cell.base = base
+    # Override cell type.
+    base.cell.type = terrainTypes['=']
+    base.cell.mine = no
 
-    @starts = []
-    re = /^@(\d+),(\d+)\s+direction:(\d+)$/
-    eachInSection 'Starting positions', (startDesc) =>
-      throw 'Corrupt map.' unless matches = re.exec(startDesc)
-      # FIXME: check input
-      @starts.push(
-        x:         parseInt matches[1]
-        y:         parseInt matches[2]
-        direction: parseInt matches[3]
-      )
+  # Recalculate tiles.
+  retval.retile()
 
-    # Process the terrain.
-    for y in [0...MAP_SIZE_TILES]
-      line = lines[i + y]
-      row = @cells[y]
-      for x in [0...MAP_SIZE_TILES]
-        cell = row[x]
-        # FIXME: check input
-        unless cell.type = terrainTypes[line.charAt(x * 2)]
-          throw 'Corrupt map, invalid terrain type: ' + line.charAt(x * 2)
-        # FIXME: check if the specific terrain can even have a mine
-        cell.mine = yes if line.charAt(x * 2 + 1) == '*'
-
-    # Link pills and bases to their cells.
-    for pill in @pills
-      pill.cell = @cells[pill.y][pill.x]
-      pill.cell.pill = pill
-    for base in @bases
-      base.cell = @cells[base.y][base.x]
-      base.cell.base = base
-      # Override cell type.
-      base.cell.type = terrainTypes['=']
-      base.cell.mine = no
-
-    # Recalculate tiles.
-    @retile()
+  retval
 
 
 # Exports.
@@ -521,3 +527,4 @@ exports.terrainTypes = terrainTypes
 exports.MapCell = MapCell
 exports.MapView = MapView
 exports.Map = Map
+exports.load = load

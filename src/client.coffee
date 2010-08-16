@@ -9,7 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 {round, cos, sin, PI}  = Math
 {Tank}                 = require './tank'
-{Map}                  = require './map'
+map                    = require './map'
 {Offscreen2dRenderer}  = require './renderers/offscreen_2d'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
@@ -38,9 +38,6 @@ init = ->
     return
 
   # Initialize all the basics.
-  game = {}
-  game.map = new Map()
-  game.map.view = renderer = new Offscreen2dRenderer(tilemap, game.map)
   hud = $('<div/>').appendTo('body')
   $(document).keydown(handleKeydown).keyup(handleKeyup)
 
@@ -49,9 +46,11 @@ init = ->
     url: 'maps/everard-island.txt'
     dataType: 'text'
     success: (data) ->
-      game.map.load data
-
-      # Create a player tank.
+      # Initialize the game state.
+      game = {}
+      game.map = map.load data
+      renderer = new Offscreen2dRenderer(tilemap, game.map)
+      game.map.setView(renderer)
       startingPos = game.map.getRandomStart()
       game.player = new Tank(game, startingPos)
 
@@ -66,7 +65,7 @@ init = ->
 # Event handlers.
 
 handleKeydown = (e) ->
-  return unless game?.player?
+  return unless game?
   switch e.which
     when 32 then game.player.shooting = yes
     when 37 then game.player.turningCounterClockwise = yes
@@ -77,7 +76,7 @@ handleKeydown = (e) ->
   e.preventDefault()
 
 handleKeyup = (e) ->
-  return unless game?.player?
+  return unless game?
   switch e.which
     when 32 then game.player.shooting = no
     when 37 then game.player.turningCounterClockwise = no
