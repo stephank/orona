@@ -367,8 +367,8 @@ class MapView
 # This class holds a complete map.
 class Map
   # Initialize the map array.
-  constructor: (@view) ->
-    @view ||= new MapView()
+  constructor: ->
+    @view = new MapView()
 
     @pills = []
     @bases = []
