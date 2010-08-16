@@ -7,10 +7,10 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, random, floor} = Math
+{round, random, floor, min} = Math
 {TILE_SIZE_WORLD,
  TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}       = require './constants'
+ MAP_SIZE_TILES}            = require './constants'
 
 
 # All the different terrain types we know about.
@@ -77,6 +77,12 @@ class MapCell
       type = arguments[i]
       return yes if @type == type or @type.ascii == type
     no
+
+  getNumericType: ->
+    return -1 if @type.ascii == '^'
+    num = NUM_TO_TERRAIN.indexOf @type
+    num += 8 if @mine
+    num
 
   setType: (newType, @mine, retileRadius) ->
     @mine ||= no
@@ -441,6 +447,133 @@ class Map
     @each (cell) ->
       cell.retile()
     , sx, sy, ex, ey
+
+  # Dump the map to an array of octets in BMAP format.
+  dump: ->
+    # Private helper for collecting consecutive cells of the same type.
+    consecutiveCells = (row, cb) ->
+      currentType = null
+      startx = null
+      count = 0
+      for cell, x in row
+        num = cell.getNumericType()
+
+        if currentType == num
+          count++
+          continue
+
+        cb(currentType, count, startx) if currentType?
+
+        currentType = num
+        startx = x
+        count = 1
+
+      cb(currentType, count, startx) if currentType?
+      return
+
+    # Private helper for encoding an array of nibbles to an array of octets.
+    encodeNibbles = (nibbles) ->
+      octets = []
+      val = null
+      for nibble, i in nibbles
+        nibble = nibble & 0x0F
+        if i % 2 == 0
+          val = nibble << 4
+        else
+          octets.push(val + nibble)
+          val = null
+      octets.push val if val?
+      octets
+
+    # Build the header.
+    retval = c.charCodeAt(0) for c in 'BMAPBOLO'
+    # FIXME: do something special with pills in possession.
+    retval.push(1, @pills.length, @bases.length, @starts.length)
+    retval.push(p.x, p.y, p.owner, p.armour, p.speed) for p in @pills
+    retval.push(b.x, b.y, b.owner, b.armour, b.shells, b.mines) for b in @bases
+    retval.push(s.x, s.y, s.direction) for s in @starts
+
+    # While building the map data, we collect sequences and runs.
+    # What follows are helpers to deal with flushing these two arrays to retval.
+    run = seq = sx = ex = y = null
+
+    # Flush the current run, and push it to retval.
+    flushRun = ->
+      return unless run?
+
+      flushSequence()
+
+      octets = encodeNibbles(run)
+      retval.push(octets.length + 4, y, sx, ex)
+      retval = retval.concat(octets)
+
+      run = null
+
+    # Ensure there's enough space in the run, or start a new one.
+    ensureRunSpace = (numNibbles) ->
+      return unless (255 - 4) * 2 - run.length < numNibbles
+      flushRun()
+
+      run = []
+      sx = ex
+
+    # Flush the current sequence, and push it to the run.
+    flushSequence = ->
+      return unless seq?
+
+      # Prevent infinite recursion.
+      localSeq = seq
+      seq = null
+
+      ensureRunSpace(localSeq.length + 1)
+      run.push(localSeq.length - 1)
+      run = run.concat(localSeq)
+      ex += localSeq.length
+
+    # Build the runs of map data.
+    for row in @cells
+      y = row[0].y
+      run = sx = ex = seq = null
+      consecutiveCells row, (type, count, x) ->
+        # Deep sea cells are simply omitted in the map data.
+        if type == -1
+          flushRun()  # The previous run ends here.
+          return
+
+        # Create the new run of we're at the start.
+        unless run?
+          run = []
+          sx = ex = x
+
+        # Add a long sequence if we have 3 or more of the same type in a row.
+        if count > 2
+          # Flush existing short sequence.
+          flushSequence()
+          # Add long sequences until count is exhausted.
+          # Because the size is a nibble, we can only encode sequences of 2..9.
+          while count > 2
+            ensureRunSpace(2)
+            seqLen = min(count, 9)
+            run.push(seqLen + 6, type)
+            ex += seqLen
+            count -= seqLen
+          # Fall-through, the remaining count may allow for a short sequence.
+
+        while count > 0
+          # Add the short sequence.
+          seq = [] unless seq?
+          seq.push(type)
+          # Flush if we run out of space.
+          flushSequence() if seq.length == 8
+          count--
+
+    # Flush any remaining stuff.
+    flushRun()
+
+    # The sentinel.
+    retval.push(4, 0xFF, 0xFF, 0xFF)
+
+    retval
 
 
 # Load a map from +buffer+. The buffer is treated as an array of numbers
