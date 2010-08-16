@@ -403,7 +403,7 @@ class Map
   # Get the cell at the given tile coordinates, or return a dummy cell.
   cellAtTile: (x, y) ->
     if cell = @cells[y]?[x] then cell
-    else new MapCell(x, y)
+    else new MapCell(this, x, y)
 
   # Get the cell at the given pixel coordinates, or return a dummy cell.
   cellAtPixel: (x, y) ->
