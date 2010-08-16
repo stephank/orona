@@ -26,20 +26,18 @@ unless process.argv.length == 2
   process.exit 1
 
 # Open input.
-infile = try
-  fs.openSync process.argv[0], 'r'
+buffer = try
+  fs.readFileSync process.argv[0]
 catch e
-  bail "Could not open #{process.argv[0]} for reading: #{e.message}"
-
+  bail "Could not read '#{process.argv[0]}': #{e.message}"
 
 # Read helper.
 filePos = 0
 readBytes = (num, msg) ->
-  retval = new Buffer(num)
-  unless fs.readSync(infile, retval, 0, num, filePos) == num
-    bail msg
+  sub = buffer.slice(filePos, filePos + num)
+  bail msg unless sub.length == num
   filePos += num
-  retval
+  sub
 
 
 # Read header.
@@ -49,7 +47,6 @@ bail "Not a Bolo map." unless magic == 'BMAPBOLO'
 [version, numPills, numBases, numStarts] = readBytes(4, "Incomplete header")
 bail "Unsupported map version: #{version}" unless version == 1
 
-bufPos = 0
 extractAttributes = (names...) ->
   retval = {}
   data = readBytes(names.length, "Incomplete header")
