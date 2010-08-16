@@ -154,18 +154,18 @@ class Tank
     # Check if we're running over another boat; destroy it if so.
     if @cell.isType('b')
       # Don't need to retile surrounding cells for this.
-      @cell.setType(' ', 0)
+      @cell.setType(' ', no, 0)
       # FIXME: create a small explosion, play a sound.
     else
       # Leave a boat if we were on a river.
       if oldcell.isType(' ')
         # Don't need to retile surrounding cells for this.
-        oldcell.setType('b', 0)
+        oldcell.setType('b', no, 0)
       @onBoat = no
 
   enterBoat: ->
     # Don't need to retile surrounding cells for this.
-    @cell.setType(' ', 0)
+    @cell.setType(' ', no, 0)
     @onBoat = yes
 
 

@@ -73,7 +73,8 @@ class MapCell
       return yes if @type == type or @type.ascii == type
     no
 
-  setType: (newType, retileRadius) ->
+  setType: (newType, @mine, retileRadius) ->
+    @mine ||= no
     retileRadius ||= 1
 
     if typeof(newType) == 'string'
