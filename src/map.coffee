@@ -429,95 +429,85 @@ class Map
     , sx, sy, ex, ey
 
 
-# Load the map from the string in +data+.
-load = (data) ->
+
+# Map the integer value found in the map file to the ascii terrain type and yes/no mine.
+NUM_TO_TERRAIN = [
+  ['|', no],  [' ', no],
+  ['~', no],  ['%', no],  ['=', no],  ['#', no],  [':', no],  ['.', no],
+  ['}', no],  ['b', no],
+  ['~', yes], ['%', yes], ['=', yes], ['#', yes], [':', yes], ['.', yes]
+]
+
+# Load a map from +buffer+. The buffer is treated as an array of numbers
+# representing octets. So a node.js Buffer will work.
+load = (buffer) ->
+  # Helper for reading slices out of the buffer.
+  filePos = 0
+  readBytes = (num, msg) ->
+    sub = try
+      buffer.slice(filePos, filePos + num)
+    catch e
+      throw msg
+    filePos += num
+    sub
+
+  # Read the header.
+  magic = readBytes(8, "Not a Bolo map.")
+  for c, i in 'BMAPBOLO'
+    throw "Not a Bolo map." unless c.charCodeAt(0) == magic[i]
+  [version, numPills, numBases, numStarts] = readBytes(4, "Incomplete header")
+  throw "Unsupported map version: #{version}" unless version == 1
+
+  # Allocate the map.
   retval = new Map()
 
-  # Determine which kind of newline we're dealing with.
-  i = data.indexOf '\n'
-  throw 'Not a Bolo map.' if i < 19
-  newline = if data.charAt(i - 1) == '\r' then '\r\n' else '\n'
+  # Helper for reading the map attributes.
+  extractAttributes = (names...) ->
+    obj = {}
+    data = readBytes(names.length, "Incomplete header")
+    for name, index in names
+      obj[name] = data[index]
+    obj
 
-  # Read the version line.
-  lines = data.split(newline)
-  throw 'Not a Bolo map.' if lines[0] != 'Bolo map, version 0'
-  throw 'Not a Bolo map.' if lines[1] != ''
+  retval.pills = for i in [1..numPills]
+    extractAttributes 'x', 'y', 'owner', 'armour', 'speed'
+  retval.bases = for i in [1..numBases]
+    extractAttributes 'x', 'y', 'owner', 'armour', 'shells', 'mines'
+  retval.starts = for i in [1..numStarts]
+    extractAttributes 'x', 'y', 'direction'
 
-  # Iteration helpers
-  line = lines[i = 2]
-  eachInSection = (section, cb) ->
-    throw 'Corrupt map.' if line != (section + ':')
-    line = lines[++i]
-    until line == ''
-      throw 'Corrupt map.' if line.substr(0, 2) != '  '
-      cb line.substr(2)
-      line = lines[++i]
-    line = lines[++i]
+  # Read map data.
+  loop
+    [dataLen, y, sx, ex] = readBytes(4, "Incomplete map data")
+    dataLen -= 4
+    break if dataLen == 0 and y == 0xFF and sx == 0xFF and ex == 0xFF
 
-  # Read the various sections on map attributes.
-  retval.pills = []
-  re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+speed:(\d+)$/
-  eachInSection 'Pillboxes', (pillDesc) =>
-    throw 'Corrupt map.' unless matches = re.exec(pillDesc)
-    # FIXME: check input
-    retval.pills.push(
-      x:      parseInt matches[1]
-      y:      parseInt matches[2]
-      owner:  parseInt matches[3]
-      armour: parseInt matches[4]
-      speed:  parseInt matches[5]
-    )
+    run = readBytes(dataLen, "Incomplete map data")
+    runPos = 0
+    takeNibble = ->
+      index = floor(runPos)
+      nibble = if index == runPos
+        (run[index] & 0xF0) >> 4
+      else
+        (run[index] & 0x0F)
+      runPos += 0.5
+      nibble
 
-  retval.bases = []
-  re = /^@(\d+),(\d+)\s+owner:(\d+)\s+armour:(\d+)\s+shells:(\d+)\s+mines:(\d+)$/
-  eachInSection 'Bases', (baseDesc) =>
-    throw 'Corrupt map.' unless matches = re.exec(baseDesc)
-    # FIXME: check input
-    retval.bases.push(
-      x:      parseInt matches[1]
-      y:      parseInt matches[2]
-      owner:  parseInt matches[3]
-      armour: parseInt matches[4]
-      shells: parseInt matches[5]
-      mines:  parseInt matches[6]
-    )
-
-  retval.starts = []
-  re = /^@(\d+),(\d+)\s+direction:(\d+)$/
-  eachInSection 'Starting positions', (startDesc) =>
-    throw 'Corrupt map.' unless matches = re.exec(startDesc)
-    # FIXME: check input
-    retval.starts.push(
-      x:         parseInt matches[1]
-      y:         parseInt matches[2]
-      direction: parseInt matches[3]
-    )
-
-  # Process the terrain.
-  for y in [0...MAP_SIZE_TILES]
-    line = lines[i + y]
-    row = retval.cells[y]
-    for x in [0...MAP_SIZE_TILES]
-      cell = row[x]
-      # FIXME: check input
-      unless cell.type = terrainTypes[line.charAt(x * 2)]
-        throw 'Corrupt map, invalid terrain type: ' + line.charAt(x * 2)
-      # FIXME: check if the specific terrain can even have a mine
-      cell.mine = yes if line.charAt(x * 2 + 1) == '*'
-
-  # Link pills and bases to their cells.
-  for pill in retval.pills
-    pill.cell = retval.cells[pill.y][pill.x]
-    pill.cell.pill = pill
-  for base in retval.bases
-    base.cell = retval.cells[base.y][base.x]
-    base.cell.base = base
-    # Override cell type.
-    base.cell.type = terrainTypes['=']
-    base.cell.mine = no
-
-  # Recalculate tiles.
-  retval.retile()
+    x = sx
+    while x < ex
+      seqLen = takeNibble()
+      if seqLen < 8
+        for i in [1..seqLen+1]
+          [type, mine] = NUM_TO_TERRAIN[takeNibble()]
+          cell = retval.cellAtTile(x++, y)
+          cell.type = terrainTypes[type]
+          cell.mine = mine
+      else
+        [type, mine] = NUM_TO_TERRAIN[takeNibble()]
+        for i in [1..seqLen-6]
+          cell = retval.cellAtTile(x++, y)
+          cell.type = terrainTypes[type]
+          cell.mine = mine
 
   retval
 

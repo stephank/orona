@@ -10,7 +10,7 @@
 {floor} = Math
 {puts}  = require 'sys'
 fs      = require 'fs'
-{Map}   = require 'bolo/map'
+{load}  = require 'bolo/map'
 
 
 # Exit helper.
@@ -31,72 +31,10 @@ buffer = try
 catch e
   bail "Could not read '#{process.argv[0]}': #{e.message}"
 
-# Read helper.
-filePos = 0
-readBytes = (num, msg) ->
-  sub = buffer.slice(filePos, filePos + num)
-  bail msg unless sub.length == num
-  filePos += num
-  sub
-
-
-# Read header.
-magic = readBytes(8, "Note a Bolo map.").toString('ascii')
-bail "Not a Bolo map." unless magic == 'BMAPBOLO'
-
-[version, numPills, numBases, numStarts] = readBytes(4, "Incomplete header")
-bail "Unsupported map version: #{version}" unless version == 1
-
-extractAttributes = (names...) ->
-  retval = {}
-  data = readBytes(names.length, "Incomplete header")
-  for name, i in names
-    retval[name] = data[i]
-  retval
-
-pills =  extractAttributes('x', 'y', 'owner', 'armour', 'speed')           for i in [1..numPills]
-bases  = extractAttributes('x', 'y', 'owner', 'armour', 'shells', 'mines') for i in [1..numBases]
-starts = extractAttributes('x', 'y', 'direction')                          for i in [1..numStarts]
-
-
-
-# Map the integer value found in the map file to the ascii terrain type and yes/no mine.
-NUM_TO_TERRAIN = [
-  ['|', no],  [' ', no],
-  ['~', no],  ['%', no],  ['=', no],  ['#', no],  [':', no],  ['.', no],
-  ['}', no],  ['b', no],
-  ['~', yes], ['%', yes], ['=', yes], ['#', yes], [':', yes], ['.', yes]
-]
-
-# Read map data.
-map = new Map()
-loop
-  [dataLen, y, sx, ex] = readBytes(4, "Incomplete map data")
-  dataLen -= 4
-  break if dataLen == 0 and y == 0xFF and sx == 0xFF and ex == 0xFF
-
-  run = readBytes(dataLen, "Incomplete map data")
-  runPos = 0
-  takeNibble = ->
-    index = floor(runPos)
-    retval = if index == runPos
-      (run[index] & 0xF0) >> 4
-    else
-      (run[index] & 0x0F)
-    runPos += 0.5
-    retval
-
-  x = sx
-  while x < ex
-    seqLen = takeNibble()
-    if seqLen < 8
-      for i in [1..seqLen+1]
-        [type, mine] = NUM_TO_TERRAIN[takeNibble()]
-        map.cellAtTile(x++, y).setType type, mine
-    else
-      [type, mine] = NUM_TO_TERRAIN[takeNibble()]
-      for i in [1..seqLen-6]
-        map.cellAtTile(x++, y).setType type, mine
+map = try
+  load buffer
+catch e
+  bail "Could not load map file: #{e}"
 
 
 # Output.
@@ -108,15 +46,15 @@ attrLines = (item, names...) ->
     str += " #{name}:#{item[name]}"
   str
 
-lines = attrLines(pill, 'owner', 'armour', 'speed') for pill in pills
+lines = attrLines(pill, 'owner', 'armour', 'speed') for pill in map.pills
 lines.unshift "Pillboxes:"
 sections.push lines.join('\n')
 
-lines = attrLines(base, 'owner', 'armour', 'shells', 'mines') for base in bases
+lines = attrLines(base, 'owner', 'armour', 'shells', 'mines') for base in map.bases
 lines.unshift "Bases:"
 sections.push lines.join('\n')
 
-lines = attrLines(start, 'direction') for start in starts
+lines = attrLines(start, 'direction') for start in map.starts
 lines.unshift "Starting positions:"
 sections.push lines.join('\n')
 
