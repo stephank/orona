@@ -14,9 +14,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 
 # All the different terrain types we know about.
-terrainTypes = {}
-for type in [
-  { ascii: '^', tankSpeed:  3, tankTurn: 0.50, manSpeed:  0, description: 'deep sea'        }
+NUM_TO_TERRAIN = [
   { ascii: '|', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'building'        }
   { ascii: ' ', tankSpeed:  3, tankTurn: 0.25, manSpeed:  0, description: 'river'           }
   { ascii: '~', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'swamp'           }
@@ -27,14 +25,21 @@ for type in [
   { ascii: '.', tankSpeed: 12, tankTurn: 1.00, manSpeed: 16, description: 'grass'           }
   { ascii: '}', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'shot building'   }
   { ascii: 'b', tankSpeed: 16, tankTurn: 1.00, manSpeed: 16, description: 'river with boat' }
+  { ascii: '^', tankSpeed:  3, tankTurn: 0.50, manSpeed:  0, description: 'deep sea'        }
 ]
-  terrainTypes[type.ascii] = type
+TERRAIN_TYPES = {}
+
+createTerrainMap = ->
+  for type in NUM_TO_TERRAIN
+    TERRAIN_TYPES[type.ascii] = type
+
+createTerrainMap()
 
 
 # A class to represent a cell on the map.
 class MapCell
   constructor: (@map, @x, @y) ->
-    @type = terrainTypes['^']
+    @type = TERRAIN_TYPES['^']
     @mine = no
 
   getTankSpeed: (onBoat) ->
@@ -78,8 +83,17 @@ class MapCell
     retileRadius ||= 1
 
     if typeof(newType) == 'string'
-      @type = terrainTypes[newType]
+      @type = TERRAIN_TYPES[newType]
       if newType.length != 1 or not @type?
+        throw "Invalid terrain type: #{newType}"
+    else if typeof(newType) == 'number'
+      if newType >= 10
+        newType -= 8
+        @mine = yes
+      else
+        @mine = no
+      @type = NUM_TO_TERRAIN[newType]
+      if not @type?
         throw "Invalid terrain type: #{newType}"
     else
       @type = newType
@@ -418,7 +432,7 @@ class Map
   # Note: this will not do any retiling!
   clear: (sx, sy, ex, ey) ->
     @each (cell) ->
-      cell.type = terrainTypes['^']
+      cell.type = TERRAIN_TYPES['^']
       cell.mine = no
     , sx, sy, ex, ey
 
@@ -428,15 +442,6 @@ class Map
       cell.retile()
     , sx, sy, ex, ey
 
-
-
-# Map the integer value found in the map file to the ascii terrain type and yes/no mine.
-NUM_TO_TERRAIN = [
-  ['|', no],  [' ', no],
-  ['~', no],  ['%', no],  ['=', no],  ['#', no],  [':', no],  ['.', no],
-  ['}', no],  ['b', no],
-  ['~', yes], ['%', yes], ['=', yes], ['#', yes], [':', yes], ['.', yes]
-]
 
 # Load a map from +buffer+. The buffer is treated as an array of numbers
 # representing octets. So a node.js Buffer will work.
@@ -498,22 +503,17 @@ load = (buffer) ->
       seqLen = takeNibble()
       if seqLen < 8
         for i in [1..seqLen+1]
-          [type, mine] = NUM_TO_TERRAIN[takeNibble()]
-          cell = retval.cellAtTile(x++, y)
-          cell.type = terrainTypes[type]
-          cell.mine = mine
+          retval.cellAtTile(x++, y).setType takeNibble(), undefined, 0
       else
-        [type, mine] = NUM_TO_TERRAIN[takeNibble()]
+        type = takeNibble()
         for i in [1..seqLen-6]
-          cell = retval.cellAtTile(x++, y)
-          cell.type = terrainTypes[type]
-          cell.mine = mine
+          retval.cellAtTile(x++, y).setType type, undefined, 0
 
   retval
 
 
 # Exports.
-exports.terrainTypes = terrainTypes
+exports.TERRAIN_TYPES = TERRAIN_TYPES
 exports.MapCell = MapCell
 exports.MapView = MapView
 exports.Map = Map
