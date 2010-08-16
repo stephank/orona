@@ -642,6 +642,16 @@ load = (buffer) ->
         for i in [1..seqLen-6]
           retval.cellAtTile(x++, y).setType type, undefined, 0
 
+  # Link pills and bases to their cells.
+  for pill in retval.pills
+    pill.cell = retval.cells[pill.y][pill.x]
+    pill.cell.pill = pill
+  for base in retval.bases
+    base.cell = retval.cells[base.y][base.x]
+    base.cell.base = base
+    # Override cell type.
+    base.cell.setType '=', no, 0
+
   retval
 
 
