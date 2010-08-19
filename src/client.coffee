@@ -10,6 +10,7 @@ the Free Software Foundation; either version 2 of the License, or
 {round, cos, sin, PI}  = Math
 {Tank}                 = require './tank'
 map                    = require './map'
+{decodeBase64}         = require './util'
 {Offscreen2dRenderer}  = require './renderers/offscreen_2d'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
@@ -39,31 +40,26 @@ init = ->
     tilemap.src = 'img/tiles2x.png'
     return
 
-  ws = new WebSocket("ws://#{location.host}/demo")
-
   # Initialize all the basics.
   hud = $('<div/>').appendTo('body')
   $(document).keydown(handleKeydown).keyup(handleKeyup)
 
-  # Fetch and load the map.
-  $.ajax(
-    url: 'maps/everard-island.txt'
-    dataType: 'text'
-    success: (data) ->
-      # Initialize the game state.
-      game = {}
-      game.map = map.load data
-      renderer = new Offscreen2dRenderer(tilemap, game.map)
-      game.map.setView(renderer)
-      startingPos = game.map.getRandomStart()
-      game.player = new Tank(game, startingPos)
+  # Connect and wait for the map.
+  ws = new WebSocket("ws://#{location.host}/demo")
+  ws.onmessage = (event) ->
+    # Initialize the game state.
+    game = {}
+    game.map = map.load decodeBase64(event.data)
+    renderer = new Offscreen2dRenderer(tilemap, game.map)
+    game.map.setView(renderer)
+    startingPos = game.map.getRandomStart()
+    game.player = new Tank(game, startingPos)
 
-      # Initialize the HUD.
-      initHud()
+    # Initialize the HUD.
+    initHud()
 
-      # Start the game loop.
-      start()
-  )
+    # Start the game loop.
+    start()
 
 
 # Event handlers.

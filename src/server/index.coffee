@@ -7,6 +7,7 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
+fs        = require 'fs'
 url       = require 'url'
 connect   = require 'connect'
 WebSocket = require './websocket'
@@ -25,9 +26,9 @@ getSocketPathHandler = (path) ->
   else if path == '/demo'
     # FIXME: This is the temporary entry point while none of the above is implemented.
     (ws) ->
-      ws.on 'connect', -> puts "WebSocket client connected."
-      ws.on 'message', (message) -> puts "Got: '#{message}'"
-      ws.on 'end', -> puts "WebSocket client disconnected."
+      ws.on 'connect', ->
+        fs.readFile 'maps/everard-island.map', (err, data) ->
+          ws.sendMessage data.toString('base64')
   else
     false
 
