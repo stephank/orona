@@ -15,20 +15,41 @@ WebSocket = require './websocket'
 {puts} = require 'sys'
 
 
+getSocketPathHandler = (path) ->
+  if path == '/lobby'
+    # FIXME: Simple lobby with chat and match making.
+    false
+  else if path.indexOf('/match/') == 0
+    # FIXME: Match joining based on a UUID.
+    false
+  else if path == '/demo'
+    # FIXME: This is the temporary entry point while none of the above is implemented.
+    (ws) ->
+      ws.on 'connect', -> puts "WebSocket client connected."
+      ws.on 'message', (message) -> puts "Got: '#{message}'"
+      ws.on 'end', -> puts "WebSocket client disconnected."
+  else
+    false
+
 handleWebsocket = (request, connection, initialData) ->
+  return connection.destroy() unless request.method == 'GET'
+
   path = url.parse(request.url).pathname
-  return connection.destroy() unless request.method == 'GET' and path == '/bolo'
+  handler = getSocketPathHandler(path)
+  return connection.destroy() if handler == false
 
   ws = new WebSocket(request, connection, initialData)
-  # FIXME
-  ws.on 'connect', -> puts "WebSocket client connected."
-  ws.on 'message', (message) -> puts "Got: '#{message}'"
-  ws.on 'end', -> puts "WebSocket client disconnected."
+  handler(ws)
 
 
-app = connect.createServer(connect.staticProvider('public'))
-# FIXME: There's no good way to deal with upgrades in connect, yet.
-# (Servers that wrap this application will fail.)
-app.on 'upgrade', handleWebsocket
+# Don't export a server directly, but this factory function. Once called, the timer loop will
+# start. Do that explicitely in this function, rather than when the module is simply require()'d.
+createBoloServer = ->
+  # FIXME: Correct way to find the path to the 'public' directory?
+  server = connect.createServer(connect.logger(), connect.staticProvider('public'))
+  # FIXME: There's no good way to deal with upgrades in Connect, yet.
+  # (Servers that wrap this application will fail.)
+  server.on 'upgrade', handleWebsocket
+  server
 
-module.exports = app
+module.exports = createBoloServer

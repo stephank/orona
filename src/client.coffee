@@ -39,7 +39,7 @@ init = ->
     tilemap.src = 'img/tiles2x.png'
     return
 
-  ws = new WebSocket("ws://#{location.host}/bolo")
+  ws = new WebSocket("ws://#{location.host}/demo")
 
   # Initialize all the basics.
   hud = $('<div/>').appendTo('body')
