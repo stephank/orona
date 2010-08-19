@@ -107,7 +107,7 @@ resolveModuleId = (baseModule, requirePath) ->
 
 
 task 'build:client', 'Compile the Bolo client-side module bundle', ->
-  output = fs.openSync 'bolo-bundle.js', 'w'
+  output = fs.openSync 'public/bolo-bundle.js', 'w'
   iterateSources 'src', (fileName, code) ->
     js = CoffeeScript.compile code, { fileName, noWrap: yes }
     wrappedJs = wrapModule js, fileName

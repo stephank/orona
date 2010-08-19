@@ -26,6 +26,8 @@ hud = null
 game = null
 # The renderer instance to use.
 renderer = null
+# The WebSocket connection.
+ws = null
 
 
 init = ->
@@ -36,6 +38,8 @@ init = ->
     # FIXME: Handle errors
     tilemap.src = 'img/tiles2x.png'
     return
+
+  ws = new WebSocket("ws://#{location.host}/bolo")
 
   # Initialize all the basics.
   hud = $('<div/>').appendTo('body')

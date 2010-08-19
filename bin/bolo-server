@@ -1,0 +1,10 @@
+#!/usr/bin/env coffee
+
+connect = require 'connect'
+bolo    = require '../lib/server'
+
+# FIXME: This breaks, because the Bolo app won't get the 'upgrade' event.
+#server = connect.createServer(connect.logger(), bolo)
+#server.listen 8124
+
+bolo.listen 8124
