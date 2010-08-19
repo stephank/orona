@@ -133,9 +133,9 @@ class WebSocket extends EventEmitter
       @queued.push message
     else
       try
-        @connection.write '\x00'
+        @connection.write '\x00', 'binary'
         @connection.write message, 'utf8'
-        @connection.write '\xFF'
+        @connection.write '\xFF', 'binary'
       catch e
         @_onClose()
     return
