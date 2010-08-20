@@ -9,7 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 {round, floor, ceil} = Math
 {TILE_SIZE_PIXEL,
- PIXEL_SIZE_WORLD}   = require '../constants'
+ PIXEL_SIZE_WORLD}   = require '../../constants'
 
 
 VERTEX_SHADER =

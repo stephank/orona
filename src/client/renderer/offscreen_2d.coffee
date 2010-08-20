@@ -9,7 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 {floor}            = Math
 {TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}   = require '../constants'
+ MAP_SIZE_TILES}   = require '../../constants'
 {Common2dRenderer} = require './common_2d'
 
 

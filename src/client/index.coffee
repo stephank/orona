@@ -8,13 +8,13 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {round, cos, sin, PI}  = Math
-{Tank}                 = require './tank'
-map                    = require './map'
-{decodeBase64}         = require './util'
-{Offscreen2dRenderer}  = require './renderers/offscreen_2d'
+{Tank}                 = require '../tank'
+map                    = require '../map'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
- TICK_LENGTH_MS}       = require './constants'
+ TICK_LENGTH_MS}       = require '../constants'
+{decodeBase64}         = require './util'
+{Offscreen2dRenderer}  = require './renderer/offscreen_2d'
 
 
 # Global variables.

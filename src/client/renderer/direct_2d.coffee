@@ -8,7 +8,7 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {floor, ceil}      = Math
-{TILE_SIZE_PIXEL}  = require '../constants'
+{TILE_SIZE_PIXEL}  = require '../../constants'
 {Common2dRenderer} = require './common_2d'
 
 
