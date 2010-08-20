@@ -27,12 +27,10 @@ Orona depends on several other projects, which you will have to install to run i
 at their project pages on how to install them:
 
  * [CoffeeScript], the language Orona is written it.
- * [node.js], a dependency of CoffeeScript.
- * Any web server that can serve static files.
+ * [node.js], a server-side JavaScript framework.
+ * [Connect], a node.js middleware framework.
 
-To build Orona, simply run `cake build`. Then serve the root directory using any web server you
-like. Open the index.html over HTTP to start Orona. (Simply opening index.html from the local
-file system will likely fail.)
+To run Orona, simply run `cake run`, then visit 'http://localhost:8124/'.
 
 ## License
 
@@ -49,3 +47,4 @@ All the graphic and sound files are copyright 1993 Stuart Cheshire.
  [GitHub Pages]: http://stephank.github.com/orona/
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [node.js]: http://nodejs.org/
+ [Connect]: http://github.com/senchalabs/connect
