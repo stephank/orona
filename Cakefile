@@ -57,10 +57,14 @@ determineDependencies = (module) ->
       fileName =  fileParts.join('/')
       try
         fileStat = fs.statSync(fileName)
+        directory = true
+      catch e
+        directory = false
+      if directory
         unless fileStat.isDirectory()
           throw new Error("Expected '#{fileName}' to be a directory.")
         dep.file = "#{fileName}/index.coffee"
-      catch e
+      else
         # Assume there's a '.coffee' source file.
         dep.file = "#{fileName}.coffee"
 
