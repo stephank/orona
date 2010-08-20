@@ -70,13 +70,19 @@ determineDependencies = (module) ->
   retval
 
 # Iterate on the given module and its dependencies.
-iterateDependencyTree = (module, cb) ->
+iterateDependencyTree = (module, depsSeen, cb) ->
   # On first invocation, we're given different parameters.
   if typeof(module) == 'string'
     [fileName, moduleName, cb] = arguments
     # The specified file is assumed to have the module identifier given by moduleName.
     # All the dependencies will be given module names relative to this.
     module = { name: moduleName, file: fileName, external: no }
+    depsSeen = []
+
+  # Check to see if we've already iterated this module.
+  for dep in depsSeen
+    return if module.name == dep.name
+  depsSeen.push module
 
   # Read the source code.
   module.code = fs.readFileSync module.file, 'utf-8'
@@ -86,7 +92,7 @@ iterateDependencyTree = (module, cb) ->
   cb(module)
   # Recurse for dependencies, unless external.
   for dep in module.dependencies
-    iterateDependencyTree(dep, cb) unless dep.external
+    iterateDependencyTree(dep, depsSeen, cb) unless dep.external
   return
 
 # Wrap some JavaScript that came from some file into a module transport definition.
