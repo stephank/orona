@@ -22,24 +22,87 @@ path         = require 'path'
 CoffeeScript = require 'coffee-script'
 
 
-# Iterate (and read) the source files in the 'src' directory.
-iterateSources = (directory, cb) ->
-  fileNames = fs.readdirSync directory
-  for fileName in fileNames
-    filePath = path.join directory, fileName
-    fileStat = fs.statSync filePath
-    if fileStat.isDirectory()
-      # Traverse into subdirectories.
-      iterateSources filePath, cb
-    else if path.extname(fileName) == '.coffee'
-      # Or simply yield the file if it's a source file.
-      code = fs.readFileSync filePath, 'utf-8'
-      cb filePath, code
-  undefined
+# Determine the module dependencies of a piece of JavaScript.
+determineDependencies = (module) ->
+  retval = []
+
+  # Walk through all the require() calls in the code.
+  re = /(?:^|[^\w\$_.])require(?:\s+|\s*\(\s*)("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')/g
+  while match = re.exec(module.code)
+    requirePath = eval match[1]
+    dep = { external: no }
+
+    # An absolute path, assume it's an external dependency.
+    unless requirePath.charAt(0) == '.'
+      dep.name = requirePath
+      dep.external = yes
+
+    # Find the module name and file name of this dependency
+    else
+      # Get the base directory we're going to start our search with.
+      nameParts = module.name.split('/'); nameParts.pop()
+      fileParts = module.file.split('/'); fileParts.pop()
+
+      # Walk the require-path.
+      for part in requirePath.split('/')
+        switch part
+          when '.'  then continue
+          when '..' then nameParts.pop();      fileParts.pop()
+          else           nameParts.push(part); fileParts.push(part)
+
+      # Set the module attributes. For the filename, we need to check if the path
+      # is pointing at a file or a directory. In the latter, we use the 'index'
+      # module inside the directory.
+      dep.name = nameParts.join('/')
+      fileName =  fileParts.join('/')
+      try
+        fileStat = fs.statSync(fileName)
+        unless fileStat.isDirectory()
+          throw new Error("Expected '#{fileName}' to be a directory.")
+        dep.file = "#{fileName}/index.coffee"
+      catch e
+        # Assume there's a '.coffee' source file.
+        dep.file = "#{fileName}.coffee"
+
+    # Collect it.
+    retval.push(dep)
+
+  retval
+
+# Iterate on the given module and its dependencies.
+iterateDependencyTree = (module, cb) ->
+  # On first invocation, we're given different parameters.
+  if typeof(module) == 'string'
+    [fileName, moduleName, cb] = arguments
+    # The specified file is assumed to have the module identifier given by moduleName.
+    # All the dependencies will be given module names relative to this.
+    module = { name: moduleName, file: fileName, external: no }
+
+  # Read the source code.
+  module.code = fs.readFileSync module.file, 'utf-8'
+  # Store the dependencies here, so the callback may use them.
+  module.dependencies = determineDependencies(module)
+  # Callback on the module.
+  cb(module)
+  # Recurse for dependencies, unless external.
+  for dep in module.dependencies
+    iterateDependencyTree(dep, cb) unless dep.external
+  return
+
+# Wrap some JavaScript that came from some file into a module transport definition.
+wrapModule = (module, js) ->
+  dependencies = "'#{dep.name}'" for dep in module.dependencies
+
+  """
+    require.define({'#{module.name}': function(require, exports, module) {
+    #{js}
+    }}, [#{dependencies.join(', ')}]);
+    
+  """
 
 # Build the lib/ output path for a file underneath src/.
-buildOutputPath = (fileName) ->
-  parts = fileName.split('/')
+buildOutputPath = (module) ->
+  parts = module.file.split('/')
   parts[0] = 'lib'
   basename = parts.pop().replace(/\.coffee$/, '.js')
 
@@ -50,82 +113,35 @@ buildOutputPath = (fileName) ->
     try
       fs.mkdirSync partial, 0777
     catch e
-      false # No problem.
+      false # Assume already exists.
 
   parts.push(basename)
   parts.join('/')
-
-# Build the bolo/ module path for a file underneath src/.
-buildModulePath = (fileName) ->
-  parts = fileName.split('/')
-  parts[0] = 'bolo'
-  parts.push parts.pop().replace(/\.coffee$/, '')
-  parts.join('/')
-
-# Wrap some JavaScript that came from some file into a module transport definition.
-wrapModule = (code, fileName) ->
-  moduleName = buildModulePath fileName
-  dependencies = "'#{dep}'" for dep in determineDependencies(moduleName, code)
-
-  """
-    require.define({'#{moduleName}': function(require, exports, module) {
-    #{code}
-    }}, [#{dependencies.join(', ')}]);
-  """
-
-# Determine the module dependencies of a piece of JavaScript.
-determineDependencies = (baseModule, code) ->
-  dependencies = []
-
-  # Walk through all the require() calls in the code.
-  re = /(?:^|[^\w\$_.])require\s*\(\s*("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\s*\)/g
-  while match = re.exec(code)
-    # Find the actual full name of the reference module.
-    dependency = resolveModuleId baseModule, eval(match[1])
-    # Collect it.
-    dependencies.push(dependency) unless dependency in dependencies
-
-  dependencies
-
-# Determine the full name of a module, that was required from some module in our package.
-resolveModuleId = (baseModule, requirePath) ->
-  # If it's not a relative path, just return it as is.
-  return requirePath unless requirePath.charAt(0) == '.'
-
-  # Get the base module directory we're going to start our search with.
-  retval = baseModule.split('/')
-  retval.pop()  # Pop the actual module name of baseModule.
-
-  # Walk the require-path.
-  for part in requirePath.split('/')
-    switch part
-      when '.'  then continue
-      when '..' then retval.pop()
-      else           retval.push(part)
-
-  # Return it as a string.
-  return retval.join('/')
 
 
 # Task definitions.
 
 task 'build:client', 'Compile the Bolo client-side module bundle', ->
+  puts "Building Bolo client JavaScript bundle..."
   output = fs.openSync 'public/bolo-bundle.js', 'w'
-  iterateSources 'src', (fileName, code) ->
-    js = CoffeeScript.compile code, { fileName, noWrap: yes }
-    wrappedJs = wrapModule js, fileName
+  iterateDependencyTree 'src/client/index.coffee', 'bolo/client', (module) ->
+    js = CoffeeScript.compile module.code, fileName: module.file, noWrap: yes
+    wrappedJs = wrapModule module, js
     fs.writeSync output, wrappedJs
-    puts "Compiled #{fileName}"
+    puts "Compiled '#{module.file}'."
   fs.closeSync output
   puts "Done."
+  puts ""
 
 task 'build:server', 'Compile the Bolo server-side modules', ->
-  iterateSources 'src', (fileName, code) ->
-    js = CoffeeScript.compile code, { fileName }
-    output = buildOutputPath fileName
+  puts "Building Bolo server modules..."
+  iterateDependencyTree 'src/server/index.coffee', 'bolo/server', (module) ->
+    js = CoffeeScript.compile module.code, fileName: module.file
+    output = buildOutputPath module
     fs.writeFileSync output, js
-    puts "Compiled #{fileName}"
+    puts "Compiled '#{module.file}'."
   puts "Done."
+  puts ""
 
 task 'build', 'Compile the Bolo client and server.', ->
   invoke 'build:server'
@@ -133,4 +149,6 @@ task 'build', 'Compile the Bolo client and server.', ->
 
 task 'run', 'Compile the Bolo client and server, then run the server', ->
   invoke 'build'
+
+  puts "Starting Bolo server..."
   spawn 'bin/bolo-server', [], customFds: [process.stdout, process.stdout -1]

@@ -1,4 +1,8 @@
 #!/usr/bin/env coffee
+
 # FIXME: Correct way to find the lib dir and add it to require.paths?
-bolo = require('../lib/server')
+bolo = require '../lib/server'
+{puts} = require 'sys'
+
 bolo().listen(8124)
+puts "Bolo server listening on port 8124."
