@@ -18,6 +18,7 @@ the Free Software Foundation; either version 2 of the License, or
 {puts}       = require 'sys'
 fs           = require 'fs'
 path         = require 'path'
+{spawn}      = require 'child_process'
 CoffeeScript = require 'coffee-script'
 
 
@@ -106,6 +107,8 @@ resolveModuleId = (baseModule, requirePath) ->
   return retval.join('/')
 
 
+# Task definitions.
+
 task 'build:client', 'Compile the Bolo client-side module bundle', ->
   output = fs.openSync 'public/bolo-bundle.js', 'w'
   iterateSources 'src', (fileName, code) ->
@@ -123,3 +126,11 @@ task 'build:server', 'Compile the Bolo server-side modules', ->
     fs.writeFileSync output, js
     puts "Compiled #{fileName}"
   puts "Done."
+
+task 'build', 'Compile the Bolo client and server.', ->
+  invoke 'build:server'
+  invoke 'build:client'
+
+task 'run', 'Compile the Bolo client and server, then run the server', ->
+  invoke 'build'
+  spawn 'bin/bolo-server', [], customFds: [process.stdout, process.stdout -1]
