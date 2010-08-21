@@ -102,12 +102,10 @@ iterateDependencyTree = (module, depsSeen, cb) ->
 
 # Wrap some JavaScript that came from some file into a module transport definition.
 wrapModule = (module, js) ->
-  dependencies = "'#{dep.name}'" for dep in module.dependencies
-
   """
-    require.define({'#{module.name}': function(require, exports, module) {
+    require.module('#{module.name}', function(module, exports, require) {
     #{js}
-    }}, [#{dependencies.join(', ')}]);
+    });
     
   """
 
