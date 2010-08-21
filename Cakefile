@@ -58,10 +58,10 @@ determineDependencies = (module) ->
       fileName =  fileParts.join('/')
       try
         fileStat = fs.statSync(fileName)
-        directory = true
+        dep.directory = true
       catch e
-        directory = false
-      if directory
+        dep.directory = false
+      if dep.directory
         unless fileStat.isDirectory()
           throw new Error("Expected '#{fileName}' to be a directory.")
         dep.file = "#{fileName}/index.coffee"
@@ -82,6 +82,7 @@ iterateDependencyTree = (module, depsSeen, cb) ->
     # The specified file is assumed to have the module identifier given by moduleName.
     # All the dependencies will be given module names relative to this.
     module = { name: moduleName, file: fileName, external: no }
+    module.directory = (fileName.substr(-13) == '/index.coffee')
     depsSeen = []
 
   # Check to see if we've already iterated this module.
@@ -103,7 +104,7 @@ iterateDependencyTree = (module, depsSeen, cb) ->
 # Wrap some JavaScript that came from some file into a module transport definition.
 wrapModule = (module, js) ->
   """
-    require.module('#{module.name}', function(module, exports, require) {
+    require.module('#{module.name}', #{module.directory}, function(module, exports, require) {
     #{js}
     });
     
