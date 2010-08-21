@@ -40,8 +40,9 @@ determineDependencies = (module) ->
     # Find the module name and file name of this dependency
     else
       # Get the base directory we're going to start our search with.
-      nameParts = module.name.split('/'); nameParts.pop()
-      fileParts = module.file.split('/'); fileParts.pop()
+      fileParts = module.file.split('/')
+      nameParts = module.name.split('/')
+      nameParts.pop() unless fileParts.pop() == 'index.coffee'
 
       # Walk the require-path.
       for part in requirePath.split('/')
