@@ -8,7 +8,7 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {round, cos, sin, PI}  = Math
-{Tank}                 = require '../tank'
+{Simulation}           = require '..'
 map                    = require '../map'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
@@ -47,13 +47,14 @@ init = ->
   # Connect and wait for the map.
   ws = new WebSocket("ws://#{location.host}/demo")
   ws.onmessage = (event) ->
+    # Load the map we just received.
+    gameMap = map.load decodeBase64(event.data)
+
     # Initialize the game state.
-    game = {}
-    game.map = map.load decodeBase64(event.data)
+    game = new Simulation(gameMap)
     renderer = new Offscreen2dRenderer(tilemap, game.map)
     game.map.setView(renderer)
-    startingPos = game.map.getRandomStart()
-    game.player = new Tank(game, startingPos)
+    game.player = game.addTank()
 
     # Initialize the HUD.
     initHud()
@@ -95,7 +96,7 @@ lastTick = null
 start = ->
   return if gameTimer?
 
-  tick()
+  game.tick()
   lastTick = Date.now()
 
   gameTimer = window.setInterval(timerCallback, TICK_LENGTH_MS)
@@ -111,15 +112,9 @@ stop = ->
 timerCallback = ->
   now = Date.now()
   while now - lastTick >= TICK_LENGTH_MS
-    tick()
+    game.tick()
     lastTick += TICK_LENGTH_MS
   draw()
-
-
-# Simulation.
-
-tick = ->
-  game.player.update()
 
 
 # Graphics.
