@@ -39,7 +39,25 @@ Much of the game logic was written with WinBolo as a reference, thus becoming a 
 Though the GNU GPL version 2 is a fine license either way. You can find a copy of the license
 in the COPYING file.
 
-All the graphic and sound files are copyright 1993 Stuart Cheshire.
+Some files, or parts of files, are subject to other licenses, where indicated in the files
+themselves. A short overview of those parts follows.
+
+Parts of the 'Cakefile' are based on:
+
+ * [CoffeeScript] 'command.coffee', © 2010 Jeremy Ashkenas, MIT-licensed.
+ * [Yabble] 'yabbler.js', © 2010 James Brantly, MIT-licensed.
+
+The source file 'src/server/websocket.coffee' is a modification/rewrite based on:
+
+ * [Socket.IO], © 2010 LearnBoost, MIT-licensed.
+
+The source file 'public/brequire.js' is a modification based on:
+
+ * [Brequire], © 2010 Jonah Fox.
+
+All the graphic and sound files are from:
+
+ * [Bolo], © 1993 Stuart Cheshire.
 
  [Bolo]: http://www.lgm.com/bolo/
  [WinBolo]: http://www.winbolo.com/
@@ -48,3 +66,6 @@ All the graphic and sound files are copyright 1993 Stuart Cheshire.
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [node.js]: http://nodejs.org/
  [Connect]: http://github.com/senchalabs/connect
+ [Yabble]: http://github.com/jbrantly/yabble
+ [Socket.IO]: http://socket.io/
+ [Brequire]: http://github.com/weepy/brequire
