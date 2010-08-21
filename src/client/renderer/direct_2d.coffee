@@ -7,9 +7,9 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor, ceil}      = Math
-{TILE_SIZE_PIXEL}  = require '../../constants'
-{Common2dRenderer} = require './common_2d'
+{floor, ceil}     = Math
+{TILE_SIZE_PIXEL} = require '../../constants'
+Common2dRenderer  = require './common_2d'
 
 
 # This is probably the simplest possible renderer there is. It simply
@@ -39,4 +39,4 @@ class Direct2dRenderer extends Common2dRenderer
 
 
 # Exports
-exports.Direct2dRenderer = Direct2dRenderer
+module.exports = Direct2dRenderer

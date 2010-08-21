@@ -55,4 +55,4 @@ class Common2dRenderer
 
 
 # Exports.
-exports.Common2dRenderer = Common2dRenderer
+module.exports = Common2dRenderer

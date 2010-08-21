@@ -7,7 +7,7 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{Tank} = require './tank'
+Tank = require './tank'
 
 
 class Simulation
@@ -25,4 +25,4 @@ class Simulation
 
 
 # Exports.
-exports.Simulation = Simulation
+module.exports = Simulation

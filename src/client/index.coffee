@@ -7,14 +7,14 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, cos, sin, PI}  = Math
-{Simulation}           = require '..'
-map                    = require '../map'
+{round, cos, sin, PI} = Math
+Simulation            = require '..'
+map                   = require '../map'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
- TICK_LENGTH_MS}       = require '../constants'
-{decodeBase64}         = require './util'
-{Offscreen2dRenderer}  = require './renderer/offscreen_2d'
+ TICK_LENGTH_MS}      = require '../constants'
+{decodeBase64}        = require './util'
+Offscreen2dRenderer   = require './renderer/offscreen_2d'
 
 
 # Global variables.

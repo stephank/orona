@@ -7,10 +7,10 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor}            = Math
+{floor}           = Math
 {TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}   = require '../../constants'
-{Common2dRenderer} = require './common_2d'
+ MAP_SIZE_TILES}  = require '../../constants'
+Common2dRenderer  = require './common_2d'
 
 
 # This renderer builds on the Direct2dRenderr, but caches segments of the
@@ -128,4 +128,4 @@ class Offscreen2dRenderer extends Common2dRenderer
 
 
 # Exports
-exports.Offscreen2dRenderer = Offscreen2dRenderer
+module.exports = Offscreen2dRenderer

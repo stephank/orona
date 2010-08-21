@@ -170,4 +170,4 @@ class Tank
 
 
 # Exports.
-exports.Tank = Tank
+module.exports = Tank

@@ -260,4 +260,4 @@ class WebglRenderer
 
 
 # Exports.
-exports.WebglRenderer = WebglRenderer
+module.exports = WebglRenderer
