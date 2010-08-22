@@ -46,9 +46,17 @@ class WebSocket extends EventEmitter
     # @request and @queued are temporary, while the handshake is in progress.
     @queued = []
 
+    # Start processing the handshake. We will emit events, so postpone it
+    # until the next event loop tick, allowing the user to install handlers.
     process.nextTick => @_handshake()
     @connection.on 'data', (data) => @_onData(data)
-    @connection.on 'end', => @_onClose()
+
+    # Delegate socket methods and events.
+    @connection.on 'end', => @_onEnd()
+    @connection.on 'timeout', => @_onTimeout()
+    @connection.on 'drain', => @_onDrain()
+    @connection.on 'error', => @_onError()
+    @connection.on 'close', => @_onClose()
 
   _handshake: ->
     return if @data.length < 8
@@ -56,7 +64,7 @@ class WebSocket extends EventEmitter
     # Get the keys.
     k1 = @request.headers['sec-websocket-key1']
     k2 = @request.headers['sec-websocket-key2']
-    return @_onClose unless k1 and k2
+    @emit 'error', new Error("Keys missing in client handshake") unless k1 and k2
     k3 = @data.slice(0, 8)
     @data = @data.slice(8)
 
@@ -65,7 +73,8 @@ class WebSocket extends EventEmitter
     for k in [k1, k2]
       n = parseInt(k.replace(/[^\d]/g, ''))
       spaces = k.replace(/[^ ]/g, '').length
-      return @_onClose if spaces == 0 or n % spaces != 0
+      if spaces == 0 or n % spaces != 0
+        @emit 'error', new Error("Invalid Keys in client handshake")
       n /= spaces
       md5.update(new Buffer([
         (n & 0xFF000000) >> 24,
@@ -122,10 +131,6 @@ class WebSocket extends EventEmitter
         return @connection.end() unless chunk[0] == '\u0000'
         @emit 'message', chunk.slice(1)
     return
-    
-  _onClose: ->
-    @connection.destroy()
-    @emit 'end'
 
   sendMessage: (message) ->
     if @request?
@@ -137,8 +142,23 @@ class WebSocket extends EventEmitter
         @connection.write message, 'utf8'
         @connection.write '\xFF', 'binary'
       catch e
-        @_onClose()
+        @emit 'error', e
     return
+
+  # Delegate socket methods and events.
+
+  end: (message) ->
+    @sendMessage(message) if message?
+    @connection.end()
+
+  setTimeout: (ms) -> @connection.setTimeout(ms)
+  destroy: -> @connection.destroy()
+
+  _onEnd: -> @emit 'end'
+  _onTimeout: -> @emit 'timeout'
+  _onDrain: -> @emit 'drain'
+  _onError: (exception) -> @emit 'error', exception
+  _onClose: (had_error) -> @emit 'close', had_error
 
 
 # Exports
