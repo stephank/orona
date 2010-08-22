@@ -23,6 +23,12 @@ class Simulation
     @tanks.push tank
     tank
 
+  removeTank: (tank) ->
+    idx = @tanks.indexOf(tank)
+    throw new Error "Tried to remove unknown tank from game." if idx == -1
+    @tanks.splice(idx, 1)
+    tank
+
 
 # Exports.
 module.exports = Simulation

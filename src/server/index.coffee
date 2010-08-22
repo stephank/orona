@@ -19,18 +19,74 @@ map              = require '../map'
 class Game
   constructor: (gameMap) ->
     @sim = new Simulation(gameMap)
+    @oddTick = no
 
-  tick: ->
-    @sim.tick()
+  # Connection handling.
 
   onConnect: (ws) ->
     tank = @sim.addTank()
     tank.client = ws
 
+    ws.setTimeout 10000 # Disconnect after 10s of inactivity.
+    ws.on 'message', => (message) @onMessage(tank, message)
+    ws.on 'end', => @onEnd(tank)
+    ws.on 'error', (exception) => @onError(tank, exception)
+    ws.on 'timeout', => @onError(tank, 'Timed out')
+
+    # Send the current map state.
     mapData = new Buffer(@sim.map.dump())
     ws.sendMessage mapData.toString('base64')
 
-    # FIXME: install message event handlers.
+    # FIXME: send other game state (info on tanks, pills, bases)
+
+    # FIXME: notify other clients
+
+  onEnd: (tank) ->
+    tank.client.end()
+    @onDisconnect(tank)
+
+  onError: (tank, exception) ->
+    # FIXME: log exception
+    tank.client.destroy()
+    @onDisconnect(tank)
+
+  onDisconnect: (tank) ->
+    @sim.removeTank(tank)
+    # FIXME: notify clients
+
+  onMessage: (tank, message) ->
+    # FIXME: do something with the command here.
+
+  # Broadcast a message to all connected clients.
+  broadcast: (message) ->
+    for {client} in @sim.tanks
+      client.sendMessage(message)
+    return
+
+  # An unreliable broadcast message is a message that may be dropped. Each client sends a periodic
+  # hearbeat. If not received in a timely fashion, we drop some of the client's messages.
+  broadcastUnreliable: (message) ->
+    for {client} in @sim.tanks
+      # Ticks are every 20ms. Network updates are every odd tick, i.e. every 40ms.
+      # Allow a client to lag 20 updates behind, i.e. 800ms, before dropping messages.
+      continue if client.heartbeatTimer > 20
+      client.sendMessage(message)
+    return
+
+  # Simulation updates.
+
+  tick: ->
+    @sim.tick()
+
+    # Every odd tick, update networking.
+    @oddTick = !@oddTick
+    @netUpdate() if @oddTick
+
+  netUpdate: ->
+    # FIXME: Gather update data and broadcast.
+
+    # Increment the heartbeat counters.
+    client.hearbeatTimer++ for {client} in @sim.tanks
 
 
 class Application
@@ -49,6 +105,7 @@ class Application
   destroy: ->
     # FIXME: The interval should be deactivated automatically when
     # there are no games. (And reactivated once a new one starts.)
+    # Maybe we shouldn't update empty games either?
     clearInterval @timer
 
   # Determine what will handle a WebSocket's 'connect' event, based on
