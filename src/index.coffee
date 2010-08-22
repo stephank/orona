@@ -20,13 +20,14 @@ class Simulation
 
   addTank: ->
     tank = new Tank(this, @map.getRandomStart())
+    tank.idx = @tanks.length
     @tanks.push tank
     tank
 
   removeTank: (tank) ->
-    idx = @tanks.indexOf(tank)
-    throw new Error "Tried to remove unknown tank from game." if idx == -1
-    @tanks.splice(idx, 1)
+    @tanks.splice tank.idx, 1
+    for other, i in @tanks
+      other.idx = i # Update indices.
     tank
 
 
