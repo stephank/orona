@@ -107,7 +107,7 @@ class MapCell
     @map.retile(
       @x - retileRadius, @y - retileRadius,
       @x + retileRadius, @y + retileRadius
-    )
+    ) unless retileRadius < 0
 
   # Short-hand for notifying the view of a retile.
   setTile: (tx, ty) ->
@@ -635,11 +635,11 @@ load = (buffer) ->
       seqLen = takeNibble()
       if seqLen < 8
         for i in [1..seqLen+1]
-          retval.cellAtTile(x++, y).setType takeNibble(), undefined, 0
+          retval.cellAtTile(x++, y).setType takeNibble(), undefined, -1
       else
         type = takeNibble()
         for i in [1..seqLen-6]
-          retval.cellAtTile(x++, y).setType type, undefined, 0
+          retval.cellAtTile(x++, y).setType type, undefined, -1
 
   # Link pills and bases to their cells.
   for pill in retval.pills
@@ -649,7 +649,7 @@ load = (buffer) ->
     base.cell = retval.cells[base.y][base.x]
     base.cell.base = base
     # Override cell type.
-    base.cell.setType '=', no, 0
+    base.cell.setType '=', no, -1
 
   retval
 
