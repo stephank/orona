@@ -30,93 +30,93 @@ the Free Software Foundation; either version 2 of the License, or
 
 # The interface provided by network contexts. Unused, but here for documentation.
 class Context
-  # Called when the context is activated. See 'activate' for more information.
+  constructor: (game) ->
+
+  # Called when the context is activated. See 'inContext' for more information.
   activated: ->
 
-  # Create the given object in the simulation. The object is usually freshly instantiated, and
-  # this method then registers it in the networking context.
-  create: (obj) ->
+  # Notification sent by the simulation that the given object was created.
+  created: (obj) ->
 
-  # Destroy the object in the simulation. The object is unregistered from the networking context,
-  # and the user will usually discard the object when this method finishes.
-  destroy: (obj) ->
+  # Notification sent by the simulation that the given object was destroyed.
+  destroyed: (obj) ->
 
 
 # The local context is used for simulations that are not networked. All of the methods in the
 # above interface are implemented as no-ops.
 class LocalContext
+  constructor: (game) ->
   activated: ->
-  create: (obj) ->
-  destroy: (obj) ->
+  created: (obj) ->
+  destroyed: (obj) ->
 
-# The server context is used on the server. It keeps a list of objects and keeps track of changes
-# to this list. The changes are available as a block of data from the 'changes' attribute.
+# The server context is used on the server. It records changes in the object list, the critical
+# updates, and makes them available in the 'changes' attribute. It also provides a method 'dump'
+# that provides the attribute updates.
 class ServerContext
-  constructor: ->
-    @objects = []
+  constructor: (@game) ->
 
   # Clear the list of changes.
   activated: ->
     @changes = []
 
-  # Record the creation and add to the object list.
-  create: (obj) ->
+  # Record the creation.
+  created: (obj) ->
     # FIXME: add to changes
-    obj._net_idx = @objects.length
-    @objects.push obj
 
-  # Record the destruction and remove from the object list.
-  destroy: (obj) ->
+  # Record the destruction.
+  destroyed: (obj) ->
     # FIXME: add to changes
-    @objects.splice obj._net_idx, 1
-    # Update indices.
-    for o, i in @objects
-      o._net_idx = i
 
   # This method is specific to the server. It serializes all objects and concatenates the
   # updates into one large data block to be sent to the clients.
   dump: ->
     # FIXME
 
-# The client context is used on the client. It keeps a list of objects like the server, and does
-# it's best to keep it in sync. The client context allows for the client simulation to continue
-# while the connection is interrupted, by marking all changes made on the client as transient.
+# The client context is used on the client. It does it's best to keep the object list in sync with
+# the server, while allowing the local simulation to continue. This is done by keeping track of
+# changes made locally and marking them as transient, until the next server update.
 class ClientContext
-  constuctor: ->
-    @objects = []
+  constructor: (@game) ->
+    @transientDestructions = []
 
-  # Before calling 'activate', the user should reset this special property, based on whether it
-  # is about the process server updates or process a simulated tick. When set, the context
-  # will assume updates are received from the server. When not set, updates are transient.
+  # Before calling 'inContext', the user should reset this special property, based on whether it
+  # is about the process server updates or process a simulated tick. When set, the context will
+  # assume updates are received from the server. When not set, updates are transient.
   authoritative: no
 
-  # The client implmentation of activated cleans up any transient objects when new updates
-  # from the server arrive.
+  # The client implementation of activated cleans up any transients
+  # when new updates from the server arrive.
   activated: ->
-    if @authoritative
-      # Find the first object that is marked transient.
-      for obj, i in @objects
-        break if obj._net_transient
-      # We can assume all objects after this are transient as well.
-      @objects.splice i, @objects.length - i
-      # FIXME: This probably won't do. How to tell the simulation that objects
-      # it destroyed are now possibly back in play?
+    return unless @authoritative
+
+    # Find the first object that is marked transient.
+    for obj, i in @game.objects
+      break if obj._net_transient
+    # We can assume all objects after this are transient as well.
+    @game.objects.splice i, @game.objects.length - i
+
+    # Now, revive the locally destroyed objects in reverse order.
+    return unless @transientDestructions.length > 0
+    for obj in @transientDestructions
+      @game.objects.splice obj.idx, 0, obj
+    @transientDestructions = []
+    # At this point, we need to reset all indices.
+    for obj, i in @game.objects
+      obj.idx = i
+
     return
 
-  # Append the object to the list, and mark the object as transient if needed.
-  create: (obj) ->
-    obj._net_idx = @objects.length
+  # Mark the object as transient if needed, so we can delete it on the next server update.
+  created: (obj) ->
     obj._net_transient = not @authoritative
-    @objects.push obj
 
-  # If this is not an update from the server, keep the object around. The simulation won't
-  # touch it any more, and this way we keep indices aligned with the server.
-  destroy: (obj) ->
-    if @authoritative
-      @objects.splice obj._net_idx, 1
-      # Update indices.
-      for o, i in @objects
-        o._net_idx = i
+  # We need to keep track of objects that are deleted locally, but managed by the server.
+  # So if this is not a server update, and not a locally created object either, add it to a list
+  # of things to restore later on.
+  destroyed: (obj) ->
+    unless @authoritative or obj._net_transient
+      @transientDestructions.unshift obj
     return
 
 
@@ -126,7 +126,7 @@ activeContext = new LocalContext()
 
 # Call +cb+ within the networking context +context+. This usually wraps calls to things that
 # alter the simulation.
-activate = (ctx, cb) ->
+inContext = (ctx, cb) ->
   activeContext = ctx
   ctx.activated()
   cb()
@@ -137,8 +137,8 @@ activate = (ctx, cb) ->
 exports.LocalContext  = LocalContext
 exports.ServerContext = ServerContext
 exports.ClientContext = ClientContext
-exports.activate = activate
+exports.inContext = inContext
 
 # Delegate the functions used by the simulation to the active context.
-exports.create  = (obj) -> activeContext.create(obj)
-exports.destroy = (obj) -> activeContext.destroy(obj)
+exports.created   = (obj) -> activeContext.created(obj)
+exports.destroyed = (obj) -> activeContext.destroyed(obj)
