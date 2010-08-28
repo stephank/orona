@@ -134,11 +134,19 @@ buildOutputPath = (module) ->
 task 'build:client', 'Compile the Bolo client-side module bundle', ->
   puts "Building Bolo client JavaScript bundle..."
   output = fs.openSync 'public/bolo-bundle.js', 'w'
+
+  brequireFile = 'src/brequire.coffee'
+  brequireCode = fs.readFileSync brequireFile, 'utf-8'
+  js = CoffeeScript.compile brequireCode, fileName: brequireFile
+  fs.writeSync output, js
+  puts "Compiled '#{brequireFile}'."
+
   iterateDependencyTree 'src/client/index.coffee', 'bolo/client', (module) ->
     js = CoffeeScript.compile module.code, fileName: module.file, noWrap: yes
     wrappedJs = wrapModule module, js
     fs.writeSync output, wrappedJs
     puts "Compiled '#{module.file}'."
+
   fs.closeSync output
   puts "Done."
   puts ""
