@@ -13,7 +13,6 @@ the Free Software Foundation; either version 2 of the License, or
 
 # FIXME: watch functionality, as in 'coffee -w ...'
 # FIXME: minify client bundle
-# FIXME: include jquery and yabble in client bundle
 
 {puts}       = require 'sys'
 fs           = require 'fs'
