@@ -11,14 +11,17 @@ fs               = require 'fs'
 url              = require 'url'
 connect          = require 'connect'
 WebSocket        = require './websocket'
+ServerContext    = require './net'
 Simulation       = require '..'
 map              = require '../map'
+net              = require '../net'
 {TICK_LENGTH_MS} = require '../constants'
 
 
 class Game
   constructor: (gameMap) ->
     @sim = new Simulation(gameMap)
+    @netctx = new ServerContext(@sim)
     @oddTick = no
 
   # Connection handling.
@@ -28,6 +31,7 @@ class Game
     tank.client = ws
 
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
+    ws.heartbeatTimer = 0
     ws.on 'message', => (message) @onMessage(tank, message)
     ws.on 'end', => @onEnd(tank)
     ws.on 'error', (exception) => @onError(tank, exception)
@@ -37,9 +41,7 @@ class Game
     mapData = new Buffer(@sim.map.dump())
     ws.sendMessage mapData.toString('base64')
 
-    # FIXME: send other game state (info on tanks, pills, bases)
-
-    # FIXME: notify other clients
+    # FIXME: Synchronize the object list with this new client
 
   onEnd: (tank) ->
     tank.client.end()
@@ -76,17 +78,24 @@ class Game
   # Simulation updates.
 
   tick: ->
-    @sim.tick()
+    net.inContext @netctx, => @sim.tick()
 
-    # Every odd tick, update networking.
-    @oddTick = !@oddTick
-    @netUpdate() if @oddTick
+    # FIXME: Somehow buffer and flush here. Right now, it's sending a packet for every socket
+    # write, which results in 6 packets: '\x00', criticals, '\xFF', '\x00', attributes, '\xFF'.
 
-  netUpdate: ->
-    # FIXME: Gather update data and broadcast.
+    # Send critical updates.
+    if @netctx.changes.length > 0
+      data = new Buffer(@netctx.changes)
+      @broadcast data.toString('base64')
 
-    # Increment the heartbeat counters.
-    client.hearbeatTimer++ for {client} in @sim.tanks
+    # Send attribute updates at half the tickrate.
+    if @oddTick = !@oddTick
+      data = new Buffer(@netctx.dump())
+      @broadcastUnreliable data.toString('base64')
+      # Increment the heartbeat counters.
+      client.heartbeatTimer++ for {client} in @sim.tanks
+
+    return
 
 
 class Application

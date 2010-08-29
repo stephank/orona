@@ -62,6 +62,9 @@ init = ->
     # Start the game loop.
     start()
 
+    # Reconnect the socket message handler.
+    ws.onmessage = handleMessage
+
 
 # Event handlers.
 
@@ -86,6 +89,9 @@ handleKeyup = (e) ->
     when 40 then game.player.braking = no
     else return
   e.preventDefault()
+
+handleMessage = (e) ->
+  console.log "Got message: #{e.data}"
 
 
 # Game loop.

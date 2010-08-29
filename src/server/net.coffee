@@ -33,6 +33,7 @@ class ServerContext
   # updates into one large data block to be sent to the clients.
   dump: ->
     # FIXME
+    []
 
 
 # Exports
