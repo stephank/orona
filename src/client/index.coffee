@@ -98,6 +98,7 @@ handleMessage = (e) ->
 
 gameTimer = null
 lastTick = null
+heartbeatTimer = 0
 
 start = ->
   return if gameTimer?
@@ -120,6 +121,12 @@ timerCallback = ->
   while now - lastTick >= TICK_LENGTH_MS
     game.tick()
     lastTick += TICK_LENGTH_MS
+
+    # Send the heartbeat (an empty message) every 10 ticks / 400ms.
+    if ++heartbeatTimer == 10
+      heartbeatTimer = 0
+      ws.send('')
+
   draw()
 
 

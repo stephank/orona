@@ -32,7 +32,7 @@ class Game
 
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
-    ws.on 'message', => (message) @onMessage(tank, message)
+    ws.on 'message', (message) => @onMessage(tank, message)
     ws.on 'end', => @onEnd(tank)
     ws.on 'error', (exception) => @onError(tank, exception)
     ws.on 'timeout', => @onError(tank, 'Timed out')
@@ -57,6 +57,11 @@ class Game
     # FIXME: notify clients
 
   onMessage: (tank, message) ->
+    if message.length == 0
+      # A hearbeat message.
+      tank.client.heartbeatTimer = 0
+      return
+
     # FIXME: do something with the command here.
 
   # Broadcast a message to all connected clients.
