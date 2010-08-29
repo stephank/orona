@@ -45,19 +45,8 @@ class Context
   mapChanged: (cell, oldType, hadMine) ->
 
 
-# The local context is used for simulations that are not networked. All of the methods in the
-# above interface are implemented as no-ops.
-class LocalContext
-  constructor: (game) ->
-  activated: ->
-  created: (obj) ->
-  destroyed: (obj) ->
-  mapChanged: (cell, oldType, hadMine) ->
-
-
-# All updates are processed by the active context. Create an implicit local context here,
-# to make things work when the user doesn't touch the networking code.
-activeContext = new LocalContext()
+# All updates are processed by the active context.
+activeContext = null
 
 # Call +cb+ within the networking context +context+. This usually wraps calls to things that
 # alter the simulation.
@@ -69,10 +58,9 @@ inContext = (ctx, cb) ->
 
 
 # Exports.
-exports.LocalContext  = LocalContext
 exports.inContext = inContext
 
 # Delegate the functions used by the simulation to the active context.
-exports.created    = (obj) -> activeContext.created(obj)
-exports.destroyed  = (obj) -> activeContext.destroyed(obj)
-exports.mapChanged = (cell, oldType, hadMine) -> activeContext.mapChanged(cell, oldType, hadMine)
+exports.created    = (obj) -> activeContext?.created(obj)
+exports.destroyed  = (obj) -> activeContext?.destroyed(obj)
+exports.mapChanged = (cell, oldType, hadMine) -> activeContext?.mapChanged(cell, oldType, hadMine)
