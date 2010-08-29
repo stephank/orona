@@ -30,6 +30,7 @@ class Game
   onConnect: (ws) ->
     # In order to create the tank object, we need to be in the networking context.
     tank = net.inContext @netctx, => @sim.addTank()
+    tank.client = null
     data = new Buffer(@netctx.changes)
     @broadcast data.toString('base64')
 
@@ -59,22 +60,26 @@ class Game
     ws.sendMessage data.toString('base64')
 
   onEnd: (tank) ->
-    tank.client.end()
+    return unless ws = tank.client
+    tank.client = null
+    ws.end()
     @onDisconnect(tank)
 
   onError: (tank, exception) ->
+    return unless ws = tank.client
+    tank.client = null
     # FIXME: log exception
-    tank.client.destroy()
+    ws.destroy()
     @onDisconnect(tank)
 
   onDisconnect: (tank) ->
-    tank.client = null
     # In order to destroy the tank object, we need to be in the networking context.
     net.inContext @netctx, => @sim.removeTank(tank)
     data = new Buffer(@netctx.changes)
     @broadcast data.toString('base64')
 
   onMessage: (tank, message) ->
+    return unless tank.client
     switch message
       when '' then tank.client.heartbeatTimer = 0
       when net.START_TURNING_CCW  then tank.turningCounterClockwise = yes
@@ -92,8 +97,8 @@ class Game
   # Broadcast a message to all connected clients.
   broadcast: (message) ->
     for {client} in @sim.tanks
-      # Client may be undefined, when used from within onConnect.
-      client?.sendMessage(message)
+      continue if client == null
+      client.sendMessage(message)
     return
 
   # An unreliable broadcast message is a message that may be dropped. Each client sends a periodic
@@ -102,7 +107,7 @@ class Game
     for {client} in @sim.tanks
       # Ticks are every 20ms. Network updates are every odd tick, i.e. every 40ms.
       # Allow a client to lag 20 updates behind, i.e. 800ms, before dropping messages.
-      continue if client.heartbeatTimer > 20
+      continue if client == null or client.heartbeatTimer > 20
       client.sendMessage(message)
     return
 
@@ -124,7 +129,9 @@ class Game
       data = new Buffer(@netctx.dump())
       @broadcastUnreliable data.toString('base64')
       # Increment the heartbeat counters.
-      client.heartbeatTimer++ for {client} in @sim.tanks
+      for {client} in @sim.tanks
+        continue if client == null
+        client.heartbeatTimer++
 
     return
 
