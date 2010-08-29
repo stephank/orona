@@ -28,9 +28,12 @@ class Game
   # Connection handling.
 
   onConnect: (ws) ->
-    tank = @sim.addTank()
-    tank.client = ws
+    # In order to create the tank object, we need to be in the networking context.
+    tank = net.inContext @netctx, => @sim.addTank()
+    data = new Buffer(@netctx.changes)
+    @broadcast data.toString('base64')
 
+    tank.client = ws
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
     ws.on 'message', (message) => @onMessage(tank, message)
@@ -65,7 +68,11 @@ class Game
     @onDisconnect(tank)
 
   onDisconnect: (tank) ->
-    @sim.removeTank(tank)
+    tank.client = null
+    # In order to destroy the tank object, we need to be in the networking context.
+    net.inContext @netctx, => @sim.removeTank(tank)
+    data = new Buffer(@netctx.changes)
+    @broadcast data.toString('base64')
 
   onMessage: (tank, message) ->
     switch message
@@ -85,7 +92,8 @@ class Game
   # Broadcast a message to all connected clients.
   broadcast: (message) ->
     for {client} in @sim.tanks
-      client.sendMessage(message)
+      # Client may be undefined, when used from within onConnect.
+      client?.sendMessage(message)
     return
 
   # An unreliable broadcast message is a message that may be dropped. Each client sends a periodic

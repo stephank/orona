@@ -74,8 +74,10 @@ activeContext = null
 inContext = (ctx, cb) ->
   activeContext = ctx
   ctx.activated()
-  cb()
+  retval = cb()
   activeContext = null
+  # Pass-through the return value of the callback.
+  retval
 
 
 # Object types should register themselves, so they may be identified in messages.
