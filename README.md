@@ -16,21 +16,39 @@ The name comes from an uninhabited island situated in the central Pacific Ocean.
 
 ## Work-in-progress
 
-Orona is a work-in-progress. Consider it less than alpha quality!
+Orona is a work-in-progress, thus you will find many basic features are missing.
+Consider it less than alpha quality!
 
-You can see Orona in action on-line, right now, without even having to download it.
-Just visit the [GitHub Pages] for a demonstration.
+But there is something to see, and you can see it in action on-line, right now, without even having
+to download it. (Though you'll be alone in the game.) Just visit the [GitHub Pages] site for a
+demonstration!
 
-## Hacking Orona
+If you want to play around with multi-player, or otherwise tinker with Orona, read on for how to
+get Orona running on your own machine.
 
-Orona depends on several other projects, which you will have to install to run it. Take a look
-at their project pages on how to install them:
+## Running Orona
 
- * [CoffeeScript], the language Orona is written it.
- * [node.js], a server-side JavaScript framework.
- * [Connect], a node.js middleware framework.
+Orona depends on several other projects, which you will have to install to run it. You'll find this
+is easiest on a Linux or Mac OS X machine, though you need a bit of commandline-fu to get it all
+set up. Here's the recipe:
 
-To run Orona, simply run `cake run`, then visit 'http://localhost:8124/'.
+ * [CoffeeScript], the language Orona is written it. Tested with 0.9.2.
+ * [node.js], a server-side JavaScript framework. Tested with 0.2.0.
+ * [Connect], a node.js middleware framework. Tested with 0.2.4.
+
+A fast way to get going is to install node.js, then install [npm], and use npm to install the rest:
+
+    npm install coffee-script
+    npm install connect
+
+To run Orona, clone it, build it, then run it:
+
+    git clone http://github.com/stephank/orona.git
+    cd orona
+    cake build
+    bin/bolo-server
+
+Now visit `http://localhost:8124/`.
 
 ## License
 
@@ -66,6 +84,7 @@ All the graphic and sound files are from:
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [node.js]: http://nodejs.org/
  [Connect]: http://github.com/senchalabs/connect
+ [npm]: http://github.com/isaacs/npm
  [Yabble]: http://github.com/jbrantly/yabble
  [Socket.IO]: http://socket.io/
  [Brequire]: http://github.com/weepy/brequire
