@@ -34,9 +34,9 @@ the Free Software Foundation; either version 2 of the License, or
 # The interface provided by world objects. Unused, but here for documentation.
 class WorldObject
   # An alternate constructor used to instantiate an object when it is created by the networking
-  # code. The data parameter is an array of bytes, much like a node.js Buffer. Usually, the
-  # class just calls deserialize on the data.
-  constructFromNetwork: (game, data) ->
+  # code. This call will be immediately followed by a call to deserialize. Note that this method
+  # MUST return `this`!
+  constructFromNetwork: (game) ->
 
   # This method should return an array of bytes that represent the object's state somehow.
   # It usually calls struct.pack() to pack all of it's state variables.
@@ -91,10 +91,13 @@ registerType = (character, type) ->
   # Build a dictionary, so we can map an incoming message to the type.
   types[code] = type
 
+getTypeFromCode = (code) -> types[code]
+
 
 # Exports.
-exports.inContext = inContext
-exports.registerType = registerType
+exports.inContext       = inContext
+exports.registerType    = registerType
+exports.getTypeFromCode = getTypeFromCode
 
 # Delegate the functions used by the simulation to the active context.
 exports.created    = (obj) -> activeContext?.created(obj)

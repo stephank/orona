@@ -42,8 +42,8 @@ class Tank
     @onBoat = yes
 
   # The alternate constructor used by networking.
-  constructFromNetwork: (@game, data) ->
-    @deserialize data
+  constructFromNetwork: (@game) ->
+    return this
 
   # These methods are used by networking to synchronize state.
   serialize: ->
@@ -57,6 +57,7 @@ class Tank
       @trees, @reload, @accelerating, @braking, @turningClockwise, @turningCounterClockwise,
       @shooting, @onBoat] = unpack 'HHBBBBBBBBffffff', data, offset
     @speed = speed / 4
+    @cell = @game.map.cellAtWorld @x, @y
     # We ate 13 bytes.
     13
 

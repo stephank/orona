@@ -32,7 +32,7 @@ class ClientContext
     @game.objects.splice i, @game.objects.length - i
 
     # Now, restore locally changed map cells.
-    for idx, cell of transientMapCells
+    for idx, cell of @transientMapCells
       cell.setType cell._net_oldType, cell._net_hadMine
     @transientMapCells = {}
 

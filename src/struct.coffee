@@ -26,6 +26,13 @@ toUint32 = (n) -> [
   ]
 
 
+# And the reverse of the above. Each takes an array of bytes, and an offset.
+
+fromUint8  = (d, o) -> d[o]
+fromUint16 = (d, o) -> (d[o] << 8) + d[o+1]
+fromUint32 = (d, o) -> (d[o] << 24) + (d[o+1] << 16) + (d[o+2] << 8) + d[o+3]
+
+
 # This method works a bit like struct.pack() in Python.
 # It takes a format string, and packs the rest of the arguments according to that.
 pack = (fmt) ->
@@ -68,8 +75,35 @@ pack = (fmt) ->
 # of values which are decoded according to the given format string.
 unpack = (fmt, data, offset) ->
   offset ||= 0
-  # FIXME
-  []
+  values = []
+
+  # These are to handle bit fields.
+  bitIndex = 0
+
+  for c, i in fmt
+    if c == 'f'
+      # A bit field.
+      bit = (1 << bitIndex) & data[offset]
+      values.push(bit > 0)
+      bitIndex++
+      # If we've collected eight, skip to the next byte.
+      if bitIndex == 8
+        offset++
+        bitIndex = 0
+    else
+      # If we were processing bitfields, skip to the next byte.
+      if bitIndex == 8
+        offset++
+        bitIndex = 0
+      # Simple byte-aligned data types.
+      [value, bytes] = switch c
+        when 'B' then [ fromUint8(data, offset), 1]
+        when 'H' then [fromUint16(data, offset), 2]
+        when 'I' then [fromUint32(data, offset), 4]
+        else throw new Error("Unknown format character #{c}")
+      values.push value
+      offset += bytes
+  values
 
 
 # Exports

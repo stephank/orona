@@ -11,9 +11,11 @@ the Free Software Foundation; either version 2 of the License, or
 Simulation            = require '..'
 net                   = require '../net'
 map                   = require '../map'
+{unpack}              = require '../struct'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
  TICK_LENGTH_MS}      = require '../constants'
+ClientContext         = require './net'
 {decodeBase64}        = require './util'
 Offscreen2dRenderer   = require './renderer/offscreen_2d'
 
@@ -26,6 +28,8 @@ tilemap = null
 hud = null
 # The game state object.
 game = null
+# The network context.
+netctx = null
 # The renderer instance to use.
 renderer = null
 # The WebSocket connection.
@@ -55,6 +59,7 @@ init = ->
     game = new Simulation(gameMap)
     renderer = new Offscreen2dRenderer(tilemap, game.map)
     game.map.setView(renderer)
+    netctx = new ClientContext(game)
 
     # Initialize the HUD.
     initHud()
@@ -64,7 +69,7 @@ init = ->
     ws.onmessage = handleMessage
 
 
-# Event handlers.
+# Keyboard event handlers.
 
 handleKeydown = (e) ->
   return unless ws?
@@ -88,11 +93,22 @@ handleKeyup = (e) ->
     else return
   e.preventDefault()
 
-handleMessage = (e) ->
-  data = decodeBase64(e.data)
-  # FIXME: loop over the commands, and call handleCommand for each of them.
 
-handleCommand = (command, data, offset) ->
+# Socket event handlers.
+
+handleMessage = (e) ->
+  netctx.authoritative = yes
+  net.inContext netctx, ->
+    data = decodeBase64(e.data)
+    pos = 0
+    length = data.length
+    while pos < length
+      command = data[pos++]
+      ate = handleServerCommand command, data, pos
+      return if ate == -1
+      pos += ate
+
+handleServerCommand = (command, data, offset) ->
   switch command
     when net.WELCOME_MESSAGE
       # Identify which tank we control.
@@ -102,7 +118,41 @@ handleCommand = (command, data, offset) ->
       start()
       # We ate 4 bytes.
       4
-    # FIXME: handle other messages, disconnect on unknown message.
+
+    when net.CREATE_MESSAGE
+      type = net.getTypeFromCode data[offset]
+      obj = game.spawn type.fromNetwork
+      # Eat the type byte, plus whatever the type needs to deserialize.
+      1 + obj.deserialize(data, offset + 1)
+
+    when net.DESTROY_MESSAGE
+      obj_idx = unpack('I', data, offset)[0]
+      obj = game.objects[obj_idx]
+      game.destroy obj
+      # We ate 4 bytes.
+      4
+
+    when net.MAPCHANGE_MESSAGE
+      [x, y, code, mine] = unpack('BBBBf', data, offset)
+      ascii = String.fromCharCode(code)
+      game.map.cells[y][x].setType(ascii, mine)
+      # We ate 5 bytes.
+      5
+
+    when net.UPDATE_MESSAGE
+      bytes = 0
+      for obj in game.objects
+        bytes += obj.deserialize data, offset + bytes
+      # The sum of what each object needed to deserialize.
+      bytes
+
+    else
+      # FIXME: nag
+      stop()
+      ws.close()
+      ws = null
+      # Tell handleMessage to bail.
+      -1
 
 
 # Game loop.
@@ -114,7 +164,8 @@ heartbeatTimer = 0
 start = ->
   return if gameTimer?
 
-  game.tick()
+  netctx.authoritative = no
+  net.inContext netctx, -> game.tick()
   lastTick = Date.now()
 
   gameTimer = window.setInterval(timerCallback, TICK_LENGTH_MS)
@@ -130,7 +181,8 @@ stop = ->
 timerCallback = ->
   now = Date.now()
   while now - lastTick >= TICK_LENGTH_MS
-    game.tick()
+    netctx.authoritative = no
+    net.inContext netctx, -> game.tick()
     lastTick += TICK_LENGTH_MS
 
     # Send the heartbeat (an empty message) every 10 ticks / 400ms.
