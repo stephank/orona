@@ -199,7 +199,9 @@ draw = ->
   renderer.centerOnObject game.player, (left, top, width, height) ->
     # Draw all canvas elements.
     renderer.drawMap(left, top, width, height)
-    drawTank(game.player)
+    for obj in game.objects
+      # FIXME: Massive assumption! Actually check if it's a tank.
+      drawTank(obj)
     drawOverlay()
 
   # Update all DOM HUD elements.
