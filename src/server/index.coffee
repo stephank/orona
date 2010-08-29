@@ -57,12 +57,19 @@ class Game
     # FIXME: notify clients
 
   onMessage: (tank, message) ->
-    if message.length == 0
-      # A hearbeat message.
-      tank.client.heartbeatTimer = 0
-      return
-
-    # FIXME: do something with the command here.
+    switch message
+      when '' then tank.client.heartbeatTimer = 0
+      when net.START_TURNING_CCW  then tank.turningCounterClockwise = yes
+      when net.STOP_TURNING_CCW   then tank.turningCounterClockwise = no
+      when net.START_TURNING_CW   then tank.turningClockwise = yes
+      when net.STOP_TURNING_CW    then tank.turningClockwise = no
+      when net.START_ACCELERATING then tank.accelerating = yes
+      when net.STOP_ACCELERATING  then tank.accelerating = no
+      when net.START_BRAKING      then tank.braking = yes
+      when net.STOP_BRAKING       then tank.braking = no
+      when net.START_SHOOTING     then tank.shooting = yes
+      when net.STOP_SHOOTING      then tank.shooting = no
+      else @onError(tank, 'Received an unknown command')
 
   # Broadcast a message to all connected clients.
   broadcast: (message) ->

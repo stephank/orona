@@ -9,6 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 {round, cos, sin, PI} = Math
 Simulation            = require '..'
+net                   = require '../net'
 map                   = require '../map'
 {TILE_SIZE_PIXEL,
  PIXEL_SIZE_WORLD,
@@ -71,22 +72,22 @@ init = ->
 handleKeydown = (e) ->
   return unless game?
   switch e.which
-    when 32 then game.player.shooting = yes
-    when 37 then game.player.turningCounterClockwise = yes
-    when 38 then game.player.accelerating = yes
-    when 39 then game.player.turningClockwise = yes
-    when 40 then game.player.braking = yes
+    when 32 then ws.send net.START_SHOOTING
+    when 37 then ws.send net.START_TURNING_CCW
+    when 38 then ws.send net.START_ACCELERATING
+    when 39 then ws.send net.START_TURNING_CW
+    when 40 then ws.send net.START_BRAKING
     else return
   e.preventDefault()
 
 handleKeyup = (e) ->
   return unless game?
   switch e.which
-    when 32 then game.player.shooting = no
-    when 37 then game.player.turningCounterClockwise = no
-    when 38 then game.player.accelerating = no
-    when 39 then game.player.turningClockwise = no
-    when 40 then game.player.braking = no
+    when 32 then ws.send net.STOP_SHOOTING
+    when 37 then ws.send net.STOP_TURNING_CCW
+    when 38 then ws.send net.STOP_ACCELERATING
+    when 39 then ws.send net.STOP_TURNING_CW
+    when 40 then ws.send net.STOP_BRAKING
     else return
   e.preventDefault()
 
