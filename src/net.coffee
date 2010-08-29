@@ -41,6 +41,9 @@ class Context
   # Notification sent by the simulation that the given object was destroyed.
   destroyed: (obj) ->
 
+  # Notification sent by the simulation that the given map cell has changed.
+  mapChanged: (cell, oldType, hadMine) ->
+
 
 # The local context is used for simulations that are not networked. All of the methods in the
 # above interface are implemented as no-ops.
@@ -49,6 +52,7 @@ class LocalContext
   activated: ->
   created: (obj) ->
   destroyed: (obj) ->
+  mapChanged: (cell, oldType, hadMine) ->
 
 # The server context is used on the server. It records changes in the object list, the critical
 # updates, and makes them available in the 'changes' attribute. It also provides a method 'dump'
@@ -68,6 +72,10 @@ class ServerContext
   destroyed: (obj) ->
     # FIXME: add to changes
 
+  # Record the map change.
+  mapChanged: (cell, oldType, hadMine) ->
+    # FIXME: add to changes
+
   # This method is specific to the server. It serializes all objects and concatenates the
   # updates into one large data block to be sent to the clients.
   dump: ->
@@ -78,6 +86,7 @@ class ServerContext
 # changes made locally and marking them as transient, until the next server update.
 class ClientContext
   constructor: (@game) ->
+    @transientMapCells = {}
     @transientDestructions = []
 
   # Before calling 'inContext', the user should reset this special property, based on whether it
@@ -96,11 +105,17 @@ class ClientContext
     # We can assume all objects after this are transient as well.
     @game.objects.splice i, @game.objects.length - i
 
-    # Now, revive the locally destroyed objects in reverse order.
+    # Now, restore locally changed map cells.
+    for idx, cell of transientMapCells
+      cell.setType cell._net_oldType, cell._net_hadMine
+    @transientMapCells = {}
+
+    # And revive destroyed objects in reverse order.
     return unless @transientDestructions.length > 0
     for obj in @transientDestructions
       @game.objects.splice obj.idx, 0, obj
     @transientDestructions = []
+
     # At this point, we need to reset all indices.
     for obj, i in @game.objects
       obj.idx = i
@@ -110,6 +125,16 @@ class ClientContext
   # Mark the object as transient if needed, so we can delete it on the next server update.
   created: (obj) ->
     obj._net_transient = not @authoritative
+
+  # Keep track of map changes that we made locally. We only remember the last state of a cell
+  # that the server told us about, so we can restore it to that state before processing
+  # server updates.
+  mapChanged: (cell, oldType, hadMine) ->
+    unless @authoritative or @transientMapCells[cell.idx]?
+      cell._net_oldType = oldType
+      cell._net_hadMine = hadMine
+      @transientMapCells[cell.idx] = cell
+    return
 
   # We need to keep track of objects that are deleted locally, but managed by the server.
   # So if this is not a server update, and not a locally created object either, add it to a list
@@ -140,5 +165,6 @@ exports.ClientContext = ClientContext
 exports.inContext = inContext
 
 # Delegate the functions used by the simulation to the active context.
-exports.created   = (obj) -> activeContext.created(obj)
-exports.destroyed = (obj) -> activeContext.destroyed(obj)
+exports.created    = (obj) -> activeContext.created(obj)
+exports.destroyed  = (obj) -> activeContext.destroyed(obj)
+exports.mapChanged = (cell, oldType, hadMine) -> activeContext.mapChanged(cell, oldType, hadMine)

@@ -7,10 +7,12 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, random, floor, min} = Math
+{round, random,
+ floor, min}      = Math
 {TILE_SIZE_WORLD,
  TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}            = require './constants'
+ MAP_SIZE_TILES}  = require './constants'
+net               = require './net'
 
 
 # All the different terrain types we know about.
@@ -41,6 +43,9 @@ class MapCell
   constructor: (@map, @x, @y) ->
     @type = TERRAIN_TYPES['^']
     @mine = no
+
+    # This is just a unique index for this cell; used in a couple of places for convenience.
+    @idx = @y * MAP_SIZE_TILES + @x
 
   getTankSpeed: (onBoat) ->
     return  0 if @pill?.armour > 0
@@ -84,10 +89,14 @@ class MapCell
     num += 8 if @mine
     num
 
-  setType: (newType, @mine, retileRadius) ->
-    @mine ||= no
+  setType: (newType, mine, retileRadius) ->
+    mine ||= no
     retileRadius ||= 1
 
+    oldType = @type
+    hadMine = @mine
+
+    @mine = mine
     if typeof(newType) == 'string'
       @type = TERRAIN_TYPES[newType]
       if newType.length != 1 or not @type?
@@ -104,6 +113,7 @@ class MapCell
     else
       @type = newType
 
+    net.mapChanged this, oldType, hadMine
     @map.retile(
       @x - retileRadius, @y - retileRadius,
       @x + retileRadius, @y + retileRadius
