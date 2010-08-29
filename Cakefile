@@ -163,9 +163,3 @@ task 'build:server', 'Compile the Bolo server-side modules', ->
 task 'build', 'Compile the Bolo client and server.', ->
   invoke 'build:server'
   invoke 'build:client'
-
-task 'run', 'Compile the Bolo client and server, then run the server', ->
-  invoke 'build'
-
-  puts "Starting Bolo server..."
-  spawn 'bin/bolo-server', [], customFds: [-1, process.stdout, process.stdout]
