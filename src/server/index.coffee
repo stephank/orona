@@ -92,7 +92,7 @@ class Game
 class Application
   constructor: ->
     @games = []
-    @timer = setTimeout =>
+    @timer = setInterval =>
       game.tick() for game in @games
       return
     , TICK_LENGTH_MS
