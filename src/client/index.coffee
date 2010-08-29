@@ -18,6 +18,7 @@ map                   = require '../map'
 ClientContext         = require './net'
 {decodeBase64}        = require './util'
 Offscreen2dRenderer   = require './renderer/offscreen_2d'
+EverardIsland         = require './everard'
 
 
 # Global variables.
@@ -49,48 +50,85 @@ init = ->
   hud = $('<div/>').appendTo('body')
   $(document).keydown(handleKeydown).keyup(handleKeyup)
 
-  # Connect and wait for the map.
-  ws = new WebSocket("ws://#{location.host}/demo")
-  ws.onmessage = (event) ->
-    # Load the map we just received.
-    gameMap = map.load decodeBase64(event.data)
-
-    # Initialize the game state.
+  if location.hostname.split('.')[1] == 'github'
+    # Start a local game.
+    # FIXME: find a neater way to do this. Perhaps we should have two classes on the client,
+    # just like Game on the server, to handle the different situations.
+    gameMap = map.load decodeBase64(EverardIsland)
     game = new Simulation(gameMap)
     renderer = new Offscreen2dRenderer(tilemap, game.map)
     game.map.setView(renderer)
-    netctx = new ClientContext(game)
-
-    # Initialize the HUD.
+    game.player = game.addTank()
     initHud()
+    start()
+  else
+    # Connect and wait for the map.
+    ws = new WebSocket("ws://#{location.host}/demo")
+    ws.onmessage = (event) ->
+      # Load the map we just received.
+      gameMap = map.load decodeBase64(event.data)
 
-    # Reconnect the socket message handler, and receive regular updates.
-    # The game loop will start on the welcome message.
-    ws.onmessage = handleMessage
+      # Initialize the game state.
+      game = new Simulation(gameMap)
+      renderer = new Offscreen2dRenderer(tilemap, game.map)
+      game.map.setView(renderer)
+      netctx = new ClientContext(game)
+
+      # Initialize the HUD.
+      initHud()
+
+      # Reconnect the socket message handler, and receive regular updates.
+      # The game loop will start on the welcome message.
+      ws.onmessage = handleMessage
 
 
 # Keyboard event handlers.
 
 handleKeydown = (e) ->
-  return unless ws?
-  switch e.which
-    when 32 then ws.send net.START_SHOOTING
-    when 37 then ws.send net.START_TURNING_CCW
-    when 38 then ws.send net.START_ACCELERATING
-    when 39 then ws.send net.START_TURNING_CW
-    when 40 then ws.send net.START_BRAKING
-    else return
+  # Are we networked?
+  if ws?
+    switch e.which
+      when 32 then ws.send net.START_SHOOTING
+      when 37 then ws.send net.START_TURNING_CCW
+      when 38 then ws.send net.START_ACCELERATING
+      when 39 then ws.send net.START_TURNING_CW
+      when 40 then ws.send net.START_BRAKING
+      else return
+  # Or running locally?
+  else if game?
+    switch e.which
+      when 32 then game.player.shooting = yes
+      when 37 then game.player.turningCounterClockwise = yes
+      when 38 then game.player.accelerating = yes
+      when 39 then game.player.turningClockwise = yes
+      when 40 then game.player.braking = yes
+  # Or just not finished loading at all?
+  else
+    return
   e.preventDefault()
 
 handleKeyup = (e) ->
-  return unless ws?
-  switch e.which
-    when 32 then ws.send net.STOP_SHOOTING
-    when 37 then ws.send net.STOP_TURNING_CCW
-    when 38 then ws.send net.STOP_ACCELERATING
-    when 39 then ws.send net.STOP_TURNING_CW
-    when 40 then ws.send net.STOP_BRAKING
-    else return
+  # Are we networked?
+  if ws?
+    switch e.which
+      when 32 then ws.send net.STOP_SHOOTING
+      when 37 then ws.send net.STOP_TURNING_CCW
+      when 38 then ws.send net.STOP_ACCELERATING
+      when 39 then ws.send net.STOP_TURNING_CW
+      when 40 then ws.send net.STOP_BRAKING
+      else return
+  # Or running locally?
+  else if game?
+    switch e.which
+      when 32 then game.player.shooting = no
+      when 37 then game.player.turningCounterClockwise = no
+      when 38 then game.player.accelerating = no
+      when 39 then game.player.turningClockwise = no
+      when 40 then game.player.braking = no
+      else return
+  # Or just not finished loading at all?
+  else
+    return
   e.preventDefault()
 
 
@@ -164,8 +202,12 @@ heartbeatTimer = 0
 start = ->
   return if gameTimer?
 
-  netctx.authoritative = no
-  net.inContext netctx, -> game.tick()
+  # Are we networked or not?
+  if netctx != null
+    netctx.authoritative = no
+    net.inContext netctx, -> game.tick()
+  else
+    game.tick()
   lastTick = Date.now()
 
   gameTimer = window.setInterval(timerCallback, TICK_LENGTH_MS)
@@ -181,12 +223,16 @@ stop = ->
 timerCallback = ->
   now = Date.now()
   while now - lastTick >= TICK_LENGTH_MS
-    netctx.authoritative = no
-    net.inContext netctx, -> game.tick()
+    # Are we networked or not?
+    if netctx != null
+      netctx.authoritative = no
+      net.inContext netctx, -> game.tick()
+    else
+      game.tick()
     lastTick += TICK_LENGTH_MS
 
     # Send the heartbeat (an empty message) every 10 ticks / 400ms.
-    if ++heartbeatTimer == 10
+    if ws != null and ++heartbeatTimer == 10
       heartbeatTimer = 0
       ws.send('')
 
@@ -239,8 +285,11 @@ initHud = ->
   $('<div/>', class: 'base').appendTo(container).data('base', base) for base in game.map.bases
 
   # Show WIP notice. This is really a temporary hack, so FIXME someday.
-  unless location.hostname in ['localhost', '127.0.0.1']
-    $('<div/>').text('This is a work-in-progress; less than alpha quality!').css(
+  if location.hostname.split('.')[1] == 'github'
+    $('<div/>').html('''
+      This is a work-in-progress; less than alpha quality!<br>
+      To see multiplayer in action, follow instructions on Github.
+    ''').css(
       'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
       'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
     ).appendTo(hud);
