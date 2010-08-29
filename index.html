@@ -4,18 +4,9 @@
 <title>Bolo</title>
 <link rel="stylesheet" media="screen" href="bolo.css">
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
-<script src="yabble.js"></script>
 <script src="bolo-bundle.js"></script>
-<script>
-$(function() {
-  require.ensure(['bolo/client'], function(require) {
-    require('bolo/client').init();
-  })
-});
-</script>
+<script>$(function() { require('bolo/client').init(); });</script>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="hud"></div>
 </body>
 </html>
