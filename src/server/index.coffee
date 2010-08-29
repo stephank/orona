@@ -66,7 +66,6 @@ class Game
 
   onDisconnect: (tank) ->
     @sim.removeTank(tank)
-    # FIXME: notify clients
 
   onMessage: (tank, message) ->
     switch message
