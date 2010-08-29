@@ -68,7 +68,6 @@ class Tank
     @reload = 13
     @shells--
     # FIXME: fire a projectile, play a sound.
-    console.debug 'BAM!'
 
   turn: ->
     # Determine turn rate.

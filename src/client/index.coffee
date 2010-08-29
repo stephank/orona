@@ -91,7 +91,6 @@ handleKeyup = (e) ->
   e.preventDefault()
 
 handleMessage = (e) ->
-  console.log "Got message: #{e.data}"
 
 
 # Game loop.
