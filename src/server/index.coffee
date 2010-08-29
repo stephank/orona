@@ -37,11 +37,23 @@ class Game
     ws.on 'error', (exception) => @onError(tank, exception)
     ws.on 'timeout', => @onError(tank, 'Timed out')
 
+    # FIXME: buffer and send all of this in a single packet.
+
     # Send the current map state.
     mapData = new Buffer(@sim.map.dump())
     ws.sendMessage mapData.toString('base64')
 
-    # FIXME: Synchronize the object list with this new client
+    # To synchronize the object list to the client, we simulate creation of all objects.
+    net.inContext @netctx, ->
+      for obj in @sim.objects
+        net.created obj
+    data = new Buffer(@netctx.changes)
+    ws.sendMessage data.toString('base64')
+
+    # Send the welcome message, along with the index of this player's tank.
+    # FIXME: pending code to pack data
+    #data = something something [net.WELCOME_MESSAGE, tank.idx]
+    #ws.sendMessage data.toString('base64')
 
   onEnd: (tank) ->
     tank.client.end()

@@ -27,6 +27,9 @@ the Free Software Foundation; either version 2 of the License, or
 # a global networking context object is used that handles all networking state. The simulation
 # only calls into a couple of methods, and is ignorant of what happens from there.
 
+# FIXME: still missing here is synchronization of pills and bases.
+# Perhaps those should be objects too?
+
 
 # The interface provided by network contexts. Unused, but here for documentation.
 class Context
@@ -67,6 +70,7 @@ exports.mapChanged = (cell, oldType, hadMine) -> activeContext?.mapChanged(cell,
 
 # These are the server message identifiers both sides need to know about.
 # The server sends binary data (encoded as base64). So we need to compare character codes.
+exports.WELCOME_MESSAGE   = 'W'.charCodeAt(0)
 exports.CREATE_MESSAGE    = 'C'.charCodeAt(0)
 exports.DESTROY_MESSAGE   = 'D'.charCodeAt(0)
 exports.MAPCHANGE_MESSAGE = 'M'.charCodeAt(0)
