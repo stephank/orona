@@ -10,6 +10,8 @@ the Free Software Foundation; either version 2 of the License, or
 {round, ceil, min,
  max, sin, cos, PI} = Math
 {TILE_SIZE_WORLD}   = require './constants'
+net                 = require './net'
+{pack, unpack}      = require './struct'
 
 
 class Tank
@@ -38,6 +40,26 @@ class Tank
     @shooting = no
 
     @onBoat = yes
+
+  # The alternate constructor used by networking.
+  constructFromNetwork: (@game, data) ->
+    @deserialize data
+
+  # These methods are used by networking to synchronize state.
+  serialize: ->
+    speed = round(@speed * 4)
+    pack 'HHBBBBBBBBffffff', @x, @y, @direction, speed, @turnSpeedup, @shells, @mines, @armour,
+      @trees, @reload, @accelerating, @braking, @turningClockwise, @turningCounterClockwise,
+      @shooting, @onBoat
+
+  deserialize: (data, offset) ->
+    [@x, @y, @direction, speed, @turnSpeedup, @shells, @mines, @armour,
+      @trees, @reload, @accelerating, @braking, @turningClockwise, @turningCounterClockwise,
+      @shooting, @onBoat] = unpack 'HHBBBBBBBBffffff', data, offset
+    @speed = speed / 4
+    # We ate 13 bytes.
+    13
+
 
   getDirection16th: ->
     round((@direction - 1) / 16) % 16
@@ -167,6 +189,9 @@ class Tank
     @cell.setType(' ', no, 0)
     @onBoat = yes
 
+
+# Networking.
+net.registerType 'T', Tank
 
 # Exports.
 module.exports = Tank

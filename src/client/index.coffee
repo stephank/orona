@@ -55,22 +55,19 @@ init = ->
     game = new Simulation(gameMap)
     renderer = new Offscreen2dRenderer(tilemap, game.map)
     game.map.setView(renderer)
-    game.player = game.addTank()
 
     # Initialize the HUD.
     initHud()
 
-    # Start the game loop.
-    start()
-
-    # Reconnect the socket message handler.
+    # Reconnect the socket message handler, and receive regular updates.
+    # The game loop will start on the welcome message.
     ws.onmessage = handleMessage
 
 
 # Event handlers.
 
 handleKeydown = (e) ->
-  return unless game?
+  return unless ws?
   switch e.which
     when 32 then ws.send net.START_SHOOTING
     when 37 then ws.send net.START_TURNING_CCW
@@ -81,7 +78,7 @@ handleKeydown = (e) ->
   e.preventDefault()
 
 handleKeyup = (e) ->
-  return unless game?
+  return unless ws?
   switch e.which
     when 32 then ws.send net.STOP_SHOOTING
     when 37 then ws.send net.STOP_TURNING_CCW
@@ -92,6 +89,20 @@ handleKeyup = (e) ->
   e.preventDefault()
 
 handleMessage = (e) ->
+  data = decodeBase64(e.data)
+  # FIXME: loop over the commands, and call handleCommand for each of them.
+
+handleCommand = (command, data, offset) ->
+  switch command
+    when net.WELCOME_MESSAGE
+      # Identify which tank we control.
+      tank_idx = unpack('I', data, offset)[0]
+      game.player = game.objects[tank_idx]
+      # Start the game loop.
+      start()
+      # We ate 4 bytes.
+      4
+    # FIXME: handle other messages, disconnect on unknown message.
 
 
 # Game loop.

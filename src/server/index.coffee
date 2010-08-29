@@ -15,6 +15,7 @@ ServerContext    = require './net'
 Simulation       = require '..'
 map              = require '../map'
 net              = require '../net'
+{pack}           = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 
 
@@ -44,16 +45,15 @@ class Game
     ws.sendMessage mapData.toString('base64')
 
     # To synchronize the object list to the client, we simulate creation of all objects.
-    net.inContext @netctx, ->
+    net.inContext @netctx, =>
       for obj in @sim.objects
         net.created obj
     data = new Buffer(@netctx.changes)
     ws.sendMessage data.toString('base64')
 
     # Send the welcome message, along with the index of this player's tank.
-    # FIXME: pending code to pack data
-    #data = something something [net.WELCOME_MESSAGE, tank.idx]
-    #ws.sendMessage data.toString('base64')
+    data = new Buffer(pack('BI', net.WELCOME_MESSAGE, tank.idx))
+    ws.sendMessage data.toString('base64')
 
   onEnd: (tank) ->
     tank.client.end()
