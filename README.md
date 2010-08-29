@@ -69,7 +69,7 @@ The source file 'src/server/websocket.coffee' is a modification/rewrite based on
 
  * [Socket.IO], © 2010 LearnBoost, MIT-licensed.
 
-The source file 'public/brequire.js' is a modification based on:
+The source file 'src/client/brequire.coffee' is a modification based on:
 
  * [Brequire], © 2010 Jonah Fox.
 
