@@ -12,7 +12,6 @@ the Free Software Foundation; either version 2 of the License, or
 # - Yabble's yabbler.js, © 2010 James Brantly
 
 # FIXME: watch functionality, as in 'coffee -w ...'
-# FIXME: minify client bundle
 
 {puts}       = require 'sys'
 fs           = require 'fs'
@@ -132,23 +131,33 @@ buildOutputPath = (module) ->
 
 task 'build:client', 'Compile the Bolo client-side module bundle', ->
   puts "Building Bolo client JavaScript bundle..."
-  output = fs.openSync 'public/bolo-bundle.js', 'w'
+  output = fs.createWriteStream 'public/bolo-bundle.js'
+
+  realOutput = output
+  if closure = process.env.CLOSURE
+    closure = spawn 'java', ['-jar', closure]
+    output = closure.stdin
+    closure.stdout.on 'data', (buffer) -> realOutput.write buffer
+    closure.stderr.on 'data', (buffer) -> process.stdout.write buffer
+    closure.on 'exit', -> realOutput.end()
 
   brequireFile = 'src/client/brequire.coffee'
   brequireCode = fs.readFileSync brequireFile, 'utf-8'
   js = CoffeeScript.compile brequireCode, fileName: brequireFile
-  fs.writeSync output, js
+  output.write js
   puts "Compiled '#{brequireFile}'."
 
   iterateDependencyTree 'src/client/index.coffee', 'bolo/client', (module) ->
     js = CoffeeScript.compile module.code, fileName: module.file, noWrap: yes
     wrappedJs = wrapModule module, js
-    fs.writeSync output, wrappedJs
+    output.write wrappedJs
     puts "Compiled '#{module.file}'."
 
-  fs.closeSync output
-  puts "Done."
-  puts ""
+  output.end()
+  puts "Waiting for Closure to finish..." if closure
+  realOutput.on 'close', ->
+    puts "Done."
+    puts ""
 
 task 'build:server', 'Compile the Bolo server-side modules', ->
   puts "Building Bolo server modules..."
