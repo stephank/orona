@@ -51,10 +51,10 @@ pack = (fmt) ->
     if c == 'f'
       # A bit field.
       if bits == null
-        bits = 1
+        bits = if !!arg then 1 else 0
         bitsIndex = 1
       else
-        bits |= 1 << bitsIndex
+        bits |= 1 << bitsIndex if !!arg
         bitsIndex++
         # We've collected eight, so add the byte.
         flushBitFields() if bitsIndex == 8
