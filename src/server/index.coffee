@@ -34,6 +34,7 @@ class Game
     data = new Buffer(@netctx.changes)
     @broadcast data.toString('base64')
 
+    # Set-up the websocket parameters.
     tank.client = ws
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
@@ -42,22 +43,21 @@ class Game
     ws.on 'error', (exception) => @onError(tank, exception)
     ws.on 'timeout', => @onError(tank, 'Timed out')
 
-    # FIXME: buffer and send all of this in a single packet.
+    ws.buffered =>
+      # Send the current map state.
+      mapData = new Buffer(@sim.map.dump())
+      ws.sendMessage mapData.toString('base64')
 
-    # Send the current map state.
-    mapData = new Buffer(@sim.map.dump())
-    ws.sendMessage mapData.toString('base64')
+      # To synchronize the object list to the client, we simulate creation of all objects.
+      net.inContext @netctx, =>
+        for obj in @sim.objects
+          net.created obj
+      data = new Buffer(@netctx.changes)
+      ws.sendMessage data.toString('base64')
 
-    # To synchronize the object list to the client, we simulate creation of all objects.
-    net.inContext @netctx, =>
-      for obj in @sim.objects
-        net.created obj
-    data = new Buffer(@netctx.changes)
-    ws.sendMessage data.toString('base64')
-
-    # Send the welcome message, along with the index of this player's tank.
-    data = new Buffer(pack('BI', net.WELCOME_MESSAGE, tank.idx))
-    ws.sendMessage data.toString('base64')
+      # Send the welcome message, along with the index of this player's tank.
+      data = new Buffer(pack('BI', net.WELCOME_MESSAGE, tank.idx))
+      ws.sendMessage data.toString('base64')
 
   onEnd: (tank) ->
     return unless ws = tank.client
@@ -116,8 +116,8 @@ class Game
   tick: ->
     net.inContext @netctx, => @sim.tick()
 
-    # FIXME: Somehow buffer and flush here. Right now, it's sending a packet for every socket
-    # write, which results in 6 packets: '\x00', criticals, '\xFF', '\x00', attributes, '\xFF'.
+    # Buffer everything to minimize the number of packets.
+    WebSocket.prototype.buffered()
 
     # Send critical updates.
     if @netctx.changes.length > 0
@@ -128,10 +128,13 @@ class Game
     if @oddTick = !@oddTick
       data = new Buffer(@netctx.dump())
       @broadcastUnreliable data.toString('base64')
+
+    for {client} in @sim.tanks
+      continue if client == null
       # Increment the heartbeat counters.
-      for {client} in @sim.tanks
-        continue if client == null
-        client.heartbeatTimer++
+      client.heartbeatTimer++ if @oddTick
+      # Flush all buffers.
+      client.flush()
 
     return
 

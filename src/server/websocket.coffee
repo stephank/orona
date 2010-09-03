@@ -43,8 +43,9 @@ class WebSocket extends EventEmitter
     # FIXME: should be buffer
     @data = initialData.toString('binary')
 
-    # @request and @queued are temporary, while the handshake is in progress.
-    @queued = []
+    # The @request attribute is temporary, while the handshake is in progress.
+    # We also queue packets while the handshake is in progress.
+    @buffered()
 
     # Start processing the handshake. We will emit events, so postpone it
     # until the next event loop tick, allowing the user to install handlers.
@@ -104,9 +105,7 @@ class WebSocket extends EventEmitter
     @connection.write md5
 
     # Flush queued messages, and clean up stuff we no longer need.
-    for messsage in @queued
-      @sendMessage message
-    delete @queued
+    @flush()
     delete @request
 
     # Signal the user.
@@ -132,18 +131,76 @@ class WebSocket extends EventEmitter
         @emit 'message', chunk.slice(1)
     return
 
+  # Send a single message.
   sendMessage: (message) ->
-    if @request?
-      # Don't interrupt the handshake.
-      @queued.push message
+    # Check the bufferAll marker on the prototype.
+    @buffered() if WebSocket.bufferAll
+
+    messageLength = Buffer.byteLength message, 'utf-8'
+    if @queued?
+      # Queue the message if needed.
+      # This happens during the handshake or when the user has called buffered().
+      @queued.push [message, messageLength]
+      @queuedTotalLength += messageLength
     else
+      # Immediately flush the message.
+      @queued = [[message, messageLength]]
+      @queuedTotalLength = messageLength
+      @flush()
+    return
+
+  # Request that the following messages be buffered. Multiple messages are thus tightly packed,
+  # reducing the number of network packets.
+  #
+  # This method may be called with a callback, to buffer for the duration of the callback,
+  # or the user may call flush() when done.
+  #
+  # This method may also be called on the prototype so as to buffer *all* WebSockets. But
+  # unfortunately, an invocation with callback is not possible in that case. The prototype has
+  # no way of knowing which WebSockets exist.
+  buffered: (cb) ->
+    if @queued?
+      return cb() if cb?
+      return
+
+    if @connection
+      @queued = []
+      @queuedTotalLength = 0
+    else
+      # Hey, we're the prototype!
+      throw "Cannot call buffered() on prototype with callback." if cb?
+      @bufferAll = yes
+
+    if cb?
+      retval = cb()
+      @flush()
+      return retval
+
+  # Flush the messages collected so far with buffered(), and stop buffering.
+  flush: ->
+    return if not @queued?
+
+    unless @queued.length == 0
+      # Build a large buffer containing all messages in WebSockets format.
+      buffer = new Buffer(@queuedTotalLength + 2 * @queued.length)
+      pos = 0
+      for [message, messageLength] in @queued
+        buffer[pos] = 0x00
+        buffer.write message, pos + 1, 'utf-8'
+        pos += messageLength + 2
+        buffer[pos - 1] = 0xFF
+
+    # Clean up.
+    delete WebSocket.bufferAll
+    delete @queued
+    delete @queuedTotalLength
+
+    if buffer?
+      # Send it off.
       try
-        @connection.write '\x00', 'binary'
-        @connection.write message, 'utf8'
-        @connection.write '\xFF', 'binary'
+        @connection.write buffer
       catch e
         @emit 'error', e
-    return
 
   # Delegate socket methods and events.
 
