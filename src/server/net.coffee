@@ -40,7 +40,7 @@ class ServerContext
   # This method is specific to the server. It serializes all objects and concatenates the
   # updates into one large data block to be sent to the clients.
   dump: ->
-    data = pack('B', net.UPDATE_MESSAGE)
+    data = [net.UPDATE_MESSAGE]
     for obj in @game.objects
       data = data.concat obj.serialize()
     data
