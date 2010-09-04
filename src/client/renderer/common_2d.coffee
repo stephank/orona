@@ -8,7 +8,7 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {round}            = Math
-{TILE_SIZE_PIXEL,
+{TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD} = require '../../constants'
 
 
@@ -37,8 +37,8 @@ class Common2dRenderer
 
   drawTile: (tx, ty, dx, dy) ->
     @ctx.drawImage @tilemap,
-      tx * TILE_SIZE_PIXEL, ty * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      dx,                   dy,                   TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+      tx * TILE_SIZE_PIXELS, ty * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
+      dx,                    dy,                    TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 
   centerOnObject: (obj, cb) ->
     @ctx.save()

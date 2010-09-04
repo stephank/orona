@@ -157,7 +157,7 @@ class WebSocket extends EventEmitter
   #
   # This method may also be called on the prototype so as to buffer *all* WebSockets. But
   # unfortunately, an invocation with callback is not possible in that case. The prototype has
-  # no way of knowing which WebSockets exist.
+  # no way of knowing which WebSockets exist, so the user must iterate and flush them afterwards.
   buffered: (cb) ->
     if @queued?
       return cb() if cb?
@@ -178,7 +178,8 @@ class WebSocket extends EventEmitter
 
   # Flush the messages collected so far with buffered(), and stop buffering.
   flush: ->
-    return if not @queued?
+    # Let's not do anything if there was no buffered() call, or we're still in the handshake.
+    return if not @queued? or @request
 
     unless @queued.length == 0
       # Build a large buffer containing all messages in WebSockets format.

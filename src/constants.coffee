@@ -13,7 +13,7 @@ the Free Software Foundation; either version 2 of the License, or
 # A single tile's size in world units.
 exports.TILE_SIZE_WORLD = 256
 # A single tile's size in CSS pixels.
-exports.TILE_SIZE_PIXEL = 32
+exports.TILE_SIZE_PIXELS = 32
 
 # A single CSS pixel's size in world units.
 exports.PIXEL_SIZE_WORLD = 8

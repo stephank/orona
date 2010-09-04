@@ -28,12 +28,13 @@ decodeBase64 = (input) ->
 
     # Gather the numerical values of the next group of 4 characters.
     quadIndex = i % 4
-    if       65 <= cc <=  90 then quad[quadIndex] = cc - 65 # A-Z
-    else if  97 <= cc <= 122 then quad[quadIndex] = cc - 71 # a-z
-    else if  48 <= cc <=  57 then quad[quadIndex] = cc + 4  # 0-9
-    else if        cc == 43  then quad[quadIndex] = 62      # +
-    else if        cc == 47  then quad[quadIndex] = 63      # /
-    else if        cc == 61  then quad[quadIndex] = -1      # Padding
+    quad[quadIndex] =
+    if      65 <= cc <=  90 then cc - 65 # A-Z
+    else if 97 <= cc <= 122 then cc - 71 # a-z
+    else if 48 <= cc <=  57 then cc + 4  # 0-9
+    else if       cc ==  43 then 62      # +
+    else if       cc ==  47 then 63      # /
+    else if       cc ==  61 then -1      # Padding
     else throw new Error "Invalid base64 input character: #{c}"
     # Did we complete a quad?
     continue unless quadIndex == 3

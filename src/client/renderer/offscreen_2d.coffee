@@ -7,10 +7,10 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor}           = Math
-{TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}  = require '../../constants'
-Common2dRenderer  = require './common_2d'
+{floor}            = Math
+{TILE_SIZE_PIXELS,
+ MAP_SIZE_TILES}   = require '../../constants'
+Common2dRenderer   = require './common_2d'
 
 
 # This renderer builds on the Direct2dRenderr, but caches segments of the
@@ -28,7 +28,7 @@ SEGMENT_SIZE_TILES = 16
 # The width and height of the map in segments.
 MAP_SIZE_SEGMENTS = MAP_SIZE_TILES / SEGMENT_SIZE_TILES
 # The width and height of a segment in pixels.
-SEGMENT_SIZE_PIXEL = SEGMENT_SIZE_TILES * TILE_SIZE_PIXEL
+SEGMENT_SIZE_PIXEL = SEGMENT_SIZE_TILES * TILE_SIZE_PIXELS
 
 
 # This class represents a single segment.
@@ -76,8 +76,8 @@ class CachedSegment
   onRetile: (cell, tx, ty) ->
     return unless @canvas
     @ctx.drawImage @renderer.tilemap,
-      tx * TILE_SIZE_PIXEL,     ty * TILE_SIZE_PIXEL,     TILE_SIZE_PIXEL, TILE_SIZE_PIXEL,
-      cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL, TILE_SIZE_PIXEL, TILE_SIZE_PIXEL
+      tx * TILE_SIZE_PIXELS,     ty * TILE_SIZE_PIXELS,     TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
+      cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 
 class Offscreen2dRenderer extends Common2dRenderer
   constructor: (tilemap, map) ->

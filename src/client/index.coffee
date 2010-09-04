@@ -12,11 +12,11 @@ Simulation            = require '..'
 net                   = require '../net'
 map                   = require '../map'
 {unpack}              = require '../struct'
-{TILE_SIZE_PIXEL,
+{TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD,
  TICK_LENGTH_MS}      = require '../constants'
 ClientContext         = require './net'
-{decodeBase64}        = require './util'
+{decodeBase64}        = require './base64'
 Offscreen2dRenderer   = require './renderer/offscreen_2d'
 EverardIsland         = require './everard'
 
@@ -255,18 +255,18 @@ draw = ->
 
 drawTank = (tank) ->
   tile = tank.getTile()
-  x = round(tank.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXEL / 2
-  y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXEL / 2
+  x = round(tank.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
+  y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
 
   renderer.drawTile tile[0], tile[1], x, y
 
 drawOverlay = ->
   # FIXME: variable firing distance
   # FIXME: hide when dead
-  distance = 7 * TILE_SIZE_PIXEL
+  distance = 7 * TILE_SIZE_PIXELS
   rad = (256 - game.player.direction) * 2 * PI / 256
-  x = round(game.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXEL / 2
-  y = round(game.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXEL / 2
+  x = round(game.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
+  y = round(game.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
 
   renderer.drawTile 17, 4, x, y
 

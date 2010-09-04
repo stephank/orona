@@ -7,9 +7,9 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{floor, ceil}     = Math
-{TILE_SIZE_PIXEL} = require '../../constants'
-Common2dRenderer  = require './common_2d'
+{floor, ceil}      = Math
+{TILE_SIZE_PIXELS} = require '../../constants'
+Common2dRenderer   = require './common_2d'
 
 
 # This is probably the simplest possible renderer there is. It simply
@@ -27,14 +27,14 @@ class Direct2dRenderer extends Common2dRenderer
     ey = sy + h - 1
 
     # Calculate tile boundaries.
-    stx = floor(sx / TILE_SIZE_PIXEL)
-    sty = floor(sy / TILE_SIZE_PIXEL)
-    etx =  ceil(ex / TILE_SIZE_PIXEL)
-    ety =  ceil(ey / TILE_SIZE_PIXEL)
+    stx = floor(sx / TILE_SIZE_PIXELS)
+    sty = floor(sy / TILE_SIZE_PIXELS)
+    etx =  ceil(ex / TILE_SIZE_PIXELS)
+    ety =  ceil(ey / TILE_SIZE_PIXELS)
 
     # Iterate each tile in view.
     @map.each (cell) =>
-      @drawTile cell.tile[0], cell.tile[1], cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL
+      @drawTile cell.tile[0], cell.tile[1], cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
     , stx, sty, etx, ety
 
 

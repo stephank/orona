@@ -8,7 +8,7 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {round, floor, ceil} = Math
-{TILE_SIZE_PIXEL,
+{TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD}   = require '../../constants'
 
 
@@ -97,8 +97,8 @@ class WebglRenderer
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, @tilemap)
 
     # Preparations for drawTile. Calculate the tile size in the texture coordinate space.
-    @hTileSizeTexture = TILE_SIZE_PIXEL / @tilemap.width
-    @vTileSizeTexture = TILE_SIZE_PIXEL / @tilemap.height
+    @hTileSizeTexture = TILE_SIZE_PIXELS / @tilemap.width
+    @vTileSizeTexture = TILE_SIZE_PIXELS / @tilemap.height
 
     # Compile the shaders.
     @program = gl.createProgram()
@@ -218,8 +218,8 @@ class WebglRenderer
     ety = sty + @vTileSizeTexture
 
     # Calculate pixel coordinate bounds for the destination.
-    edx = sdx + TILE_SIZE_PIXEL
-    edy = sdy + TILE_SIZE_PIXEL
+    edx = sdx + TILE_SIZE_PIXELS
+    edy = sdy + TILE_SIZE_PIXELS
 
     # Update the quad array.
     @vertexArray.set([
@@ -244,17 +244,17 @@ class WebglRenderer
     ey = sy + h - 1
 
     # Calculate tile boundaries.
-    stx = floor(sx / TILE_SIZE_PIXEL)
-    sty = floor(sy / TILE_SIZE_PIXEL)
-    etx =  ceil(ex / TILE_SIZE_PIXEL)
-    ety =  ceil(ey / TILE_SIZE_PIXEL)
+    stx = floor(sx / TILE_SIZE_PIXELS)
+    sty = floor(sy / TILE_SIZE_PIXELS)
+    etx =  ceil(ex / TILE_SIZE_PIXELS)
+    ety =  ceil(ey / TILE_SIZE_PIXELS)
 
     # Iterate each tile in view.
     @map.each (cell) =>
       # FIXME: use one large VBO to do this.
       @drawTile(
         cell.tile[0], cell.tile[1],
-        cell.x * TILE_SIZE_PIXEL, cell.y * TILE_SIZE_PIXEL
+        cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
       )
     , stx, sty, etx, ety
 

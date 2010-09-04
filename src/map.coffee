@@ -8,15 +8,16 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {round, random,
- floor, min}      = Math
+ floor, min}       = Math
 {TILE_SIZE_WORLD,
- TILE_SIZE_PIXEL,
- MAP_SIZE_TILES}  = require './constants'
-net               = require './net'
+ TILE_SIZE_PIXELS,
+ MAP_SIZE_TILES}   = require './constants'
+net                = require './net'
 
 
-# All the different terrain types we know about.
-NUM_TO_TERRAIN = [
+# All the different terrain types we know about, indexed both by the numeric ID used in the
+# binary BMAP format, as well as by ASCII code we use here in Orona.
+TERRAIN_TYPES = [
   { ascii: '|', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'building'        }
   { ascii: ' ', tankSpeed:  3, tankTurn: 0.25, manSpeed:  0, description: 'river'           }
   { ascii: '~', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'swamp'           }
@@ -29,10 +30,9 @@ NUM_TO_TERRAIN = [
   { ascii: 'b', tankSpeed: 16, tankTurn: 1.00, manSpeed: 16, description: 'river with boat' }
   { ascii: '^', tankSpeed:  3, tankTurn: 0.50, manSpeed:  0, description: 'deep sea'        }
 ]
-TERRAIN_TYPES = {}
 
 createTerrainMap = ->
-  for type in NUM_TO_TERRAIN
+  for type in TERRAIN_TYPES
     TERRAIN_TYPES[type.ascii] = type
 
 createTerrainMap()
@@ -85,7 +85,7 @@ class MapCell
 
   getNumericType: ->
     return -1 if @type.ascii == '^'
-    num = NUM_TO_TERRAIN.indexOf @type
+    num = TERRAIN_TYPES.indexOf @type
     num += 8 if @mine
     num
 
@@ -107,7 +107,7 @@ class MapCell
         @mine = yes
       else
         @mine = no
-      @type = NUM_TO_TERRAIN[newType]
+      @type = TERRAIN_TYPES[newType]
       if not @type?
         throw "Invalid terrain type: #{newType}"
     else
@@ -422,7 +422,7 @@ class Map
 
   # Get the cell at the given pixel coordinates, or return a dummy cell.
   cellAtPixel: (x, y) ->
-    @cellAtTile floor(x / TILE_SIZE_PIXEL), floor(y / TILE_SIZE_PIXEL)
+    @cellAtTile floor(x / TILE_SIZE_PIXELS), floor(y / TILE_SIZE_PIXELS)
 
   # Get the cell at the given world coordinates, or return a dummy cell.
   cellAtWorld: (x, y) ->

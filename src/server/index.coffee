@@ -96,19 +96,17 @@ class Game
 
   # Broadcast a message to all connected clients.
   broadcast: (message) ->
-    for {client} in @sim.tanks
-      continue if client == null
+    for {client} in @sim.tanks when client != null
       client.sendMessage(message)
     return
 
   # An unreliable broadcast message is a message that may be dropped. Each client sends a periodic
   # hearbeat. If not received in a timely fashion, we drop some of the client's messages.
   broadcastUnreliable: (message) ->
-    for {client} in @sim.tanks
+    for {client} in @sim.tanks when client != null
       # Ticks are every 20ms. Network updates are every odd tick, i.e. every 40ms.
       # Allow a client to lag 20 updates behind, i.e. 800ms, before dropping messages.
-      continue if client == null or client.heartbeatTimer > 20
-      client.sendMessage(message)
+      client.sendMessage(message) unless client.heartbeatTimer > 20
     return
 
   # Simulation updates.
@@ -129,8 +127,7 @@ class Game
       data = new Buffer(@netctx.dump())
       @broadcastUnreliable data.toString('base64')
 
-    for {client} in @sim.tanks
-      continue if client == null
+    for {client} in @sim.tanks when client != null
       # Increment the heartbeat counters.
       client.heartbeatTimer++ if @oddTick
       # Flush all buffers.
@@ -143,7 +140,8 @@ class Application
   constructor: ->
     @games = []
     @timer = setInterval =>
-      game.tick() for game in @games
+      for game in @games
+        game.tick()
       return
     , TICK_LENGTH_MS
 
