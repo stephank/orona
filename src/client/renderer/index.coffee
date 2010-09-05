@@ -16,7 +16,7 @@ class Renderer extends MapView
   # The constructor takes the Image object that represents the tilemap image, and the Map instance
   # for the map it needs to draw. Once the constructor finishes, Map#setView is called to hook up
   # this renderer instance, which causes onRetile to be invoked once for each tile to initialize.
-  constructor: (tilemap, map) ->
+  constructor: (images, map) ->
 
   # This methods takes x and y coordinates to center the screen on. The callback provided should be
   # invoked exactly once. Any drawing operations used from within the callback will have a

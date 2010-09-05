@@ -13,7 +13,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 
 class Common2dRenderer
-  constructor: (@tilemap, @map) ->
+  constructor: (@images, @map) ->
     # Initialize the canvas.
     @canvas = $('<canvas/>')
     try
@@ -36,7 +36,7 @@ class Common2dRenderer
     )
 
   drawTile: (tx, ty, dx, dy) ->
-    @ctx.drawImage @tilemap,
+    @ctx.drawImage @images.base,
       tx * TILE_SIZE_PIXELS, ty * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
       dx,                    dy,                    TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 

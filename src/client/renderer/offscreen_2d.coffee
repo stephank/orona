@@ -75,12 +75,12 @@ class CachedSegment
 
   onRetile: (cell, tx, ty) ->
     return unless @canvas
-    @ctx.drawImage @renderer.tilemap,
+    @ctx.drawImage @renderer.images.base,
       tx * TILE_SIZE_PIXELS,     ty * TILE_SIZE_PIXELS,     TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
       cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 
 class Offscreen2dRenderer extends Common2dRenderer
-  constructor: (tilemap, map) ->
+  constructor: (images, map) ->
     super
 
     # Build a 2D array of map segments.

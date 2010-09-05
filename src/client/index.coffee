@@ -16,6 +16,7 @@ map                   = require '../map'
  PIXEL_SIZE_WORLD,
  TICK_LENGTH_MS}      = require '../constants'
 ClientContext         = require './net'
+Loader                = require './loader'
 {decodeBase64}        = require './base64'
 Offscreen2dRenderer   = require './renderer/offscreen_2d'
 EverardIsland         = require './everard'
@@ -23,8 +24,8 @@ EverardIsland         = require './everard'
 
 # Global variables.
 
-# The tilemap Image object.
-tilemap = null
+# The loader instance to grab resources.
+loader = null
 # The jQuery object referring to the HUD.
 hud = null
 # The game state object.
@@ -38,12 +39,17 @@ ws = null
 
 
 init = ->
-  # First, make sure the tilemap is loaded.
-  unless tilemap?
-    tilemap = new Image()
-    $(tilemap).load(init)
+  # First, make sure all resources are loaded.
+  unless loader?
+    loader = new Loader()
+    loader.onComplete = init
     # FIXME: Handle errors
-    tilemap.src = 'img/tiles2x.png'
+
+    loader.image 'base'
+    loader.image 'styled'
+    loader.image 'overlay'
+
+    loader.finish()
     return
 
   # Initialize all the basics.
@@ -56,7 +62,7 @@ init = ->
     # just like Game on the server, to handle the different situations.
     gameMap = map.load decodeBase64(EverardIsland)
     game = new Simulation(gameMap)
-    renderer = new Offscreen2dRenderer(tilemap, game.map)
+    renderer = new Offscreen2dRenderer(loader.resources.images, game.map)
     game.map.setView(renderer)
     game.player = game.addTank()
     initHud()
@@ -70,7 +76,7 @@ init = ->
 
       # Initialize the game state.
       game = new Simulation(gameMap)
-      renderer = new Offscreen2dRenderer(tilemap, game.map)
+      renderer = new Offscreen2dRenderer(loader.resources.images, game.map)
       game.map.setView(renderer)
       netctx = new ClientContext(game)
 
