@@ -199,11 +199,11 @@ class WebglRenderer
     arr[13] = py * -yt + 1
     @ctx.uniformMatrix4fv(@uTransform, no, arr)
 
-  centerOnObject: (obj, cb) ->
+  centerOn: (x, y, cb) ->
     # Apply a translation that centers everything around the player.
     {width, height} = @canvas[0]
-    left = round(obj.x / PIXEL_SIZE_WORLD - width  / 2)
-    top =  round(obj.y / PIXEL_SIZE_WORLD - height / 2)
+    left = round(x / PIXEL_SIZE_WORLD - width  / 2)
+    top =  round(y / PIXEL_SIZE_WORLD - height / 2)
     @setTranslation(-left, -top)
 
     cb(left, top, width, height)

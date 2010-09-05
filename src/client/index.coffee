@@ -241,11 +241,21 @@ timerCallback = ->
 
 # Graphics.
 
+lastCenter = [0, 0]
 draw = ->
-  renderer.centerOnObject game.player, (left, top, width, height) ->
+  {x, y} = game.player
+
+  # Remember or restore the last center position. We use this after tank
+  # death, so as to keep drawing something useful while we fade.
+  if x == -1 or y == -1
+    [x, y] = lastCenter
+  else
+    lastCenter = [x, y]
+
+  renderer.centerOn x, y, (left, top, width, height) ->
     # Draw all canvas elements.
     renderer.drawMap(left, top, width, height)
-    for obj in game.objects
+    for obj in game.objects when obj.x? and obj.x != -1 and obj.y? and obj.y != -1
       # FIXME: Massive assumption! Actually check if it's a tank.
       drawTank(obj)
     drawOverlay()

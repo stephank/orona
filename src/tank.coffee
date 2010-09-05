@@ -15,7 +15,13 @@ net                 = require './net'
 
 
 class Tank
-  constructor: (@game, startingPos) ->
+  # The Tank constructor is never simulated. It is only ever called on the server.
+  constructor: (@game) ->
+    @reset()
+
+  # (Re)spawn the tank. Initializes all state. Only ever called on the server.
+  reset: ->
+    startingPos = @game.map.getRandomStart()
     @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
@@ -62,9 +68,10 @@ class Tank
     13
 
 
-  getDirection16th: ->
-    round((@direction - 1) / 16) % 16
+  # Get the 1/16th direction step.
+  getDirection16th: -> round((@direction - 1) / 16) % 16
 
+  # Get the tilemap index to draw.
   getTile: ->
     tx = @getDirection16th()
 
@@ -74,7 +81,11 @@ class Tank
 
     [tx, ty]
 
+
+  # The following methods all update the simulation.
+
   update: ->
+    return if @death()
     @shootOrReload()
     @turn()
     @accelerate()
@@ -82,6 +93,17 @@ class Tank
     @move() if @speed > 0
     # FIXME: check for mine impact
     # FIXME: Reveal hidden mines nearby
+
+  death: ->
+    return no if @armour != -1
+
+    # Count down ticks from 255, before respawning.
+    if net.isAuthority() and --@respawnTimer == 0
+      delete @respawnTimer
+      @reset()
+      return no
+
+    return yes
 
   shootOrReload: ->
     @reload-- if @reload > 0
@@ -170,6 +192,7 @@ class Tank
     if @onBoat
       @leaveBoat(oldcell) unless @cell.isType(' ', '^')
     else
+      @sink() if @cell.isType('^')
       @enterBoat() if @cell.isType('b')
 
   leaveBoat: (oldcell) ->
@@ -189,6 +212,18 @@ class Tank
     # Don't need to retile surrounding cells for this.
     @cell.setType(' ', no, 0)
     @onBoat = yes
+
+  sink: ->
+    # FIXME: Play sinking sound.
+    # FIXME: Somehow blame a killer, if instigated by a shot?
+    @kill()
+
+  kill: ->
+    # FIXME: Message the other players. Probably want a scoreboard too.
+    @x = @y = @armour = -1
+    # The respawnTimer attribute exists only on the server.
+    # It is deleted once the timer is triggered, which happens in death().
+    @respawnTimer = 255
 
 
 # Networking.

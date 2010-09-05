@@ -15,6 +15,9 @@ class ClientContext
     @transientMapCells = {}
     @transientDestructions = []
 
+  # The client context is no simulation authority.
+  authority: no
+
   # Before calling 'inContext', the user should reset this special property, based on whether it
   # is about the process server updates or process a simulated tick. When set, the context will
   # assume updates are received from the server. When not set, updates are transient.

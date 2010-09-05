@@ -46,7 +46,7 @@ class Simulation
   # Player management.
 
   addTank: ->
-    tank = @spawn Tank, @map.getRandomStart()
+    tank = @spawn Tank
     tank.tank_idx = @tanks.length
     @tanks.push tank
     tank

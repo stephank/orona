@@ -18,10 +18,10 @@ class Renderer extends MapView
   # this renderer instance, which causes onRetile to be invoked once for each tile to initialize.
   constructor: (tilemap, map) ->
 
-  # This methods takes an object that is expected to have 'x' and 'y' attributes. The callback
-  # provided should be invoked exactly once. Any drawing operations used from within the callback
-  # will have a translation applied so that the given object is centered on the screen.
-  centerOnObject: (obj, cb) ->
+  # This methods takes x and y coordinates to center the screen on. The callback provided should be
+  # invoked exactly once. Any drawing operations used from within the callback will have a
+  # translation applied so that the given coordinates become the center on the screen.
+  centerOn: (x, y, cb) ->
 
   # Draw the tile (tx,ty), which are x and y indices in the tilemap (and not pixel coordinates), so
   # that the top left corner of the tile is placed at (sdx,sdy) pixel coordinates on the screen.

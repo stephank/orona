@@ -53,6 +53,11 @@ class WorldObject
 class Context
   constructor: (game) ->
 
+  # This class attribute tells whether the context type is for a simulation authority.
+  # The simulation will leave certain actions only to the authority, such as respawning.
+  # It should be simply yes or no.
+  authority: null
+
   # Called when the context is activated. See 'inContext' for more information.
   activated: ->
 
@@ -102,9 +107,10 @@ exports.registerType    = registerType
 exports.getTypeFromCode = getTypeFromCode
 
 # Delegate the functions used by the simulation to the active context.
-exports.created    = (obj) -> activeContext?.created(obj)
-exports.destroyed  = (obj) -> activeContext?.destroyed(obj)
-exports.mapChanged = (cell, oldType, hadMine) -> activeContext?.mapChanged(cell, oldType, hadMine)
+exports.isAuthority = -> if activeContext? then activeContext.authority else yes
+exports.created     = (obj) -> activeContext?.created(obj)
+exports.destroyed   = (obj) -> activeContext?.destroyed(obj)
+exports.mapChanged  = (cell, oldType, hadMine) -> activeContext?.mapChanged(cell, oldType, hadMine)
 
 # These are the server message identifiers both sides need to know about.
 # The server sends binary data (encoded as base64). So we need to compare character codes.

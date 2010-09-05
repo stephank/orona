@@ -40,13 +40,13 @@ class Common2dRenderer
       tx * TILE_SIZE_PIXELS, ty * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
       dx,                    dy,                    TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 
-  centerOnObject: (obj, cb) ->
+  centerOn: (x, y, cb) ->
     @ctx.save()
 
     # Apply a translation that centers everything around the player.
     {width, height} = @canvas[0]
-    left = round(obj.x / PIXEL_SIZE_WORLD - width  / 2)
-    top =  round(obj.y / PIXEL_SIZE_WORLD - height / 2)
+    left = round(x / PIXEL_SIZE_WORLD - width  / 2)
+    top =  round(y / PIXEL_SIZE_WORLD - height / 2)
     @ctx.translate(-left, -top)
 
     cb left, top, width, height

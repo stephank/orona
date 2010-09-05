@@ -17,6 +17,9 @@ net    = require '../net'
 class ServerContext
   constructor: (@game) ->
 
+  # The server context is a simulation authority.
+  authority: yes
+
   # Clear the list of changes.
   activated: ->
     @changes = []
