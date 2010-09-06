@@ -7,6 +7,8 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
+# FIXME: Better error handling all around.
+
 {round, cos, sin, PI} = Math
 Simulation            = require '..'
 net                   = require '../net'
@@ -22,314 +24,314 @@ Offscreen2dRenderer   = require './renderer/offscreen_2d'
 EverardIsland         = require './everard'
 
 
-# Global variables.
+class BaseGame
+  constructor: ->
+    # Setup the page.
+    @hud = $('<div/>').appendTo('body')
+    $(document).keydown (e) =>
+      @handleKeydown(e) if @sim?
+    $(document).keyup (e) =>
+      @handleKeyup(e) if @sim?
 
-# The loader instance to grab resources.
-loader = null
-# The jQuery object referring to the HUD.
-hud = null
-# The game state object.
-game = null
-# The network context.
-netctx = null
-# The renderer instance to use.
-renderer = null
-# The WebSocket connection.
-ws = null
+    # Setup game state.
+    @gameTimer = @lastTick = null
+    @lastCenter = [0, 0]
 
-
-init = ->
-  # First, make sure all resources are loaded.
-  unless loader?
+    # Load resources.
     loader = new Loader()
-    loader.onComplete = init
-    # FIXME: Handle errors
+    loader.onComplete = =>
+      @resources = loader.resources
+      @startup()
 
     loader.image 'base'
     loader.image 'styled'
     loader.image 'overlay'
 
     loader.finish()
-    return
 
-  # Initialize all the basics.
-  hud = $('<div/>').appendTo('body')
-  $(document).keydown(handleKeydown).keyup(handleKeyup)
+  # Common initialization once the map is available
+  commonInitialization: (gameMap) ->
+    @sim = new Simulation(gameMap)
 
-  if location.hostname.split('.')[1] == 'github'
-    # Start a local game.
-    # FIXME: find a neater way to do this. Perhaps we should have two classes on the client,
-    # just like Game on the server, to handle the different situations.
-    gameMap = map.load decodeBase64(EverardIsland)
-    game = new Simulation(gameMap)
-    renderer = new Offscreen2dRenderer(loader.resources.images, game.map)
-    game.map.setView(renderer)
-    game.player = game.addTank()
-    initHud()
-    start()
-  else
-    # Connect and wait for the map.
-    ws = new WebSocket("ws://#{location.host}/demo")
-    ws.onmessage = (event) ->
-      # Load the map we just received.
-      gameMap = map.load decodeBase64(event.data)
+    @renderer = new Offscreen2dRenderer(@resources.images, gameMap)
+    @sim.map.setView(@renderer)
 
-      # Initialize the game state.
-      game = new Simulation(gameMap)
-      renderer = new Offscreen2dRenderer(loader.resources.images, game.map)
-      game.map.setView(renderer)
-      netctx = new ClientContext(game)
+    @initHud()
 
-      # Initialize the HUD.
-      initHud()
+  # Game loop.
 
-      # Reconnect the socket message handler, and receive regular updates.
-      # The game loop will start on the welcome message.
-      ws.onmessage = handleMessage
+  start: ->
+    return if @gameTimer?
 
-
-# Keyboard event handlers.
-
-handleKeydown = (e) ->
-  # Are we networked?
-  if ws?
-    switch e.which
-      when 32 then ws.send net.START_SHOOTING
-      when 37 then ws.send net.START_TURNING_CCW
-      when 38 then ws.send net.START_ACCELERATING
-      when 39 then ws.send net.START_TURNING_CW
-      when 40 then ws.send net.START_BRAKING
-      else return
-  # Or running locally?
-  else if game?
-    switch e.which
-      when 32 then game.player.shooting = yes
-      when 37 then game.player.turningCounterClockwise = yes
-      when 38 then game.player.accelerating = yes
-      when 39 then game.player.turningClockwise = yes
-      when 40 then game.player.braking = yes
-  # Or just not finished loading at all?
-  else
-    return
-  e.preventDefault()
-
-handleKeyup = (e) ->
-  # Are we networked?
-  if ws?
-    switch e.which
-      when 32 then ws.send net.STOP_SHOOTING
-      when 37 then ws.send net.STOP_TURNING_CCW
-      when 38 then ws.send net.STOP_ACCELERATING
-      when 39 then ws.send net.STOP_TURNING_CW
-      when 40 then ws.send net.STOP_BRAKING
-      else return
-  # Or running locally?
-  else if game?
-    switch e.which
-      when 32 then game.player.shooting = no
-      when 37 then game.player.turningCounterClockwise = no
-      when 38 then game.player.accelerating = no
-      when 39 then game.player.turningClockwise = no
-      when 40 then game.player.braking = no
-      else return
-  # Or just not finished loading at all?
-  else
-    return
-  e.preventDefault()
-
-
-# Socket event handlers.
-
-handleMessage = (e) ->
-  netctx.authoritative = yes
-  net.inContext netctx, ->
-    data = decodeBase64(e.data)
-    pos = 0
-    length = data.length
-    while pos < length
-      command = data[pos++]
-      ate = handleServerCommand command, data, pos
-      return if ate == -1
-      pos += ate
-
-handleServerCommand = (command, data, offset) ->
-  switch command
-    when net.WELCOME_MESSAGE
-      # Identify which tank we control.
-      tank_idx = unpack('I', data, offset)[0]
-      game.player = game.objects[tank_idx]
-      # Start the game loop.
-      start()
-      # We ate 4 bytes.
-      4
-
-    when net.CREATE_MESSAGE
-      type = net.getTypeFromCode data[offset]
-      obj = game.spawn type.fromNetwork
-      # Eat the type byte, plus whatever the type needs to deserialize.
-      1 + obj.deserialize(data, offset + 1)
-
-    when net.DESTROY_MESSAGE
-      obj_idx = unpack('I', data, offset)[0]
-      obj = game.objects[obj_idx]
-      game.destroy obj
-      # We ate 4 bytes.
-      4
-
-    when net.MAPCHANGE_MESSAGE
-      [x, y, code, mine] = unpack('BBBBf', data, offset)
-      ascii = String.fromCharCode(code)
-      game.map.cells[y][x].setType(ascii, mine)
-      # We ate 5 bytes.
-      5
-
-    when net.UPDATE_MESSAGE
-      bytes = 0
-      for obj in game.objects
-        bytes += obj.deserialize data, offset + bytes
-      # The sum of what each object needed to deserialize.
-      bytes
-
-    else
-      # FIXME: nag
-      stop()
-      ws.close()
-      ws = null
-      # Tell handleMessage to bail.
-      -1
-
-
-# Game loop.
-
-gameTimer = null
-lastTick = null
-heartbeatTimer = 0
-
-start = ->
-  return if gameTimer?
-
-  # Are we networked or not?
-  if netctx != null
-    netctx.authoritative = no
-    net.inContext netctx, -> game.tick()
-  else
-    game.tick()
-  lastTick = Date.now()
-
-  gameTimer = window.setInterval(timerCallback, TICK_LENGTH_MS)
-
-stop = ->
-  return unless gameTimer?
-
-  window.clearInterval(gameTimer)
-
-  gameTimer = null
-  lastTick = null
-
-timerCallback = ->
-  now = Date.now()
-  while now - lastTick >= TICK_LENGTH_MS
     # Are we networked or not?
-    if netctx != null
-      netctx.authoritative = no
-      net.inContext netctx, -> game.tick()
+    @tick()
+    @lastTick = Date.now()
+
+    @gameTimer = window.setInterval =>
+      @timerCallback()
+    , TICK_LENGTH_MS
+
+  stop: ->
+    return unless @gameTimer?
+    window.clearInterval(@gameTimer)
+    @gameTimer = @lastTick = null
+
+  timerCallback: ->
+    now = Date.now()
+    while now - @lastTick >= TICK_LENGTH_MS
+      @tick()
+      @lastTick += TICK_LENGTH_MS
+    @draw()
+
+
+  # Graphics.
+
+  draw: ->
+    {x, y} = @sim.player
+
+    # Remember or restore the last center position. We use this after tank
+    # death, so as to keep drawing something useful while we fade.
+    if x == -1 or y == -1
+      [x, y] = @lastCenter
     else
-      game.tick()
-    lastTick += TICK_LENGTH_MS
+      @lastCenter = [x, y]
+
+    @renderer.centerOn x, y, (left, top, width, height) =>
+      # Draw all canvas elements.
+      @renderer.drawMap(left, top, width, height)
+      for obj in @sim.objects when obj.x? and obj.x != -1 and obj.y? and obj.y != -1
+        # FIXME: Massive assumption! Actually check if it's a tank.
+        @drawTank(obj)
+      @drawOverlay()
+
+    # Update all DOM HUD elements.
+    @updateHud()
+
+  drawTank: (tank) ->
+    tile = tank.getTile()
+    x = round(tank.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
+    y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
+
+    @renderer.drawTile tile[0], tile[1], x, y
+
+  drawOverlay: ->
+    # FIXME: variable firing distance
+    # FIXME: hide when dead
+    distance = 7 * TILE_SIZE_PIXELS
+    rad = (256 - @sim.player.direction) * 2 * PI / 256
+    x = round(@sim.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
+    y = round(@sim.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
+
+    @renderer.drawTile 17, 4, x, y
+
+  initHud: ->
+    # Clear the HUD container contents.
+    @hud.html('')
+
+    # Create the pillbox status indicator.
+    container = $('<div/>', id: 'pillStatus').appendTo(@hud)
+    $('<div/>', class: 'deco').appendTo(container)
+    $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in @sim.map.pills
+
+    # Create the base status indicator.
+    container = $('<div/>', id: 'baseStatus').appendTo(@hud)
+    $('<div/>', class: 'deco').appendTo(container)
+    $('<div/>', class: 'base').appendTo(container).data('base', base) for base in @sim.map.bases
+
+    # Show WIP notice. This is really a temporary hack, so FIXME someday.
+    if location.hostname.split('.')[1] == 'github'
+      $('<div/>').html('''
+        This is a work-in-progress; less than alpha quality!<br>
+        To see multiplayer in action, follow instructions on Github.
+      ''').css(
+        'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
+        'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
+      ).appendTo(@hud);
+      $('<a href="http://github.com/stephank/orona"></a>')
+        .css('position': 'absolute', 'top': '0px', 'right': '0px')
+        .html('<img src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub">')
+        .appendTo(@hud);
+
+    # One-shot update to set all the real-time attributes.
+    @updateHud()
+
+  updateHud: ->
+    # Pillboxes.
+    @hud.find('#pillStatus .pill').each (i, node) =>
+      # FIXME: allegiance
+      $(node).attr('status', 'neutral')
+
+    # Bases.
+    @hud.find('#baseStatus .base').each (i, node) =>
+      # FIXME: allegiance
+      $(node).attr('status', 'neutral')
+
+
+  # Abstract methods.
+
+  # Called after resources are loaded.
+  startup: ->
+
+  # Simulate a tick.
+  tick: ->
+
+  # Key press handlers.
+  handleKeydown: (e) ->
+  handleKeyup: (e) ->
+
+
+class LocalGame extends BaseGame
+  startup: ->
+    gameMap = map.load decodeBase64(EverardIsland)
+    @commonInitialization(gameMap)
+    @sim.player = @sim.addTank()
+    @start()
+
+  tick: ->
+    @sim.tick()
+
+  # Key press handlers.
+
+  handleKeydown: (e) ->
+    switch e.which
+      when 32 then @sim.player.shooting = yes
+      when 37 then @sim.player.turningCounterClockwise = yes
+      when 38 then @sim.player.accelerating = yes
+      when 39 then @sim.player.turningClockwise = yes
+      when 40 then @sim.player.braking = yes
+    e.preventDefault()
+
+  handleKeyup: (e) ->
+    switch e.which
+      when 32 then @sim.player.shooting = no
+      when 37 then @sim.player.turningCounterClockwise = no
+      when 38 then @sim.player.accelerating = no
+      when 39 then @sim.player.turningClockwise = no
+      when 40 then @sim.player.braking = no
+      else return
+    e.preventDefault()
+
+
+class NetworkGame extends BaseGame
+  constructor: ->
+    @heartbeatTimer = 0
+    super
+
+  startup: ->
+    @ws = new WebSocket("ws://#{location.host}/demo")
+    $(@ws).one 'message', (e) =>
+      @receiveMap(e.originalEvent)
+
+  receiveMap: (e) ->
+    gameMap = map.load decodeBase64(e.data)
+    @commonInitialization(gameMap)
+    @netctx = new ClientContext(@sim)
+    $(@ws).bind 'message', (e) =>
+      @handleMessage(e.originalEvent) if @ws?
+
+  tick: ->
+    @netctx.authoritative = no
+    net.inContext @netctx, =>
+      @sim.tick()
 
     # Send the heartbeat (an empty message) every 10 ticks / 400ms.
-    if ws != null and ++heartbeatTimer == 10
-      heartbeatTimer = 0
-      ws.send('')
+    if ++@heartbeatTimer == 10
+      @heartbeatTimer = 0
+      @ws.send('')
 
-  draw()
+  # Key press handlers.
+
+  handleKeydown: (e) ->
+    switch e.which
+      when 32 then @ws.send net.START_SHOOTING
+      when 37 then @ws.send net.START_TURNING_CCW
+      when 38 then @ws.send net.START_ACCELERATING
+      when 39 then @ws.send net.START_TURNING_CW
+      when 40 then @ws.send net.START_BRAKING
+      else return
+    e.preventDefault()
+
+  handleKeyup: (e) ->
+    switch e.which
+      when 32 then @ws.send net.STOP_SHOOTING
+      when 37 then @ws.send net.STOP_TURNING_CCW
+      when 38 then @ws.send net.STOP_ACCELERATING
+      when 39 then @ws.send net.STOP_TURNING_CW
+      when 40 then @ws.send net.STOP_BRAKING
+      else return
+    e.preventDefault()
+
+  # Network message handlers.
+
+  handleMessage: (e) ->
+    @netctx.authoritative = yes
+    net.inContext @netctx, =>
+      data = decodeBase64(e.data)
+      pos = 0
+      length = data.length
+      while pos < length
+        command = data[pos++]
+        ate = @handleServerCommand command, data, pos
+        return if ate == -1
+        pos += ate
+
+  handleServerCommand: (command, data, offset) ->
+    switch command
+      when net.WELCOME_MESSAGE
+        # Identify which tank we control.
+        tank_idx = unpack('I', data, offset)[0]
+        @sim.player = @sim.objects[tank_idx]
+        # Start the game loop.
+        @start()
+        # We ate 4 bytes.
+        4
+
+      when net.CREATE_MESSAGE
+        type = net.getTypeFromCode data[offset]
+        obj = @sim.spawn type.fromNetwork
+        # Eat the type byte, plus whatever the type needs to deserialize.
+        1 + obj.deserialize(data, offset + 1)
+
+      when net.DESTROY_MESSAGE
+        obj_idx = unpack('I', data, offset)[0]
+        obj = @sim.objects[obj_idx]
+        @sim.destroy obj
+        # We ate 4 bytes.
+        4
+
+      when net.MAPCHANGE_MESSAGE
+        [x, y, code, mine] = unpack('BBBBf', data, offset)
+        ascii = String.fromCharCode(code)
+        @sim.map.cells[y][x].setType(ascii, mine)
+        # We ate 5 bytes.
+        5
+
+      when net.UPDATE_MESSAGE
+        bytes = 0
+        for obj in @sim.objects
+          bytes += obj.deserialize data, offset + bytes
+        # The sum of what each object needed to deserialize.
+        bytes
+
+      else
+        # FIXME: nag
+        @stop()
+        @ws.close()
+        @ws = null
+        # Tell handleMessage to bail.
+        -1
 
 
-# Graphics.
+game = null
 
-lastCenter = [0, 0]
-draw = ->
-  {x, y} = game.player
-
-  # Remember or restore the last center position. We use this after tank
-  # death, so as to keep drawing something useful while we fade.
-  if x == -1 or y == -1
-    [x, y] = lastCenter
-  else
-    lastCenter = [x, y]
-
-  renderer.centerOn x, y, (left, top, width, height) ->
-    # Draw all canvas elements.
-    renderer.drawMap(left, top, width, height)
-    for obj in game.objects when obj.x? and obj.x != -1 and obj.y? and obj.y != -1
-      # FIXME: Massive assumption! Actually check if it's a tank.
-      drawTank(obj)
-    drawOverlay()
-
-  # Update all DOM HUD elements.
-  updateHud()
-
-drawTank = (tank) ->
-  tile = tank.getTile()
-  x = round(tank.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
-  y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
-
-  renderer.drawTile tile[0], tile[1], x, y
-
-drawOverlay = ->
-  # FIXME: variable firing distance
-  # FIXME: hide when dead
-  distance = 7 * TILE_SIZE_PIXELS
-  rad = (256 - game.player.direction) * 2 * PI / 256
-  x = round(game.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
-  y = round(game.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
-
-  renderer.drawTile 17, 4, x, y
-
-initHud = ->
-  # Clear all existing contents
-  hud.html('')
-
-  # Create the pillbox status indicator.
-  container = $('<div/>', id: 'pillStatus').appendTo(hud)
-  $('<div/>', class: 'deco').appendTo(container)
-  $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in game.map.pills
-
-  # Create the base status indicator.
-  container = $('<div/>', id: 'baseStatus').appendTo(hud)
-  $('<div/>', class: 'deco').appendTo(container)
-  $('<div/>', class: 'base').appendTo(container).data('base', base) for base in game.map.bases
-
-  # Show WIP notice. This is really a temporary hack, so FIXME someday.
+init = ->
   if location.hostname.split('.')[1] == 'github'
-    $('<div/>').html('''
-      This is a work-in-progress; less than alpha quality!<br>
-      To see multiplayer in action, follow instructions on Github.
-    ''').css(
-      'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
-      'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
-    ).appendTo(hud);
-    $('<a href="http://github.com/stephank/orona"></a>')
-      .css('position': 'absolute', 'top': '0px', 'right': '0px')
-      .html('<img src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub">')
-      .appendTo(hud);
-
-  # One-shot update to set all the real-time attributes.
-  updateHud()
-
-updateHud = ->
-  # Pillboxes.
-  $('#pillStatus .pill').each (i, node) =>
-    # FIXME: allegiance
-    $(node).attr('status', 'neutral')
-
-  # Bases.
-  $('#baseStatus .base').each (i, node) =>
-    # FIXME: allegiance
-    $(node).attr('status', 'neutral')
+    game = new LocalGame()
+  else
+    game = new NetworkGame()
 
 
 # Exports.
-exports.init = init
-exports.start = start
-exports.stop = stop
+exports.init  = init
+exports.start = -> game.start()
+exports.stop  = -> game.stop()
