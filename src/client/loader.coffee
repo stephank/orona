@@ -38,19 +38,20 @@ class Loader
     for category, container of @resources
       for name, resource of container
         return unless resource.complete
+    @_stopEvents()
     @onComplete()
 
   # Make sure no further events are fired, then call onError.
   _handleError: (resource) ->
-    cb = @onError
+    @_stopEvents()
+    @onError(resource)
 
-    # Replace methods with empty functions.
+  # Replace methods with empty functions, to prevent any further events.
+  _stopEvents: ->
     @image = ->
     @finish = ->
     @checkComplete = ->
     @handleError = ->
-
-    cb(resource)
 
   # The user should replace these methods; they are more or less events.
   onComplete: ->
