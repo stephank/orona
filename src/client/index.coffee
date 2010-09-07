@@ -112,7 +112,7 @@ class BaseGame
     x = round(tank.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
     y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
 
-    @renderer.drawTile tile[0], tile[1], x, y
+    @renderer.drawStyledTile tile[0], tile[1], tank.team, x, y
 
   drawOverlay: ->
     # FIXME: variable firing distance

@@ -23,10 +23,15 @@ class Renderer extends MapView
   # translation applied so that the given coordinates become the center on the screen.
   centerOn: (x, y, cb) ->
 
-  # Draw the tile (tx,ty), which are x and y indices in the tilemap (and not pixel coordinates), so
-  # that the top left corner of the tile is placed at (sdx,sdy) pixel coordinates on the screen.
-  # The destination coordinates may be subject to translation from centerOnObject.
+  # Draw the tile (tx,ty), which are x and y indices in the base tilemap (and not pixel
+  # coordinates), so that the top left corner of the tile is placed at (sdx,sdy) pixel coordinates
+  # on the screen. The destination coordinates may be subject to translation from centerOn.
   drawTile: (tx, ty, sdx, sdy) ->
+
+  # Similar to drawTile, but draws from the styled tilemap. Takes an additional parameter `style`,
+  # which is a selection from the team colors. The overlay tile is drawn in this color on top of
+  # the tile from the styled tilemap. If the style doesn't exist, no overlay is drawn.
+  drawStyledTile: (tx, ty, style, sdx, sdy) ->
 
   # Draw the map section that intersects with the given boundary box (sx,sy,w,h). The boundary
   # box is given in pixel coordinates. This may very well be a no-op if the renderer can do all of

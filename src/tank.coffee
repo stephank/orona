@@ -17,6 +17,8 @@ net                 = require './net'
 class Tank
   # The Tank constructor is never simulated. It is only ever called on the server.
   constructor: (@game) ->
+    @team = 0
+
     @reset()
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
@@ -54,31 +56,27 @@ class Tank
   # These methods are used by networking to synchronize state.
   serialize: ->
     speed = round(@speed * 4)
-    pack 'HHBBBBBBBBffffff', @x, @y, @direction, speed, @turnSpeedup, @shells, @mines, @armour,
-      @trees, @reload, @accelerating, @braking, @turningClockwise, @turningCounterClockwise,
-      @shooting, @onBoat
+    pack 'BHHBBBBBBBBffffff', @team, @x, @y, @direction, speed, @turnSpeedup, @shells, @mines,
+      @armour, @trees, @reload, @accelerating, @braking, @turningClockwise,
+      @turningCounterClockwise, @shooting, @onBoat
 
   deserialize: (data, offset) ->
-    [@x, @y, @direction, speed, @turnSpeedup, @shells, @mines, @armour,
-      @trees, @reload, @accelerating, @braking, @turningClockwise, @turningCounterClockwise,
-      @shooting, @onBoat] = unpack 'HHBBBBBBBBffffff', data, offset
+    [@team, @x, @y, @direction, speed, @turnSpeedup, @shells, @mines,
+      @armour, @trees, @reload, @accelerating, @braking, @turningClockwise,
+      @turningCounterClockwise, @shooting, @onBoat] = unpack 'BHHBBBBBBBBffffff', data, offset
     @speed = speed / 4
     @cell = @game.map.cellAtWorld @x, @y
     # We ate 13 bytes.
-    13
+    14
 
 
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16
 
-  # Get the tilemap index to draw.
+  # Get the tilemap index to draw. This is the index in styled.png.
   getTile: ->
     tx = @getDirection16th()
-
-    ty = 12
-    # FIXME: allegiance
-    ty += 1 if @onBoat
-
+    ty = if @onBoat then 1 else 0
     [tx, ty]
 
 

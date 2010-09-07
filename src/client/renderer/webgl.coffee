@@ -234,6 +234,8 @@ class WebglRenderer
     gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
+  drawStyledTile: (tx, ty, style, dx, dy) -> # FIXME
+
   onRetile: (cell, tx, ty) ->
     # Simply cache the tile index.
     cell.tile = [tx, ty]
