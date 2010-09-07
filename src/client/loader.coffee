@@ -50,8 +50,8 @@ class Loader
   _stopEvents: ->
     @image = ->
     @finish = ->
-    @checkComplete = ->
-    @handleError = ->
+    @_checkComplete = ->
+    @_handleError = ->
 
   # The user should replace these methods; they are more or less events.
   onComplete: ->
