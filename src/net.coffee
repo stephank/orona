@@ -33,10 +33,19 @@ the Free Software Foundation; either version 2 of the License, or
 
 # The interface provided by world objects. Unused, but here for documentation.
 class WorldObject
+  # The constructor takes a Simulation object.
+  constructor: (game) ->
+
+  # Called just before the object is removed from the simulation.
+  destroy: ->
+
   # An alternate constructor used to instantiate an object when it is created by the networking
   # code. This call will be immediately followed by a call to deserialize. Note that this method
   # MUST return `this`!
   constructFromNetwork: (game) ->
+
+  # The alternate destructor called when the object is destroyed by the networking code.
+  destroyFromNetwork: ->
 
   # This method should return an array of bytes that represent the object's state somehow.
   # It usually calls struct.pack() to pack all of it's state variables.

@@ -33,7 +33,11 @@ class Simulation
     # Return the new object.
     obj
 
-  destroy: (obj) ->
+  destroy: (obj, destructor) ->
+    # Call the destructor.
+    destructor ||= obj.destroy
+    destructor.apply(obj)
+    # Remove it from the list.
     @objects.splice obj.idx, 1
     # Update the indices of everything that follows.
     for i in [obj.idx...@objects.length]
@@ -45,15 +49,21 @@ class Simulation
 
   # Player management.
 
-  addTank: ->
-    tank = @spawn Tank
+  addTank: (tank) ->
     tank.tank_idx = @tanks.length
     @tanks.push tank
-    tank
+    @resolveMapObjects()
 
   removeTank: (tank) ->
     @tanks.splice tank.tank_idx, 1
-    @destroy tank
+    @resolveMapObjects()
+
+  # Resolve pillbox and base owner indices to the actual tanks.
+  resolveMapObjects: ->
+    mapObjects = @map.pills.concat @map.bases
+    for obj in mapObjects
+      obj.owner = @tanks[obj.owner_idx]
+    return
 
 
 # Exports.

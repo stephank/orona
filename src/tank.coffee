@@ -15,11 +15,23 @@ net                 = require './net'
 
 
 class Tank
-  # The Tank constructor is never simulated. It is only ever called on the server.
+  # The Tank constructor and destructor are never simulated.
+  # They are only ever called on the server.
   constructor: (@game) ->
     @team = 0
+    @game.addTank(this)
 
     @reset()
+
+  destroy: ->
+    @game.removeTank(this)
+
+  constructFromNetwork: (@game) ->
+    @game.addTank(this)
+    return this
+
+  destroyFromNetwork: ->
+    @game.removeTank(this)
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->
@@ -48,10 +60,6 @@ class Tank
     @shooting = no
 
     @onBoat = yes
-
-  # The alternate constructor used by networking.
-  constructFromNetwork: (@game) ->
-    return this
 
   # These methods are used by networking to synchronize state.
   serialize: ->

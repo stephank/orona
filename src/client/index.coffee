@@ -229,6 +229,10 @@ class NetworkGame extends BaseGame
     $(@ws).bind 'message', (e) =>
       @handleMessage(e.originalEvent) if @ws?
 
+  receiveWelcome: (tank) ->
+    @sim.player = tank
+    @start()
+
   tick: ->
     @netctx.authoritative = no
     net.inContext @netctx, =>
@@ -278,11 +282,8 @@ class NetworkGame extends BaseGame
   handleServerCommand: (command, data, offset) ->
     switch command
       when net.WELCOME_MESSAGE
-        # Identify which tank we control.
         tank_idx = unpack('I', data, offset)[0]
-        @sim.player = @sim.objects[tank_idx]
-        # Start the game loop.
-        @start()
+        @receiveWelcome @sim.objects[tank_idx]
         # We ate 4 bytes.
         4
 
@@ -295,7 +296,7 @@ class NetworkGame extends BaseGame
       when net.DESTROY_MESSAGE
         obj_idx = unpack('I', data, offset)[0]
         obj = @sim.objects[obj_idx]
-        @sim.destroy obj
+        @sim.destroy obj, obj.destroyFromNetwork
         # We ate 4 bytes.
         4
 

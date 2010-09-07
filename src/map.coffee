@@ -498,8 +498,8 @@ class Map
     retval = c.charCodeAt(0) for c in 'BMAPBOLO'
     # FIXME: do something special with pills in possession.
     retval.push(1, @pills.length, @bases.length, @starts.length)
-    retval.push(p.x, p.y, p.owner, p.armour, p.speed) for p in @pills
-    retval.push(b.x, b.y, b.owner, b.armour, b.shells, b.mines) for b in @bases
+    retval.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in @pills
+    retval.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in @bases
     retval.push(s.x, s.y, s.direction) for s in @starts
 
     # While building the map data, we collect sequences and runs.
@@ -617,9 +617,9 @@ load = (buffer) ->
     obj
 
   retval.pills = for i in [1..numPills]
-    extractAttributes 'x', 'y', 'owner', 'armour', 'speed'
+    extractAttributes 'x', 'y', 'owner_idx', 'armour', 'speed'
   retval.bases = for i in [1..numBases]
-    extractAttributes 'x', 'y', 'owner', 'armour', 'shells', 'mines'
+    extractAttributes 'x', 'y', 'owner_idx', 'armour', 'shells', 'mines'
   retval.starts = for i in [1..numStarts]
     extractAttributes 'x', 'y', 'direction'
 

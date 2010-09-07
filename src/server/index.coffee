@@ -13,6 +13,7 @@ connect          = require 'connect'
 WebSocket        = require './websocket'
 ServerContext    = require './net'
 Simulation       = require '..'
+Tank             = require '../tank'
 map              = require '../map'
 net              = require '../net'
 {pack}           = require '../struct'
@@ -29,7 +30,7 @@ class Game
 
   onConnect: (ws) ->
     # In order to create the tank object, we need to be in the networking context.
-    tank = net.inContext @netctx, => @sim.addTank()
+    tank = net.inContext @netctx, => @sim.spawn Tank
     tank.client = null
     data = new Buffer(@netctx.changes)
     @broadcast data.toString('base64')
@@ -74,7 +75,7 @@ class Game
 
   onDisconnect: (tank) ->
     # In order to destroy the tank object, we need to be in the networking context.
-    net.inContext @netctx, => @sim.removeTank(tank)
+    net.inContext @netctx, => @sim.destroy tank
     data = new Buffer(@netctx.changes)
     @broadcast data.toString('base64')
 
