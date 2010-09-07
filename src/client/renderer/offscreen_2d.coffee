@@ -75,9 +75,12 @@ class CachedSegment
 
   onRetile: (cell, tx, ty) ->
     return unless @canvas
-    @ctx.drawImage @renderer.images.base,
-      tx * TILE_SIZE_PIXELS,     ty * TILE_SIZE_PIXELS,     TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
-      cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
+    if obj = cell.pill || cell.base
+      @renderer.drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.team,
+          cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, @ctx
+    else
+      @renderer.drawTile       cell.tile[0], cell.tile[1],
+          cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, @ctx
 
 class Offscreen2dRenderer extends Common2dRenderer
   constructor: (images, map) ->

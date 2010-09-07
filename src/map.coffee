@@ -127,10 +127,10 @@ class MapCell
   retile: ->
     if @pill?
       # FIXME: allegiance
-      @setTile @pill.armour, 4
+      @setTile @pill.armour, 2
     else if @base?
       # FIXME: allegiance
-      @setTile 16, 4
+      @setTile 16, 0
     else
       switch @type.ascii
         when '^' then @retileDeepSea()

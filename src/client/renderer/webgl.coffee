@@ -254,10 +254,12 @@ class WebglRenderer
     # Iterate each tile in view.
     @map.each (cell) =>
       # FIXME: use one large VBO to do this.
-      @drawTile(
-        cell.tile[0], cell.tile[1],
-        cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
-      )
+      if obj = cell.pill || cell.base
+        @drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.team,
+            cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
+      else
+        @drawTile       cell.tile[0], cell.tile[1],
+            cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
     , stx, sty, etx, ety
 
 

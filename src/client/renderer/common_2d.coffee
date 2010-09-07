@@ -53,8 +53,10 @@ class Common2dRenderer
       height: window.innerHeight + 'px'
     )
 
-  drawTile: (tx, ty, dx, dy) ->
-    @ctx.drawImage @images.base,
+  # We use an extra parameter `ctx` here, so that the offscreen renderer can
+  # use the context specific to segments.
+  drawTile: (tx, ty, dx, dy, ctx) ->
+    (ctx || @ctx).drawImage @images.base,
       tx * TILE_SIZE_PIXELS, ty * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
       dx,                    dy,                    TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 
@@ -89,7 +91,7 @@ class Common2dRenderer
     # All done, return.
     source
 
-  drawStyledTile: (tx, ty, style, dx, dy) ->
+  drawStyledTile: (tx, ty, style, dx, dy, ctx) ->
     # Get the prestyled tilemap, or create it.
     unless source = @prestyled[style]
       source =
@@ -99,7 +101,7 @@ class Common2dRenderer
           @images.styled
 
     # Draw from the prestyled tilemap.
-    @ctx.drawImage source,
+    (ctx || @ctx).drawImage source,
       tx * TILE_SIZE_PIXELS, ty * TILE_SIZE_PIXELS, TILE_SIZE_PIXELS, TILE_SIZE_PIXELS,
       dx,                    dy,                    TILE_SIZE_PIXELS, TILE_SIZE_PIXELS
 
