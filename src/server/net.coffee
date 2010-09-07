@@ -15,7 +15,7 @@ net    = require '../net'
 # makes them available in the 'changes' attribute. It also provides a method 'dump' that provides
 # the attribute updates.
 class ServerContext
-  constructor: (@game) ->
+  constructor: (@sim) ->
 
   # The server context is a simulation authority.
   authority: yes
@@ -44,7 +44,7 @@ class ServerContext
   # updates into one large data block to be sent to the clients.
   dump: ->
     data = [net.UPDATE_MESSAGE]
-    for obj in @game.objects
+    for obj in @sim.objects
       data = data.concat obj.serialize()
     data
 

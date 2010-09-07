@@ -11,7 +11,7 @@ the Free Software Foundation; either version 2 of the License, or
 # while allowing the local simulation to continue. This is done by keeping track of changes made
 # locally and marking them as transient, until the next server update.
 class ClientContext
-  constructor: (@game) ->
+  constructor: (@sim) ->
     @transientMapCells = {}
     @transientDestructions = []
 
@@ -29,10 +29,10 @@ class ClientContext
     return unless @authoritative
 
     # Find the first object that is marked transient.
-    for obj, i in @game.objects
+    for obj, i in @sim.objects
       break if obj._net_transient
     # We can assume all objects after this are transient as well.
-    @game.objects.splice i, @game.objects.length - i
+    @sim.objects.splice i, @sim.objects.length - i
 
     # Now, restore locally changed map cells.
     for idx, cell of @transientMapCells
@@ -42,11 +42,11 @@ class ClientContext
     # And revive destroyed objects in reverse order.
     return unless @transientDestructions.length > 0
     for obj in @transientDestructions
-      @game.objects.splice obj.idx, 0, obj
+      @sim.objects.splice obj.idx, 0, obj
     @transientDestructions = []
 
     # At this point, we need to reset all indices.
-    for obj, i in @game.objects
+    for obj, i in @sim.objects
       obj.idx = i
 
     return

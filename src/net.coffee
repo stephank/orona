@@ -34,7 +34,7 @@ the Free Software Foundation; either version 2 of the License, or
 # The interface provided by world objects. Unused, but here for documentation.
 class WorldObject
   # The constructor takes a Simulation object.
-  constructor: (game) ->
+  constructor: (sim) ->
 
   # Called just before the object is removed from the simulation.
   destroy: ->
@@ -42,7 +42,7 @@ class WorldObject
   # An alternate constructor used to instantiate an object when it is created by the networking
   # code. This call will be immediately followed by a call to deserialize. Note that this method
   # MUST return `this`!
-  constructFromNetwork: (game) ->
+  constructFromNetwork: (sim) ->
 
   # The alternate destructor called when the object is destroyed by the networking code.
   destroyFromNetwork: ->
@@ -60,7 +60,7 @@ class WorldObject
 
 # The interface provided by network contexts. Unused, but here for documentation.
 class Context
-  constructor: (game) ->
+  constructor: (sim) ->
 
   # This class attribute tells whether the context type is for a simulation authority.
   # The simulation will leave certain actions only to the authority, such as respawning.

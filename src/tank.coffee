@@ -17,30 +17,30 @@ net                 = require './net'
 class Tank
   # The Tank constructor and destructor are never simulated.
   # They are only ever called on the server.
-  constructor: (@game) ->
+  constructor: (@sim) ->
     @team = 0
-    @game.addTank(this)
+    @sim.addTank(this)
 
     @reset()
 
   destroy: ->
-    @game.removeTank(this)
+    @sim.removeTank(this)
 
-  constructFromNetwork: (@game) ->
-    @game.addTank(this)
+  constructFromNetwork: (@sim) ->
+    @sim.addTank(this)
     return this
 
   destroyFromNetwork: ->
-    @game.removeTank(this)
+    @sim.removeTank(this)
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->
-    startingPos = @game.map.getRandomStart()
+    startingPos = @sim.map.getRandomStart()
     @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
 
-    @cell = @game.map.cells[startingPos.y][startingPos.x]
+    @cell = @sim.map.cells[startingPos.y][startingPos.x]
 
     @speed = 0.00
     @accelerating = no
@@ -73,7 +73,7 @@ class Tank
       @armour, @trees, @reload, @accelerating, @braking, @turningClockwise,
       @turningCounterClockwise, @shooting, @onBoat] = unpack 'BHHBBBBBBBBffffff', data, offset
     @speed = speed / 4
-    @cell = @game.map.cellAtWorld @x, @y
+    @cell = @sim.map.cellAtWorld @x, @y
     # We ate 13 bytes.
     14
 
@@ -174,14 +174,14 @@ class Tank
     # Check if we're running into an obstacle in either axis direction.
     unless dx == 0
       aheadx = if dx > 0 then newx + 64 else newx - 64
-      aheadx = @game.map.cellAtWorld(aheadx, newy)
+      aheadx = @sim.map.cellAtWorld(aheadx, newy)
       unless aheadx.getTankSpeed(@onBoat) == 0
         slowDown = no
         @x = newx unless @onBoat and !aheadx.isType(' ', '^') and @speed < 16
 
     unless dy == 0
       aheady = if dy > 0 then newy + 64 else newy - 64
-      aheady = @game.map.cellAtWorld(newx, aheady)
+      aheady = @sim.map.cellAtWorld(newx, aheady)
       unless aheady.getTankSpeed(@onBoat) == 0
         slowDown = no
         @y = newy unless @onBoat and !aheady.isType(' ', '^') and @speed < 16
@@ -192,7 +192,7 @@ class Tank
 
     # Update the cell reference.
     oldcell = @cell
-    @cell = @game.map.cellAtWorld(@x, @y)
+    @cell = @sim.map.cellAtWorld(@x, @y)
 
     # Check if we just entered or left the water.
     if @onBoat
