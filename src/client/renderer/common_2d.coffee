@@ -8,13 +8,16 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {min, round}       = Math
+BaseRenderer       = require '.'
 {TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD} = require '../../constants'
 TEAM_COLORS        = require '../../team_colors'
 
 
-class Common2dRenderer
-  constructor: (@images, @map) ->
+class Common2dRenderer extends BaseRenderer
+  constructor: (images, sim) ->
+    super
+
     # Initialize the canvas.
     @canvas = $('<canvas/>')
     try

@@ -66,7 +66,7 @@ class CachedSegment
     @ctx.translate(-@psx, -@psy)
 
     # Iterate the map tiles in this segment, and draw them.
-    @renderer.map.each (cell) =>
+    @renderer.sim.map.each (cell) =>
       @onRetile(cell, cell.tile[0], cell.tile[1])
     , @sx, @sy, @ex, @ey
 
@@ -82,8 +82,9 @@ class CachedSegment
       @renderer.drawTile       cell.tile[0], cell.tile[1],
           cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, @ctx
 
+
 class Offscreen2dRenderer extends Common2dRenderer
-  constructor: (images, map) ->
+  constructor: (images, sim) ->
     super
 
     # Build a 2D array of map segments.

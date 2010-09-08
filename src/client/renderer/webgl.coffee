@@ -8,6 +8,7 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {round, floor, ceil} = Math
+BaseRenderer         = require '.'
 {TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD}   = require '../../constants'
 
@@ -61,8 +62,10 @@ compileShader = (ctx, type, source) ->
 # The WebGL renderer works much like the Direct2D renderer,
 # but uses WebGL to accomplish it, of course.
 
-class WebglRenderer
-  constructor: (@images, @map) ->
+class WebglRenderer extends BaseRenderer
+  constructor: (images, sim) ->
+    super
+
     # Initialize the canvas.
     @canvas = $('<canvas/>')
     try
@@ -252,7 +255,7 @@ class WebglRenderer
     ety =  ceil(ey / TILE_SIZE_PIXELS)
 
     # Iterate each tile in view.
-    @map.each (cell) =>
+    @sim.map.each (cell) =>
       # FIXME: use one large VBO to do this.
       if obj = cell.pill || cell.base
         @drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.team,
