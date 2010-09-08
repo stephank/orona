@@ -65,6 +65,7 @@ class Simulation
     mapObjects = @map.pills.concat @map.bases
     for obj in mapObjects
       obj.owner = @tanks[obj.owner_idx]
+      obj.cell.retile()
     return
 
 

@@ -18,7 +18,9 @@ class Tank
   # The Tank constructor and destructor are never simulated.
   # They are only ever called on the server.
   constructor: (@sim) ->
-    @team = 0
+    # FIXME: Proper way to select teams.
+    @team = @sim.tanks.length % 2
+
     @sim.addTank(this)
 
     @reset()
@@ -27,7 +29,13 @@ class Tank
     @sim.removeTank(this)
 
   constructFromNetwork: (@sim) ->
+    # FIXME: A temporary assumption. We need to know the team before addTank, because that
+    # calls into MapCell#retile. Of course, we need to properly catch team changes someday.
+    # (Right now, the attribute is updated by deserialize, but no retiling is done.)
+    @team = @sim.tanks.length % 2
+
     @sim.addTank(this)
+
     return this
 
   destroyFromNetwork: ->
