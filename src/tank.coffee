@@ -87,6 +87,9 @@ class Tank
     ty = if @onBoat then 1 else 0
     [tx, ty]
 
+  # Tell whether the other tank is an ally.
+  isAlly: (other) -> @team != 255 and other.team == @team
+
 
   # The following methods all update the simulation.
 
@@ -122,7 +125,7 @@ class Tank
 
   turn: ->
     # Determine turn rate.
-    maxTurn = @cell.getTankTurn @onBoat
+    maxTurn = @cell.getTankTurn this
 
     # Are the key presses cancelling eachother out?
     if @turningClockwise == @turningCounterClockwise
@@ -149,7 +152,7 @@ class Tank
 
   accelerate: ->
     # Determine acceleration.
-    maxSpeed = @cell.getTankSpeed @onBoat
+    maxSpeed = @cell.getTankSpeed this
     # Is terrain forcing us to slow down?
     if @speed > maxSpeed then acceleration = -0.25
     # Are key presses cancelling eachother out?
@@ -173,18 +176,18 @@ class Tank
 
     # Check if we're running into an obstacle in either axis direction.
     unless dx == 0
-      aheadx = if dx > 0 then newx + 64 else newx - 64
-      aheadx = @sim.map.cellAtWorld(aheadx, newy)
-      unless aheadx.getTankSpeed(@onBoat) == 0
+      ahead = if dx > 0 then newx + 64 else newx - 64
+      ahead = @sim.map.cellAtWorld(ahead, newy)
+      unless ahead.getTankSpeed(this) == 0
         slowDown = no
-        @x = newx unless @onBoat and !aheadx.isType(' ', '^') and @speed < 16
+        @x = newx unless @onBoat and !ahead.isType(' ', '^') and @speed < 16
 
     unless dy == 0
-      aheady = if dy > 0 then newy + 64 else newy - 64
-      aheady = @sim.map.cellAtWorld(newx, aheady)
-      unless aheady.getTankSpeed(@onBoat) == 0
+      ahead = if dy > 0 then newy + 64 else newy - 64
+      ahead = @sim.map.cellAtWorld(newx, ahead)
+      unless ahead.getTankSpeed(this) == 0
         slowDown = no
-        @y = newy unless @onBoat and !aheady.isType(' ', '^') and @speed < 16
+        @y = newy unless @onBoat and !ahead.isType(' ', '^') and @speed < 16
 
     # If we're completely obstructed, reduce our speed.
     if slowDown

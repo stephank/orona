@@ -47,22 +47,38 @@ class MapCell
     # This is just a unique index for this cell; used in a couple of places for convenience.
     @idx = @y * MAP_SIZE_TILES + @x
 
-  getTankSpeed: (onBoat) ->
-    return  0 if @pill?.armour > 0
-    # FIXME: check for an enemy base, otherwise fall through. The tile is road any way.
-    return 16 if onBoat and @isType('^', ' ')
+  getTankSpeed: (tank) ->
+    # Check for a pillbox.
+    return 0 if @pill?.armour > 0
+    # Check for an enemy base.
+    if @base?.owner?
+      return 0 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
+    # Check if we're on a boat.
+    return 16 if tank.onBoat and @isType('^', ' ')
+    # Take the land speed.
     @type.tankSpeed
 
-  getTankTurn: (onBoat) ->
+  getTankTurn: (tank) ->
+    # Check for a pillbox.
     return 0.00 if @pill?.armour > 0
-    # FIXME: check for an enemy base, otherwise fall through. The tile is road any way.
-    return 1.00 if onBoat and @isType('^', ' ')
+    # Check for an enemy base.
+    if @base?.owner?
+      return 0.00 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
+    # Check if we're on a boat.
+    return 1.00 if tank.onBoat and @isType('^', ' ')
+    # Take the land turn speed.
     @type.tankTurn
 
-  getManSpeed: (onBoat) ->
-    return  0 if @pill?.armour > 0
-    # FIXME: check for an enemy base, otherwise fall through. The tile is road any way.
-    return 16 if onBoat and @isType('^', ' ')
+  getManSpeed: (man) ->
+    {tank} = man
+    # Check for a pillbox.
+    return 0 if @pill?.armour > 0
+    # Check for an enemy base.
+    if @base?.owner?
+      return 0 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
+    # Check if we're on a boat.
+    return 16 if man.onBoat and @isType('^', ' ')
+    # Take the land speed.
     @type.manSpeed
 
   # Get the cell at offset +dx+,+dy+ from this cell.
