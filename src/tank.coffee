@@ -28,15 +28,10 @@ class Tank
   destroy: ->
     @sim.removeTank(this)
 
-  constructFromNetwork: (@sim) ->
-    # FIXME: A temporary assumption. We need to know the team before addTank, because that
-    # calls into MapCell#retile. Of course, we need to properly catch team changes someday.
-    # (Right now, the attribute is updated by deserialize, but no retiling is done.)
-    @team = @sim.tanks.length % 2
-
+  initFromNetwork: (@sim, data, offset) ->
+    bytes = @deserialize data, offset
     @sim.addTank(this)
-
-    return this
+    bytes
 
   destroyFromNetwork: ->
     @sim.removeTank(this)

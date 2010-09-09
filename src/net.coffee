@@ -39,10 +39,10 @@ class WorldObject
   # Called just before the object is removed from the simulation.
   destroy: ->
 
-  # An alternate constructor used to instantiate an object when it is created by the networking
-  # code. This call will be immediately followed by a call to deserialize. Note that this method
-  # MUST return `this`!
-  constructFromNetwork: (sim) ->
+  # When an object is created by the networking code, it is instantiated using a blank constructor.
+  # This function is then the first to be called, and responsible for loading state from the data
+  # parameter, usually with a call to deserialize. The return value is the number of bytes used.
+  initFromNetwork: (sim, data, offset) ->
 
   # The alternate destructor called when the object is destroyed by the networking code.
   destroyFromNetwork: ->
@@ -101,9 +101,6 @@ registerType = (character, type) ->
   code = character.charCodeAt(0)
   # Store the character on the prototype, so we can retrieve it from an object reference.
   type.prototype._net_identifier = code
-  # Set up the alternative constructor.
-  type.fromNetwork = type.prototype.constructFromNetwork
-  type.fromNetwork.prototype = type.prototype
   # Build a dictionary, so we can map an incoming message to the type.
   types[code] = type
 

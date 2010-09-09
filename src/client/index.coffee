@@ -197,9 +197,12 @@ class NetworkGame extends BaseGame
 
       when net.CREATE_MESSAGE
         type = net.getTypeFromCode data[offset]
-        obj = @sim.spawn type.fromNetwork
-        # Eat the type byte, plus whatever the type needs to deserialize.
-        1 + obj.deserialize(data, offset + 1)
+        # Spawn a blank object, then call the network initializer.
+        blankConstructor = -> this
+        blankConstructor.prototype = type.prototype
+        obj = @sim.spawn blankConstructor
+        # We ate 1 byte, plus whatever the type needs to deserialize.
+        1 + obj.initFromNetwork(@sim, data, offset + 1)
 
       when net.DESTROY_MESSAGE
         obj_idx = unpack('I', data, offset)[0]
