@@ -88,7 +88,7 @@ class MapCell
     @map.cellAtTile(@x + dx, @y + dy)
 
   # Check whether the cell is one of the give types.
-  # FIXME: The splat variant is significantly slower
+  # The splat variant is significantly slower
   #isType: (types...) ->
   #  for type in types
   #    return yes if @type == type or @type.ascii == type
@@ -142,10 +142,8 @@ class MapCell
   # Retile this cell. See map#retile.
   retile: ->
     if @pill?
-      # FIXME: allegiance
       @setTile @pill.armour, 2
     else if @base?
-      # FIXME: allegiance
       @setTile 16, 0
     else
       switch @type.ascii
@@ -512,7 +510,6 @@ class Map
 
     # Build the header.
     retval = c.charCodeAt(0) for c in 'BMAPBOLO'
-    # FIXME: do something special with pills in possession.
     retval.push(1, @pills.length, @bases.length, @starts.length)
     retval.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in @pills
     retval.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in @bases

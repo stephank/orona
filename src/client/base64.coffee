@@ -9,8 +9,10 @@ the Free Software Foundation; either version 2 of the License, or
 
 # A base64 decoder, because we don't have one in the browser.
 # The output is an array of byte values as numbers, much like a node.js Buffer.
-# FIXME: Doesn't cope with whitespace.
-# FIXME: Breaks when the padding character is injected in the middle.
+
+# Note that this is a very simple implementation. It doesn't cope with whitespace, and breaks on
+# otherwise invalid input. For example, it's known to break when the padding character is injected
+# in the middle.
 decodeBase64 = (input) ->
   unless input.length % 4 == 0
     throw new Error "Invalid base64 input length, not properly padded?"
