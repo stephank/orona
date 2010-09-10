@@ -11,6 +11,7 @@ the Free Software Foundation; either version 2 of the License, or
 BaseRenderer         = require '.'
 {TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD}   = require '../../constants'
+TEAM_COLORS          = require '../../team_colors'
 
 
 VERTEX_SHADER =
@@ -38,13 +39,33 @@ FRAGMENT_SHADER =
 
   /* Input variables. */
   varying vec2 vTextureCoord;
-  uniform sampler2D uTexture;
+  uniform sampler2D uBase;
+  uniform sampler2D uStyled;
+  uniform sampler2D uOverlay;
+  uniform bool uUseStyled;
+  uniform bool uIsStyled;
+  uniform vec3 uStyleColor;
 
   /* Output variables. */
   /* implicit vec4 gl_FragColor; */
 
   void main(void) {
-    gl_FragColor = texture2D(uTexture, vTextureCoord);
+    if (uUseStyled) {
+      vec4 base = texture2D(uStyled, vTextureCoord);
+      if (uIsStyled) {
+        float alpha = texture2D(uOverlay, vTextureCoord).r;
+        gl_FragColor = vec4(
+            mix(base.rgb, uStyleColor, alpha), base.rgb,
+            clamp(base.a + alpha, 0.0, 1.0)
+        );
+      }
+      else {
+        gl_FragColor = base;
+      }
+    }
+    else {
+      gl_FragColor = texture2D(uBase, vTextureCoord);
+    }
   }
   '''
 
@@ -87,21 +108,25 @@ class WebglRenderer extends BaseRenderer
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
     # Create and permanently bind the tilemap texture into texture unit 0.
-    gl.activeTexture(gl.TEXTURE0)
-    @tilemapTexture = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, @tilemapTexture)
-    # No scaling should ever be necessary, so pick the fastest algorithm.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-    # This should prevent overflowing between tiles at least at the edge of the tilemap.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    # Load the tilemap data into the texture
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, @images.base)
+    for img, i in [@images.base, @images.styled, @images.overlay]
+      gl.activeTexture(gl.TEXTURE0 + i)
+      texture = gl.createTexture()
+      gl.bindTexture(gl.TEXTURE_2D, texture)
+      # No scaling should ever be necessary, so pick the fastest algorithm.
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+      # This should prevent overflowing between tiles at least at the edge of the tilemap.
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+      # Load the tilemap data into the texture
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
 
     # Preparations for drawTile. Calculate the tile size in the texture coordinate space.
     @hTileSizeTexture = TILE_SIZE_PIXELS / @images.base.width
     @vTileSizeTexture = TILE_SIZE_PIXELS / @images.base.height
+    # And again for drawStyledTile.
+    @hStyledTileSizeTexture = TILE_SIZE_PIXELS / @images.styled.width
+    @vStyledTileSizeTexture = TILE_SIZE_PIXELS / @images.styled.height
 
     # Compile the shaders.
     @program = gl.createProgram()
@@ -116,14 +141,21 @@ class WebglRenderer extends BaseRenderer
     @aVertexCoord  =  gl.getAttribLocation(@program, 'aVertexCoord')
     @aTextureCoord =  gl.getAttribLocation(@program, 'aTextureCoord')
     @uTransform    = gl.getUniformLocation(@program, 'uTransform')
-    @uTexture      = gl.getUniformLocation(@program, 'uTexture')
+    @uBase         = gl.getUniformLocation(@program, 'uBase')
+    @uStyled       = gl.getUniformLocation(@program, 'uStyled')
+    @uOverlay      = gl.getUniformLocation(@program, 'uOverlay')
+    @uUseStyled    = gl.getUniformLocation(@program, 'uUseStyled')
+    @uIsStyled     = gl.getUniformLocation(@program, 'uIsStyled')
+    @uStyleColor   = gl.getUniformLocation(@program, 'uStyleColor')
 
     # Enable vertex attributes as arrays.
     gl.enableVertexAttribArray(@aVertexCoord)
     gl.enableVertexAttribArray(@aTextureCoord)
 
-    # Tell the fragment shader to take tilemap input from texture unit 0.
-    gl.uniform1i(@uTexture, 0)
+    # Tell the fragment shader which texture units to use for its uniforms.
+    gl.uniform1i(@uBase,    0)
+    gl.uniform1i(@uStyled,  1)
+    gl.uniform1i(@uOverlay, 2)
 
     # Allocate the translation matrix, and fill it with the identity matrix.
     # To do all of our transformations, we only need to change 4 elements.
@@ -214,6 +246,11 @@ class WebglRenderer extends BaseRenderer
     @setTranslation(0, 0)
 
   drawTile: (tx, ty, sdx, sdy) ->
+    gl = @ctx
+
+    # Initialize the uniforms, so the shader knows this is an unstyled tile.
+    gl.uniform1i(@uUseStyled, 0)
+
     # Calculate texture coordinate bounds for the tile.
     stx =  tx * @hTileSizeTexture
     sty =  ty * @vTileSizeTexture
@@ -233,11 +270,41 @@ class WebglRenderer extends BaseRenderer
     ])
 
     # Draw.
-    gl = @ctx
     gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
-  drawStyledTile: (tx, ty, style, dx, dy) -> # FIXME
+  drawStyledTile: (tx, ty, style, sdx, sdy) ->
+    gl = @ctx
+
+    # Initialize the uniforms, to tell the uniform the style color.
+    gl.uniform1i(@uUseStyled, 1)
+    if color = TEAM_COLORS[style]
+      gl.uniform1i(@uIsStyled, 1)
+      gl.uniform3f(@uStyleColor, color.r / 255, color.g / 255, color.b / 255)
+    else
+      gl.uniform1i(@uIsStyled, 0)
+
+    # Calculate texture coordinate bounds for the tile.
+    stx =  tx * @hStyledTileSizeTexture
+    sty =  ty * @vStyledTileSizeTexture
+    etx = stx + @hStyledTileSizeTexture
+    ety = sty + @vStyledTileSizeTexture
+
+    # Calculate pixel coordinate bounds for the destination.
+    edx = sdx + TILE_SIZE_PIXELS
+    edy = sdy + TILE_SIZE_PIXELS
+
+    # Update the quad array.
+    @vertexArray.set([
+      sdx, sdy, stx, sty,
+      sdx, edy, stx, ety,
+      edx, sdy, etx, sty,
+      edx, edy, etx, ety
+    ])
+
+    # Draw.
+    gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
   onRetile: (cell, tx, ty) ->
     # Simply cache the tile index.
