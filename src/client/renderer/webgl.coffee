@@ -55,7 +55,7 @@ FRAGMENT_SHADER =
       if (uIsStyled) {
         float alpha = texture2D(uOverlay, vTextureCoord).r;
         gl_FragColor = vec4(
-            mix(base.rgb, uStyleColor, alpha), base.rgb,
+            mix(base.rgb, uStyleColor, alpha),
             clamp(base.a + alpha, 0.0, 1.0)
         );
       }
