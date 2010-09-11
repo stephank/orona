@@ -12,6 +12,7 @@ net = require './net'
 # These requires are to ensure that all world objects are registered.
 require './tank'
 require './explosion'
+require './shell'
 
 
 class Simulation

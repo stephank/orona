@@ -13,6 +13,7 @@ the Free Software Foundation; either version 2 of the License, or
 net                     = require './net'
 {pack, unpack}          = require './struct'
 Explosion               = require './explosion'
+Shell                   = require './shell'
 
 
 class Tank
@@ -125,7 +126,9 @@ class Tank
 
     @reload = 13
     @shells--
-    # FIXME: fire a projectile, play a sound.
+    # FIXME: variable firing distance
+    @sim.spawn Shell, @x, @y, @direction
+    # FIXME: Play sound.
 
   turn: ->
     # Determine turn rate.
