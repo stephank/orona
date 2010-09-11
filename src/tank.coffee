@@ -101,7 +101,7 @@ class Tank
     @shootOrReload()
     @turn()
     @accelerate()
-    # FIXME: check if the terrain is clear, or if someone built underneath us.
+    @fixPosition()
     @move() if @speed > 0
     # FIXME: check for mine impact
     # FIXME: Reveal hidden mines nearby
@@ -168,6 +168,17 @@ class Tank
       @speed = min(maxSpeed, @speed + acceleration)
     else if acceleration < 0.00 and @speed > 0.00
       @speed = max(0.00, @speed + acceleration)
+
+  fixPosition: ->
+    # Check to see if there's a solid underneath the tank. This could happen if some other player
+    # builds underneath us. In that case, we try to nudge the tank off the solid.
+    if @cell.getTankSpeed(this) == 0
+      halftile = TILE_SIZE_WORLD / 2
+      if @x % TILE_SIZE_WORLD >= halftile then @x++ else @x--
+      if @y % TILE_SIZE_WORLD >= halftile then @y++ else @y--
+      @speed = max(0.00, @speed - 1)
+
+    # FIXME: Also check if we're on top of another tank.
 
   move: ->
     # FIXME: UGLY, and probably incorrect too.
