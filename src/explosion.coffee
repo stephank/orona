@@ -34,7 +34,7 @@ class Explosion
       when 3 then [20, 5]
       when 2 then [21, 5]
       when 1 then [18, 4]
-      when 0 then [19, 4]
+      else [19, 4]
 
 
 # Networking.
