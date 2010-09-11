@@ -57,6 +57,9 @@ class WorldObject
   # bytes it used.
   deserialize: (data, offset) ->
 
+  # Simulate a tick.
+  update: ->
+
 
 # The interface provided by network contexts. Unused, but here for documentation.
 class Context
