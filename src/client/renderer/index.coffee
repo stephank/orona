@@ -110,6 +110,9 @@ class BaseRenderer
         'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
         'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
       ).appendTo(@hud);
+
+    # Show GitHub ribbon. Also temporary. FIXME
+    if location.hostname.split('.')[1] == 'github' or location.hostname.substr(-6) == '.no.de'
       $('<a href="http://github.com/stephank/orona"></a>')
         .css('position': 'absolute', 'top': '0px', 'right': '0px')
         .html('<img src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub">')
