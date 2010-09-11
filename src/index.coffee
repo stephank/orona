@@ -21,7 +21,8 @@ class Simulation
   # Basic object management.
 
   tick: ->
-    for obj in @objects
+    # Work on a shallow copy of the object list.
+    for obj in @objects.slice(0)
       obj.update()
     return
 
