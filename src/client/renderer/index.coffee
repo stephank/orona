@@ -62,8 +62,10 @@ class BaseRenderer
       # Draw all canvas elements.
       @drawMap(left, top, width, height)
       for obj in @sim.objects when obj.x? and obj.x != -1 and obj.y? and obj.y != -1
-        # FIXME: Massive assumption! Actually check if it's a tank.
-        @drawTank(obj)
+        # FIXME: Use something better than the net identifier? Or make that generic.
+        switch String.fromCharCode(obj._net_identifier)
+          when 'T' then @drawTank(obj)
+          when 'E' then @drawExplosion(obj)
       @drawOverlay()
 
     # Update all DOM HUD elements.
@@ -76,6 +78,13 @@ class BaseRenderer
     y = round(tank.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
 
     @drawStyledTile tile[0], tile[1], tank.team, x, y
+
+  drawExplosion: (explosion) ->
+    [tx, ty] = explosion.getTile()
+    x = round(explosion.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
+    y = round(explosion.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
+
+    @drawTile tx, ty, x, y
 
   # Draw HUD elements that overlay the map. These are elements that need to be drawn in regular
   # game coordinates, rather than screen coordinates.

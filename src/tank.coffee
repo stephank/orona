@@ -12,6 +12,7 @@ the Free Software Foundation; either version 2 of the License, or
 {TILE_SIZE_WORLD}       = require './constants'
 net                     = require './net'
 {pack, unpack}          = require './struct'
+Explosion               = require './explosion'
 
 
 class Tank
@@ -236,7 +237,9 @@ class Tank
     if @cell.isType('b')
       # Don't need to retile surrounding cells for this.
       @cell.setType(' ', no, 0)
-      # FIXME: create a small explosion, play a sound.
+      # Create a small explosion at the center of the tile.
+      @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
+      # FIXME: Play sound.
     else
       # Leave a boat if we were on a river.
       if oldcell.isType(' ')
