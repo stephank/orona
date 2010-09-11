@@ -77,7 +77,7 @@ class Tank
       @turningCounterClockwise, @shooting, @onBoat] = unpack 'BHHBBBBBBBBffffff', data, offset
     @speed = speed / 4
     @cell = @sim.map.cellAtWorld @x, @y
-    # We ate 13 bytes.
+    # We ate 14 bytes.
     14
 
 
