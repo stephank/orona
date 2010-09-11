@@ -212,11 +212,11 @@ class NetworkGame extends BaseGame
         4
 
       when net.MAPCHANGE_MESSAGE
-        [x, y, code, mine] = unpack('BBBBf', data, offset)
+        [x, y, code, mine] = unpack('BBBf', data, offset)
         ascii = String.fromCharCode(code)
         @sim.map.cells[y][x].setType(ascii, mine)
-        # We ate 5 bytes.
-        5
+        # We ate 4 bytes.
+        4
 
       when net.UPDATE_MESSAGE
         bytes = 0
