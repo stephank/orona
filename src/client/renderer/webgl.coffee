@@ -166,9 +166,9 @@ class WebglRenderer extends BaseRenderer
       0, 0, 0, 1
     ])
 
-    # Allocate the vertex buffer for our quads.
+    # Allocate the vertex buffer with room for a bunch of tiles.
     # This will store both vertex coordinates as well as texture coordinates.
-    @vertexArray = new Float32Array(4*4)
+    @vertexArray = new Float32Array(256 * (6*4))
 
     # Create and permanently bind the vertex buffer.
     @vertexBuffer = gl.createBuffer()
@@ -245,33 +245,45 @@ class WebglRenderer extends BaseRenderer
 
     @setTranslation(0, 0)
 
-  drawTile: (tx, ty, sdx, sdy) ->
-    gl = @ctx
-
-    # Initialize the uniforms, so the shader knows this is an unstyled tile.
-    gl.uniform1i(@uUseStyled, 0)
-
+  bufferTile: (buffer, offset, tx, ty, styled, sdx, sdy) ->
     # Calculate texture coordinate bounds for the tile.
-    stx =  tx * @hTileSizeTexture
-    sty =  ty * @vTileSizeTexture
-    etx = stx + @hTileSizeTexture
-    ety = sty + @vTileSizeTexture
+    if styled
+      stx =  tx * @hStyledTileSizeTexture
+      sty =  ty * @vStyledTileSizeTexture
+      etx = stx + @hStyledTileSizeTexture
+      ety = sty + @vStyledTileSizeTexture
+    else
+      stx =  tx * @hTileSizeTexture
+      sty =  ty * @vTileSizeTexture
+      etx = stx + @hTileSizeTexture
+      ety = sty + @vTileSizeTexture
 
     # Calculate pixel coordinate bounds for the destination.
     edx = sdx + TILE_SIZE_PIXELS
     edy = sdy + TILE_SIZE_PIXELS
 
     # Update the quad array.
-    @vertexArray.set([
+    buffer.set([
       sdx, sdy, stx, sty,
       sdx, edy, stx, ety,
       edx, sdy, etx, sty,
+      sdx, edy, stx, ety,
+      edx, sdy, etx, sty,
       edx, edy, etx, ety
-    ])
+    ], offset * (6*4))
+
+  drawTile: (tx, ty, sdx, sdy) ->
+    gl = @ctx
+
+    # Initialize the uniforms, so the shader knows this is an unstyled tile.
+    gl.uniform1i(@uUseStyled, 0)
+
+    # Update the quad array.
+    @bufferTile(@vertexArray, 0, tx, ty, no, sdx, sdy)
 
     # Draw.
     gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+    gl.drawArrays(gl.TRIANGLES, 0, 6)
 
   drawStyledTile: (tx, ty, style, sdx, sdy) ->
     gl = @ctx
@@ -284,33 +296,20 @@ class WebglRenderer extends BaseRenderer
     else
       gl.uniform1i(@uIsStyled, 0)
 
-    # Calculate texture coordinate bounds for the tile.
-    stx =  tx * @hStyledTileSizeTexture
-    sty =  ty * @vStyledTileSizeTexture
-    etx = stx + @hStyledTileSizeTexture
-    ety = sty + @vStyledTileSizeTexture
-
-    # Calculate pixel coordinate bounds for the destination.
-    edx = sdx + TILE_SIZE_PIXELS
-    edy = sdy + TILE_SIZE_PIXELS
-
     # Update the quad array.
-    @vertexArray.set([
-      sdx, sdy, stx, sty,
-      sdx, edy, stx, ety,
-      edx, sdy, etx, sty,
-      edx, edy, etx, ety
-    ])
+    @bufferTile(@vertexArray, 0, tx, ty, yes, sdx, sdy)
 
     # Draw.
     gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+    gl.drawArrays(gl.TRIANGLES, 0, 6)
 
   onRetile: (cell, tx, ty) ->
     # Simply cache the tile index.
     cell.tile = [tx, ty]
 
   drawMap: (sx, sy, w, h) ->
+    gl = @ctx
+
     # Calculate pixel boundaries.
     ex = sx + w - 1
     ey = sy + h - 1
@@ -321,16 +320,49 @@ class WebglRenderer extends BaseRenderer
     etx =  ceil(ex / TILE_SIZE_PIXELS)
     ety =  ceil(ey / TILE_SIZE_PIXELS)
 
+    styledCells = {}
+    arrayTileIndex = 0
+    maxTiles = @vertexArray.length / (6*4)
+
+    # Draw the accumulated tiles.
+    flushArray = =>
+      return if arrayTileIndex == 0
+      gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
+      gl.drawArrays(gl.TRIANGLES, 0, arrayTileIndex * 6)
+      arrayTileIndex = 0
+
     # Iterate each tile in view.
+    gl.uniform1i(@uUseStyled, 0)
     @sim.map.each (cell) =>
-      # FIXME: use one large VBO to do this.
       if obj = cell.pill || cell.base
-        @drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.team,
-            cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
+        # Only draw unstyled tiles, but index styled tiles by color.
+        style = obj.owner?.team
+        style = 255 unless TEAM_COLORS[style]
+        (styledCells[style] ||= []).push(cell)
       else
-        @drawTile       cell.tile[0], cell.tile[1],
+        # Add the tile to the vertex buffer.
+        @bufferTile @vertexArray, arrayTileIndex, cell.tile[0], cell.tile[1], no,
             cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
+        if ++arrayTileIndex == maxTiles
+          flushArray()
     , stx, sty, etx, ety
+    flushArray()
+
+    # Draw the remaining styled tiles.
+    gl.uniform1i(@uUseStyled, 1)
+    for style, cells of styledCells
+      if color = TEAM_COLORS[style]
+        gl.uniform1i(@uIsStyled, 1)
+        gl.uniform3f(@uStyleColor, color.r / 255, color.g / 255, color.b / 255)
+      else
+        gl.uniform1i(@uIsStyled, 0)
+
+      for cell in cells
+        @bufferTile @vertexArray, arrayTileIndex, cell.tile[0], cell.tile[1], yes,
+            cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
+        if ++arrayTileIndex == maxTiles
+          flushArray()
+      flushArray()
 
 
 # Exports.
