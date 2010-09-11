@@ -7,11 +7,11 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, ceil, min,
- max, sin, cos, PI} = Math
-{TILE_SIZE_WORLD}   = require './constants'
-net                 = require './net'
-{pack, unpack}      = require './struct'
+{round, ceil, min, sqrt
+ max, sin, cos, PI}     = Math
+{TILE_SIZE_WORLD}       = require './constants'
+net                     = require './net'
+{pack, unpack}          = require './struct'
 
 
 class Tank
@@ -178,7 +178,20 @@ class Tank
       if @y % TILE_SIZE_WORLD >= halftile then @y++ else @y--
       @speed = max(0.00, @speed - 1)
 
-    # FIXME: Also check if we're on top of another tank.
+    # Also check if we're on top of another tank.
+    for other in @sim.tanks when other != this
+      continue if other.x == -1 # He's dead, Jim.
+
+      dx = other.x - @x; dy = other.y - @y
+      distance = sqrt(dx*dx + dy*dy)
+      continue if distance > 255
+
+      # FIXME: winbolo actually does an increasing size of nudges while the tanks are colliding,
+      # keeping a static/global variable. But perhaps this should be combined with tank sliding?
+      dx = Math.random() - 0.5 if dx == 0
+      if dx < 0 then @x++ else @x--
+      dy = Math.random() - 0.5 if dy == 0
+      if dy < 0 then @y++ else @y--
 
   move: ->
     # FIXME: UGLY, and probably incorrect too.
