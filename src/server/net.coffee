@@ -27,7 +27,7 @@ class ServerContext
   # Record the creation.
   created: (obj) ->
     @changes = @changes
-      .concat pack('BB', net.CREATE_MESSAGE, obj._net_identifier)
+      .concat pack('BB', net.CREATE_MESSAGE, obj.charCodeId)
       .concat obj.serialize()
 
   # Record the destruction.

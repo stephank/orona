@@ -9,7 +9,7 @@ the Free Software Foundation; either version 2 of the License, or
 
 {round, floor, sqrt
  cos, sin, PI}      = Math
-net                 = require './net'
+WorldObject         = require './world_object'
 {TILE_SIZE_WORLD}   = require './constants'
 {pack, unpack}      = require './struct'
 Explosion           = require './explosion'
@@ -17,7 +17,10 @@ Explosion           = require './explosion'
 
 # FIXME: Shells need an owner.
 
-class Shell
+class Shell extends WorldObject
+  charId: 'S'
+  styled: false
+
   constructor: (@sim, @x, @y, @direction, @lifespan) ->
     # Default lifespan (fired by pillboxes) is 7 tiles.
     @lifespan ||= 7 * TILE_SIZE_WORLD / 32 - 2
@@ -95,14 +98,12 @@ class Shell
 
     return no
 
-  # The tile index to draw.
   getTile: ->
     tx = @getDirection16th()
     [tx, 4]
 
+Shell.register()
 
-# Networking.
-net.registerType 'S', Shell
 
 # Exports.
 module.exports = Shell

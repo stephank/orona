@@ -8,11 +8,14 @@ the Free Software Foundation; either version 2 of the License, or
 ###
 
 {floor}        = Math
-net            = require './net'
+WorldObject    = require './world_object'
 {pack, unpack} = require './struct'
 
 
-class Explosion
+class Explosion extends WorldObject
+  charId: 'E'
+  styled: false
+
   constructor: (@sim, @x, @y) -> @lifespan = 23
   destroy: ->
 
@@ -24,7 +27,6 @@ class Explosion
 
   update: -> if @lifespan-- == 0 then @sim.destroy this
 
-  # The tile index to draw.
   getTile: ->
     switch floor(@lifespan / 3)
       when 7 then [20, 3]
@@ -36,9 +38,8 @@ class Explosion
       when 1 then [18, 4]
       else [19, 4]
 
+Explosion.register()
 
-# Networking.
-net.registerType 'E', Explosion
 
 # Exports.
 module.exports = Explosion

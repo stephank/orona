@@ -10,6 +10,7 @@ the Free Software Foundation; either version 2 of the License, or
 # FIXME: Better error handling all around.
 
 Simulation       = require '..'
+WorldObject      = require '../world_object'
 net              = require '../net'
 map              = require '../map'
 {unpack}         = require '../struct'
@@ -196,7 +197,7 @@ class NetworkGame extends BaseGame
         4
 
       when net.CREATE_MESSAGE
-        type = net.getTypeFromCode data[offset]
+        type = WorldObject.getType data[offset]
         # Spawn a blank object, then call the network initializer.
         blankConstructor = -> this
         blankConstructor.prototype = type.prototype

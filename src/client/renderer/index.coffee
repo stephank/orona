@@ -65,11 +65,9 @@ class BaseRenderer
         [tx, ty] = obj.getTile()
         ox = round(obj.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
         oy = round(obj.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
-        # FIXME: Use something better than the net identifier? Or make that generic.
-        switch String.fromCharCode(obj._net_identifier)
-          when 'T' then @drawStyledTile tx, ty, obj.team, ox, oy
-          when 'E' then @drawTile tx, ty, ox, oy
-          when 'S' then @drawTile tx, ty, ox, oy
+        switch obj.styled
+          when true  then @drawStyledTile tx, ty, obj.team, ox, oy
+          when false then @drawTile tx, ty, ox, oy
       @drawOverlay()
 
     # Update all DOM HUD elements.

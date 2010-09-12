@@ -10,13 +10,17 @@ the Free Software Foundation; either version 2 of the License, or
 {round, ceil, min, sqrt
  max, sin, cos, PI}     = Math
 {TILE_SIZE_WORLD}       = require './constants'
+WorldObject             = require './world_object'
 net                     = require './net'
 {pack, unpack}          = require './struct'
 Explosion               = require './explosion'
 Shell                   = require './shell'
 
 
-class Tank
+class Tank extends WorldObject
+  charId: 'T'
+  styled: true
+
   # The Tank constructor and destructor are never simulated.
   # They are only ever called on the server.
   constructor: (@sim) ->
@@ -267,9 +271,8 @@ class Tank
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
 
+Tank.register()
 
-# Networking.
-net.registerType 'T', Tank
 
 # Exports.
 module.exports = Tank
