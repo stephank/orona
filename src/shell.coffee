@@ -7,12 +7,12 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, floor,
- cos, sin, PI}    = Math
-net               = require './net'
-{TILE_SIZE_WORLD} = require './constants'
-{pack, unpack}    = require './struct'
-Explosion         = require './explosion'
+{round, floor, sqrt
+ cos, sin, PI}      = Math
+net                 = require './net'
+{TILE_SIZE_WORLD}   = require './constants'
+{pack, unpack}      = require './struct'
+Explosion           = require './explosion'
 
 
 # FIXME: Shells need an owner.
@@ -47,8 +47,7 @@ class Shell
 
   update: ->
     @move()
-
-    # FIXME: check collision
+    return if @collide()
 
     return unless @lifespan-- == 0
     @sim.destroy this
@@ -57,6 +56,44 @@ class Shell
   move: ->
     @x += round(cos(@radians) * 32)
     @y += round(sin(@radians) * 32)
+
+    # Update the cell reference.
+    @cell = @sim.map.cellAtWorld(@x, @y)
+
+  collide: ->
+    # FIXME: This code is a draft, take this out once it actually works.
+    return no
+
+    # Check for a collision with a pillbox.
+    # FIXME: implement pillbox takeShellHit.
+    if pill = @cell.pill
+      pill.takeShellHit(this)
+      @sim.destroy this
+      @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
+      return yes
+
+    # Check for collision with tanks.
+    # FIXME: implement @owner.
+    for tank in @sim.tanks when tank != @owner
+      dx = tank.x - @x; dy = tank.y - @y
+      distance = sqrt(dx*dx + dy*dy)
+      if distance <= 127
+        tank.takeShellHit(this)
+        @sim.destroy this
+        return yes
+
+    # Check for collision with enemy base.
+    # FIXME: implement @owner, @onBoat, base takeShellHit
+    if base = @cell.base
+      if @onBoat or (base.armour > 4 and base?.owner? and not base.owner.isAlly(@owner))
+        base.takeShellHit(this)
+        @sim.destroy this
+        @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
+        return yes
+
+    # FIXME: implement terrain collision
+
+    return no
 
   # The tile index to draw.
   getTile: ->

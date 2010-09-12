@@ -93,7 +93,7 @@ class Tank
     [tx, ty]
 
   # Tell whether the other tank is an ally.
-  isAlly: (other) -> @team != 255 and other.team == @team
+  isAlly: (other) -> other == this or (@team != 255 and other.team == @team)
 
 
   # The following methods all update the simulation.
