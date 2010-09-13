@@ -71,10 +71,13 @@ pack = (fmt) ->
   data
 
 
-# The opposite of the above. Takes an array of bytes and an optional offset, and returns an array
-# of values which are decoded according to the given format string.
+# The opposite of the above. Takes an array of bytes and an optional offset,
+# and returns a pair containing:
+#  * an array of values which are decoded according to the given format string.
+#  * a length in bytes that was read.
 unpack = (fmt, data, offset) ->
   offset ||= 0
+  idx = offset
   values = []
 
   # These are to handle bit fields.
@@ -83,27 +86,32 @@ unpack = (fmt, data, offset) ->
   for c, i in fmt
     if c == 'f'
       # A bit field.
-      bit = (1 << bitIndex) & data[offset]
+      bit = (1 << bitIndex) & data[idx]
       values.push(bit > 0)
       bitIndex++
       # If we've collected eight, skip to the next byte.
       if bitIndex == 8
-        offset++
+        idx++
         bitIndex = 0
     else
       # If we were processing bitfields, skip to the next byte.
-      if bitIndex == 8
-        offset++
+      if bitIndex != 0
+        idx++
         bitIndex = 0
       # Simple byte-aligned data types.
       [value, bytes] = switch c
-        when 'B' then [ fromUint8(data, offset), 1]
-        when 'H' then [fromUint16(data, offset), 2]
-        when 'I' then [fromUint32(data, offset), 4]
+        when 'B' then [ fromUint8(data, idx), 1]
+        when 'H' then [fromUint16(data, idx), 2]
+        when 'I' then [fromUint32(data, idx), 4]
         else throw new Error("Unknown format character #{c}")
       values.push value
-      offset += bytes
-  values
+      idx += bytes
+  # Make sure we account for trailing bitfields.
+  if bitIndex != 0
+    idx++
+
+  # Return the pair.
+  [values, idx - offset]
 
 
 # Exports

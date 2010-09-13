@@ -191,38 +191,32 @@ class NetworkGame extends BaseGame
   handleServerCommand: (command, data, offset) ->
     switch command
       when net.WELCOME_MESSAGE
-        tank_idx = unpack('I', data, offset)[0]
+        [[tank_idx], bytes] = unpack('I', data, offset)
         @receiveWelcome @sim.objects[tank_idx]
-        # We ate 4 bytes.
-        4
+        bytes
 
       when net.CREATE_MESSAGE
         type = WorldObject.getType data[offset]
-        # Spawn a blank object, then call the network initializer.
-        blankConstructor = -> this
-        blankConstructor.prototype = type.prototype
-        obj = @sim.spawn blankConstructor
-        # We ate 1 byte, plus whatever the type needs to deserialize.
-        1 + obj.initFromNetwork(@sim, data, offset + 1)
+        bytes = @sim.netSpawn type, data, offset + 1
+        bytes + 1
 
       when net.DESTROY_MESSAGE
-        obj_idx = unpack('I', data, offset)[0]
+        [[obj_idx], bytes] = unpack('I', data, offset)
         obj = @sim.objects[obj_idx]
-        @sim.destroy obj, obj.destroyFromNetwork
-        # We ate 4 bytes.
-        4
+        @sim.netDestroy obj
+        bytes
 
       when net.MAPCHANGE_MESSAGE
-        [x, y, code, mine] = unpack('BBBf', data, offset)
+        [[x, y, code, mine], bytes] = unpack('BBBf', data, offset)
         ascii = String.fromCharCode(code)
         @sim.map.cells[y][x].setType(ascii, mine)
-        # We ate 4 bytes.
-        4
+        bytes
 
       when net.UPDATE_MESSAGE
         bytes = 0
         for obj in @sim.objects
-          bytes += obj.deserialize data, offset + bytes
+          bytes += obj.loadStateFromData data, offset + bytes
+          obj.postNetUpdate()
         # The sum of what each object needed to deserialize.
         bytes
 

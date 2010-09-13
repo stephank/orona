@@ -28,20 +28,40 @@ class Simulation
       obj.update()
     return
 
+  # Spawn an object, as the authority or simulated.
   spawn: (type, args...) ->
     obj = new type(this, args...)
     # Register it.
     obj.idx = @objects.length
     @objects.push obj
+    # Invoke the callback.
+    obj.postInitialize()
     # Notify networking.
     net.created obj
     # Return the new object.
     obj
 
-  destroy: (obj, destructor) ->
+  # Create an object received from the network.
+  netSpawn: (type, data, offset) ->
+    blankConstructor = (@sim) -> this
+    blankConstructor.prototype = type.prototype
+    obj = new blankConstructor(this)
+    # Register it.
+    obj.idx = @objects.length
+    @objects.push obj
+    # Deserialize.
+    bytes = obj.loadStateFromData(data, offset)
+    # Invoke the callback.
+    obj.postInitialize()
+    # Return the number of bytes taken.
+    1 + bytes
+
+  # Destroy an object, as the authority or simulated.
+  destroy: (obj) ->
+    # Invoke the callback.
+    obj.preRemove()
     # Call the destructor.
-    destructor ||= obj.destroy
-    destructor.apply(obj)
+    obj.destroy()
     # Remove it from the list.
     @objects.splice obj.idx, 1
     # Update the indices of everything that follows.
@@ -51,6 +71,16 @@ class Simulation
     net.destroyed obj
     # Return the same object.
     obj
+
+  # Destroy an object, as received from the network.
+  netDestroy: (obj) ->
+    # Invoke the callback.
+    obj.preRemove()
+    # Remove it from the list.
+    @objects.splice obj.idx, 1
+    # Update the indices of everything that follows.
+    for i in [obj.idx...@objects.length]
+      @objects[i].idx--
 
   # Player management.
 

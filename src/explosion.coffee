@@ -9,23 +9,22 @@ the Free Software Foundation; either version 2 of the License, or
 
 {floor}        = Math
 WorldObject    = require './world_object'
-{pack, unpack} = require './struct'
 
 
 class Explosion extends WorldObject
   charId: 'E'
   styled: false
 
-  constructor: (@sim, @x, @y) -> @lifespan = 23
-  destroy: ->
+  constructor: (@sim, @x, @y) ->
+    @lifespan = 23
 
-  initFromNetwork: (@sim, data, offset) -> @deserialize(data, offset)
-  destroyFromNetwork: ->
+  serialization: (p) ->
+    super
+    @lifespan = p('B', @lifespan)
 
-  serialize: -> pack 'HHB', @x, @y, @lifespan
-  deserialize: (data, offset) -> [@x, @y, @lifespan] = unpack 'HHB', data, offset; return 5
-
-  update: -> if @lifespan-- == 0 then @sim.destroy this
+  update: ->
+    if @lifespan-- == 0
+      @sim.destroy(this)
 
   getTile: ->
     switch floor(@lifespan / 3)

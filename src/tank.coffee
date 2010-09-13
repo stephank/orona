@@ -12,7 +12,6 @@ the Free Software Foundation; either version 2 of the License, or
 {TILE_SIZE_WORLD}       = require './constants'
 WorldObject             = require './world_object'
 net                     = require './net'
-{pack, unpack}          = require './struct'
 Explosion               = require './explosion'
 Shell                   = require './shell'
 
@@ -23,24 +22,26 @@ class Tank extends WorldObject
 
   # The Tank constructor and destructor are never simulated.
   # They are only ever called on the server.
-  constructor: (@sim) ->
+  constructor: (sim) ->
+    super
+
     # FIXME: Proper way to select teams.
     @team = @sim.tanks.length % 2
 
-    @sim.addTank(this)
-
     @reset()
 
-  destroy: ->
-    @sim.removeTank(this)
+  updateCell: ->
+    @cell = @sim.map.cellAtWorld @x, @y
 
-  initFromNetwork: (@sim, data, offset) ->
-    bytes = @deserialize data, offset
+  postInitialize: ->
+    @updateCell()
     @sim.addTank(this)
-    bytes
 
-  destroyFromNetwork: ->
+  preRemove: ->
     @sim.removeTank(this)
+
+  postNetUpdate: ->
+    @updateCell()
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->
@@ -48,43 +49,51 @@ class Tank extends WorldObject
     @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
+    @updateCell()
 
-    @cell = @sim.map.cells[startingPos.y][startingPos.x]
-
-    @speed = 0.00
+    @speed        = 0.00
     @accelerating = no
-    @braking = no
+    @braking      = no
 
-    @turningClockwise = no
+    @turningClockwise        = no
     @turningCounterClockwise = no
-    @turnSpeedup = 0
+    @turnSpeedup             = 0
 
     # FIXME: gametype dependant.
     @shells = 40
-    @mines = 0
+    @mines  = 0
     @armour = 40
-    @trees = 0
+    @trees  = 0
 
-    @reload = 0
+    @reload   = 0
     @shooting = no
 
     @onBoat = yes
 
-  # These methods are used by networking to synchronize state.
-  serialize: ->
-    speed = round(@speed * 4)
-    pack 'BHHBBBBBBBBffffff', @team, @x, @y, @direction, speed, @turnSpeedup, @shells, @mines,
-      @armour, @trees, @reload, @accelerating, @braking, @turningClockwise,
-      @turningCounterClockwise, @shooting, @onBoat
+  serialization: (p) ->
+    super
 
-  deserialize: (data, offset) ->
-    [@team, @x, @y, @direction, speed, @turnSpeedup, @shells, @mines,
-      @armour, @trees, @reload, @accelerating, @braking, @turningClockwise,
-      @turningCounterClockwise, @shooting, @onBoat] = unpack 'BHHBBBBBBBBffffff', data, offset
-    @speed = speed / 4
-    @cell = @sim.map.cellAtWorld @x, @y
-    # We ate 14 bytes.
-    14
+    @team = p('B', @team)
+
+    @direction = p('B', @direction)
+
+    @speed        = p('B', @speed * 4) / 4
+    @accelerating = p('f', @accelerating)
+    @braking      = p('f', @braking)
+
+    @turningClockwise        = p('f', @turningClockwise)
+    @turningCounterClockwise = p('f', @turningCounterClockwise)
+    @turnSpeedup             = p('B', @turnSpeedup)
+
+    @shells = p('B', @shells)
+    @mines  = p('B', @mines)
+    @armour = p('B', @armour)
+    @trees  = p('B', @trees)
+
+    @reload   = p('B', @reload)
+    @shooting = p('f', @shooting)
+
+    @onBoat = p('f', @onBoat)
 
 
   # Get the 1/16th direction step.
@@ -230,7 +239,7 @@ class Tank extends WorldObject
 
     # Update the cell reference.
     oldcell = @cell
-    @cell = @sim.map.cellAtWorld(@x, @y)
+    @updateCell()
 
     # Check if we just entered or left the water.
     if @onBoat
