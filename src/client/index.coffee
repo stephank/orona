@@ -155,6 +155,7 @@ class NetworkGame extends BaseGame
   # Key press handlers.
 
   handleKeydown: (e) ->
+    return unless @ws?
     switch e.which
       when 32 then @ws.send net.START_SHOOTING
       when 37 then @ws.send net.START_TURNING_CCW
@@ -165,6 +166,7 @@ class NetworkGame extends BaseGame
     e.preventDefault()
 
   handleKeyup: (e) ->
+    return unless @ws?
     switch e.which
       when 32 then @ws.send net.STOP_SHOOTING
       when 37 then @ws.send net.STOP_TURNING_CCW
