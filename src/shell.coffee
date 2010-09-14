@@ -68,34 +68,33 @@ class Shell extends WorldObject
     @cell = @sim.map.cellAtWorld(@x, @y)
 
   collide: ->
-    # FIXME: This code is a draft, take this out once it actually works.
-    return no
-
     # Check for a collision with a pillbox.
-    # FIXME: implement pillbox takeShellHit.
     if pill = @cell.pill
-      pill.takeShellHit(this)
-      @sim.destroy this
+      # FIXME: implement pillbox takeShellHit.
+      #pill.takeShellHit(this)
       @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
+      # FIXME: play sound.
+      @sim.destroy this
       return yes
 
     # Check for collision with tanks.
-    # FIXME: implement @owner.
     for tank in @sim.tanks when tank != @owner
       dx = tank.x - @x; dy = tank.y - @y
       distance = sqrt(dx*dx + dy*dy)
       if distance <= 127
         tank.takeShellHit(this)
+        # FIXME: play sound.
         @sim.destroy this
         return yes
 
     # Check for collision with enemy base.
-    # FIXME: implement @owner, @onBoat, base takeShellHit
     if base = @cell.base
-      if @onBoat or (base.armour > 4 and base?.owner? and not base.owner.isAlly(@owner))
-        base.takeShellHit(this)
-        @sim.destroy this
+      if @onWater or (base.armour > 4 and base?.owner? and not base.owner.isAlly(@owner))
+        # FIXME: implement base takeShellHit.
+        #base.takeShellHit(this)
         @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
+        # FIXME: play sound.
+        @sim.destroy this
         return yes
 
     # FIXME: implement terrain collision

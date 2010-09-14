@@ -109,6 +109,9 @@ class Tank extends WorldObject
   # Tell whether the other tank is an ally.
   isAlly: (other) -> other == this or (@team != 255 and other.team == @team)
 
+  takeShellHit: (shell) ->
+    # FIXME
+
 
   # The following methods all update the simulation.
 
