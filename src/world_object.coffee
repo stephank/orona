@@ -164,9 +164,9 @@ class WorldObject
     child.register = @register
 
   # Find a type by character or character code.
-  @getType: (char) ->
-    char = String.fromCharCode(char) if typeof(char) != 'string'
-    types[char]
+  @getType: (c) ->
+    c = String.fromCharCode(c) if typeof(c) != 'string'
+    types[c]
 
   # This should be called after a class is defined, as for example `MyObject.register()`.
   # FIXME: Would be neat if this were automagic somehow.
