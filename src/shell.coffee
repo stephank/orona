@@ -20,16 +20,21 @@ class Shell extends WorldObject
   charId: 'S'
   styled: false
 
-  constructor: (sim, @x, @y, @direction, @lifespan) ->
+  constructor: (sim, @owner, options) ->
     super
+    options ||= {}
+    # Default direction is the owner's.
+    @direction = options.direction || @owner.direction
     # Default lifespan (fired by pillboxes) is 7 tiles.
-    @lifespan ||= 7 * TILE_SIZE_WORLD / 32 - 2
-    # Move a single step away from the owner.
+    @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
+    # Start the owner's location, and move one step away.
+    @x = @owner.x; @y = @owner.y
     @move()
 
   serialization: (p) ->
     super
     @direction = p('B', @direction)
+    @owner     = p('O', @owner)
     @lifespan  = p('B', @lifespan)
 
   # Get the 1/16th direction step.
