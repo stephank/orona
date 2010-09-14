@@ -227,7 +227,7 @@ class NetworkGame extends BaseGame
 
       else
         # FIXME: Do something better than this when console is not available.
-        console.log "Bad command from server:", command
+        console.log "Bad command '#{command}' from server, and offset #{offset - 1}"
         @stop()
         @ws.close()
         @ws = null
