@@ -27,6 +27,8 @@ class Shell extends WorldObject
     @direction = options.direction || @owner.direction
     # Default lifespan (fired by pillboxes) is 7 tiles.
     @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
+    # Default for onWater (fired by pillboxes) is no.
+    @onWater = options.onWater || no
     # Start the owner's location, and move one step away.
     @x = @owner.x; @y = @owner.y
     @move()
@@ -36,6 +38,7 @@ class Shell extends WorldObject
     @direction = p('B', @direction)
     @owner     = p('O', @owner)
     @lifespan  = p('B', @lifespan)
+    @onWater   = p('f', @onWater)
 
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16

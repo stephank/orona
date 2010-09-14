@@ -141,7 +141,7 @@ class Tank extends WorldObject
     @reload = 13
     @shells--
     # FIXME: variable firing distance
-    @sim.spawn Shell, this
+    @sim.spawn Shell, this, onWater: @onBoat
     # FIXME: Play sound.
 
   turn: ->
