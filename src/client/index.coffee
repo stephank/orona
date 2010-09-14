@@ -185,7 +185,10 @@ class NetworkGame extends BaseGame
       while pos < length
         command = data[pos++]
         ate = @handleServerCommand command, data, pos
-        return if ate == -1
+        if ate == -1
+          # FIXME: Do something better than this when console is not available.
+          console.log "Message was:", data
+          return
         pos += ate
 
   handleServerCommand: (command, data, offset) ->
@@ -221,7 +224,8 @@ class NetworkGame extends BaseGame
         bytes
 
       else
-        # FIXME: nag
+        # FIXME: Do something better than this when console is not available.
+        console.log "Bad command from server:", command
         @stop()
         @ws.close()
         @ws = null
