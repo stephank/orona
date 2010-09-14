@@ -15,7 +15,8 @@ class Explosion extends WorldObject
   charId: 'E'
   styled: false
 
-  constructor: (@sim, @x, @y) ->
+  constructor: (sim, @x, @y) ->
+    super
     @lifespan = 23
 
   serialization: (p) ->

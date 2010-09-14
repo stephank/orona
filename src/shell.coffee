@@ -20,7 +20,8 @@ class Shell extends WorldObject
   charId: 'S'
   styled: false
 
-  constructor: (@sim, @x, @y, @direction, @lifespan) ->
+  constructor: (sim, @x, @y, @direction, @lifespan) ->
+    super
     # Default lifespan (fired by pillboxes) is 7 tiles.
     @lifespan ||= 7 * TILE_SIZE_WORLD / 32 - 2
     # Move a single step away from the owner.
@@ -33,6 +34,13 @@ class Shell extends WorldObject
 
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16
+
+  # Get the tilemap index to draw. This is the index in base.png.
+  getTile: ->
+    tx = @getDirection16th()
+    [tx, 4]
+
+  # The following methods all update the simulation.
 
   update: ->
     @move()
@@ -85,10 +93,6 @@ class Shell extends WorldObject
     # FIXME: implement terrain collision
 
     return no
-
-  getTile: ->
-    tx = @getDirection16th()
-    [tx, 4]
 
 Shell.register()
 

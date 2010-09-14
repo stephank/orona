@@ -24,15 +24,16 @@ class Tank extends WorldObject
   # They are only ever called on the server.
   constructor: (sim) ->
     super
-
     # FIXME: Proper way to select teams.
     @team = @sim.tanks.length % 2
-
+    # Initialize.
     @reset()
 
+  # Helper, called in several places that change tank position.
   updateCell: ->
     @cell = @sim.map.cellAtWorld @x, @y
 
+  # Use postInitialize and preRemove to keep the player list updated.
   postInitialize: ->
     @updateCell()
     @sim.addTank(this)
@@ -40,6 +41,7 @@ class Tank extends WorldObject
   preRemove: ->
     @sim.removeTank(this)
 
+  # Track position updates.
   postNetUpdate: ->
     @updateCell()
 
@@ -49,7 +51,6 @@ class Tank extends WorldObject
     @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
-    @updateCell()
 
     @speed        = 0.00
     @accelerating = no
