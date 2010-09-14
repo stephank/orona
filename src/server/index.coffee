@@ -57,7 +57,7 @@ class Game
       ws.sendMessage data.toString('base64')
 
       # Send the welcome message, along with the index of this player's tank.
-      data = new Buffer(pack('BI', net.WELCOME_MESSAGE, tank.idx))
+      data = new Buffer(pack('BH', net.WELCOME_MESSAGE, tank.idx))
       ws.sendMessage data.toString('base64')
 
   onEnd: (tank) ->

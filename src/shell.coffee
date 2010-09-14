@@ -30,7 +30,7 @@ class Shell extends WorldObject
   serialization: (p) ->
     super
     @direction = p('B', @direction)
-    @lifespan = p('H', @lifespan)
+    @lifespan  = p('B', @lifespan)
 
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16

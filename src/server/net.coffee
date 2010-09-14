@@ -32,7 +32,7 @@ class ServerContext
 
   # Record the destruction.
   destroyed: (obj) ->
-    @changes = @changes.concat pack('BI', net.DESTROY_MESSAGE, obj.idx)
+    @changes = @changes.concat pack('BH', net.DESTROY_MESSAGE, obj.idx)
 
   # Record the map change.
   mapChanged: (cell, oldType, hadMine) ->

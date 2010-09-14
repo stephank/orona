@@ -196,7 +196,7 @@ class NetworkGame extends BaseGame
   handleServerCommand: (command, data, offset) ->
     switch command
       when net.WELCOME_MESSAGE
-        [[tank_idx], bytes] = unpack('I', data, offset)
+        [[tank_idx], bytes] = unpack('H', data, offset)
         @receiveWelcome @sim.objects[tank_idx]
         bytes
 
@@ -206,7 +206,7 @@ class NetworkGame extends BaseGame
         bytes + 1
 
       when net.DESTROY_MESSAGE
-        [[obj_idx], bytes] = unpack('I', data, offset)
+        [[obj_idx], bytes] = unpack('H', data, offset)
         obj = @sim.objects[obj_idx]
         @sim.netDestroy obj
         bytes
