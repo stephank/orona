@@ -54,7 +54,7 @@ class Simulation
     # Invoke the callback.
     obj.postInitialize()
     # Return the number of bytes taken.
-    1 + bytes
+    bytes
 
   # Destroy an object, as the authority or simulated.
   destroy: (obj) ->
