@@ -40,6 +40,14 @@ class Shell extends WorldObject
     @lifespan  = p('B', @lifespan)
     @onWater   = p('f', @onWater)
 
+  # Helper, called in several places that change shell position.
+  updateCell: ->
+    @cell = @sim.map.cellAtWorld @x, @y
+
+  # Track position updates.
+  postNetUpdate: ->
+    @updateCell()
+
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16
 
@@ -60,12 +68,9 @@ class Shell extends WorldObject
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
-
     @x += round(cos(@radians) * 32)
     @y += round(sin(@radians) * 32)
-
-    # Update the cell reference.
-    @cell = @sim.map.cellAtWorld(@x, @y)
+    @updateCell()
 
   collide: ->
     # Check for a collision with a pillbox.
