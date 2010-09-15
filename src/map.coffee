@@ -7,28 +7,24 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 ###
 
-{round, random,
- floor, min}       = Math
-{TILE_SIZE_WORLD,
- TILE_SIZE_PIXELS,
- MAP_SIZE_TILES}   = require './constants'
-net                = require './net'
+{floor, min}     = Math
+{MAP_SIZE_TILES} = require './constants'
 
 
 # All the different terrain types we know about, indexed both by the numeric ID used in the
 # binary BMAP format, as well as by ASCII code we use here in Orona.
 TERRAIN_TYPES = [
-  { ascii: '|', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'building'        }
-  { ascii: ' ', tankSpeed:  3, tankTurn: 0.25, manSpeed:  0, description: 'river'           }
-  { ascii: '~', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'swamp'           }
-  { ascii: '%', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'crater'          }
-  { ascii: '=', tankSpeed: 16, tankTurn: 1.00, manSpeed: 16, description: 'road'            }
-  { ascii: '#', tankSpeed:  6, tankTurn: 0.50, manSpeed:  8, description: 'forest'          }
-  { ascii: ':', tankSpeed:  3, tankTurn: 0.25, manSpeed:  4, description: 'rubble'          }
-  { ascii: '.', tankSpeed: 12, tankTurn: 1.00, manSpeed: 16, description: 'grass'           }
-  { ascii: '}', tankSpeed:  0, tankTurn: 0.00, manSpeed:  0, description: 'shot building'   }
-  { ascii: 'b', tankSpeed: 16, tankTurn: 1.00, manSpeed: 16, description: 'river with boat' }
-  { ascii: '^', tankSpeed:  3, tankTurn: 0.50, manSpeed:  0, description: 'deep sea'        }
+  { ascii: '|', description: 'building'        }
+  { ascii: ' ', description: 'river'           }
+  { ascii: '~', description: 'swamp'           }
+  { ascii: '%', description: 'crater'          }
+  { ascii: '=', description: 'road'            }
+  { ascii: '#', description: 'forest'          }
+  { ascii: ':', description: 'rubble'          }
+  { ascii: '.', description: 'grass'           }
+  { ascii: '}', description: 'shot building'   }
+  { ascii: 'b', description: 'river with boat' }
+  { ascii: '^', description: 'deep sea'        }
 ]
 
 createTerrainMap = ->
@@ -46,40 +42,6 @@ class MapCell
 
     # This is just a unique index for this cell; used in a couple of places for convenience.
     @idx = @y * MAP_SIZE_TILES + @x
-
-  getTankSpeed: (tank) ->
-    # Check for a pillbox.
-    return 0 if @pill?.armour > 0
-    # Check for an enemy base.
-    if @base?.owner?
-      return 0 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
-    # Check if we're on a boat.
-    return 16 if tank.onBoat and @isType('^', ' ')
-    # Take the land speed.
-    @type.tankSpeed
-
-  getTankTurn: (tank) ->
-    # Check for a pillbox.
-    return 0.00 if @pill?.armour > 0
-    # Check for an enemy base.
-    if @base?.owner?
-      return 0.00 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
-    # Check if we're on a boat.
-    return 1.00 if tank.onBoat and @isType('^', ' ')
-    # Take the land turn speed.
-    @type.tankTurn
-
-  getManSpeed: (man) ->
-    {tank} = man
-    # Check for a pillbox.
-    return 0 if @pill?.armour > 0
-    # Check for an enemy base.
-    if @base?.owner?
-      return 0 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
-    # Check if we're on a boat.
-    return 16 if man.onBoat and @isType('^', ' ')
-    # Take the land speed.
-    @type.manSpeed
 
   # Get the cell at offset +dx+,+dy+ from this cell.
   # Most commonly used to get one of the neighbouring cells.
@@ -129,13 +91,12 @@ class MapCell
     else
       @type = newType
 
-    net.mapChanged this, oldType, hadMine
     @map.retile(
       @x - retileRadius, @y - retileRadius,
       @x + retileRadius, @y + retileRadius
     ) unless retileRadius < 0
 
-  # Short-hand for notifying the view of a retile.
+  # Helper for retile methods. Short-hand for notifying the view of a retile.
   setTile: (tx, ty) ->
     @map.view.onRetile this, tx, ty
 
@@ -409,6 +370,8 @@ class MapView
 
 # This class holds a complete map.
 class Map
+  cellClass: MapCell
+
   # Initialize the map array.
   constructor: ->
     @view = new MapView()
@@ -421,26 +384,15 @@ class Map
     for y in [0...MAP_SIZE_TILES]
       row = @cells[y] = new Array(MAP_SIZE_TILES)
       for x in [0...MAP_SIZE_TILES]
-        row[x] = new MapCell(this, x, y)
+        row[x] = new @cellClass(this, x, y)
 
   setView: (@view) ->
     @retile()
 
-  getRandomStart: ->
-    @starts[round(random() * (@starts.length - 1))]
-
   # Get the cell at the given tile coordinates, or return a dummy cell.
   cellAtTile: (x, y) ->
     if cell = @cells[y]?[x] then cell
-    else new MapCell(this, x, y)
-
-  # Get the cell at the given pixel coordinates, or return a dummy cell.
-  cellAtPixel: (x, y) ->
-    @cellAtTile floor(x / TILE_SIZE_PIXELS), floor(y / TILE_SIZE_PIXELS)
-
-  # Get the cell at the given world coordinates, or return a dummy cell.
-  cellAtWorld: (x, y) ->
-    @cellAtTile floor(x / TILE_SIZE_WORLD), floor(y / TILE_SIZE_WORLD)
+    else new @cellClass(this, x, y, isDummy: yes)
 
   # Iterate over the map cells, either the complete map or a specific area.
   # The callback function will have each cell available as +this+.
@@ -597,84 +549,86 @@ class Map
 
     retval
 
+  # Load a map from +buffer+. The buffer is treated as an array of numbers
+  # representing octets. So a node.js Buffer will work.
+  @load: (buffer) ->
+    # Helper for reading slices out of the buffer.
+    filePos = 0
+    readBytes = (num, msg) ->
+      sub = try
+        buffer.slice(filePos, filePos + num)
+      catch e
+        throw msg
+      filePos += num
+      sub
 
-# Load a map from +buffer+. The buffer is treated as an array of numbers
-# representing octets. So a node.js Buffer will work.
-load = (buffer) ->
-  # Helper for reading slices out of the buffer.
-  filePos = 0
-  readBytes = (num, msg) ->
-    sub = try
-      buffer.slice(filePos, filePos + num)
-    catch e
-      throw msg
-    filePos += num
-    sub
+    # Read the header.
+    magic = readBytes(8, "Not a Bolo map.")
+    for c, i in 'BMAPBOLO'
+      throw "Not a Bolo map." unless c.charCodeAt(0) == magic[i]
+    [version, numPills, numBases, numStarts] = readBytes(4, "Incomplete header")
+    throw "Unsupported map version: #{version}" unless version == 1
 
-  # Read the header.
-  magic = readBytes(8, "Not a Bolo map.")
-  for c, i in 'BMAPBOLO'
-    throw "Not a Bolo map." unless c.charCodeAt(0) == magic[i]
-  [version, numPills, numBases, numStarts] = readBytes(4, "Incomplete header")
-  throw "Unsupported map version: #{version}" unless version == 1
+    # Allocate the map.
+    retval = new this()
 
-  # Allocate the map.
-  retval = new Map()
+    # Helper for reading the map attributes.
+    extractAttributes = (names...) ->
+      obj = {}
+      data = readBytes(names.length, "Incomplete header")
+      for name, index in names
+        obj[name] = data[index]
+      obj
 
-  # Helper for reading the map attributes.
-  extractAttributes = (names...) ->
-    obj = {}
-    data = readBytes(names.length, "Incomplete header")
-    for name, index in names
-      obj[name] = data[index]
-    obj
+    retval.pills = for i in [1..numPills]
+      extractAttributes 'x', 'y', 'owner_idx', 'armour', 'speed'
+    retval.bases = for i in [1..numBases]
+      extractAttributes 'x', 'y', 'owner_idx', 'armour', 'shells', 'mines'
+    retval.starts = for i in [1..numStarts]
+      extractAttributes 'x', 'y', 'direction'
 
-  retval.pills = for i in [1..numPills]
-    extractAttributes 'x', 'y', 'owner_idx', 'armour', 'speed'
-  retval.bases = for i in [1..numBases]
-    extractAttributes 'x', 'y', 'owner_idx', 'armour', 'shells', 'mines'
-  retval.starts = for i in [1..numStarts]
-    extractAttributes 'x', 'y', 'direction'
+    # Read map data.
+    loop
+      [dataLen, y, sx, ex] = readBytes(4, "Incomplete map data")
+      dataLen -= 4
+      break if dataLen == 0 and y == 0xFF and sx == 0xFF and ex == 0xFF
 
-  # Read map data.
-  loop
-    [dataLen, y, sx, ex] = readBytes(4, "Incomplete map data")
-    dataLen -= 4
-    break if dataLen == 0 and y == 0xFF and sx == 0xFF and ex == 0xFF
+      run = readBytes(dataLen, "Incomplete map data")
+      runPos = 0
+      takeNibble = ->
+        index = floor(runPos)
+        nibble = if index == runPos
+          (run[index] & 0xF0) >> 4
+        else
+          (run[index] & 0x0F)
+        runPos += 0.5
+        nibble
 
-    run = readBytes(dataLen, "Incomplete map data")
-    runPos = 0
-    takeNibble = ->
-      index = floor(runPos)
-      nibble = if index == runPos
-        (run[index] & 0xF0) >> 4
-      else
-        (run[index] & 0x0F)
-      runPos += 0.5
-      nibble
+      x = sx
+      while x < ex
+        seqLen = takeNibble()
+        if seqLen < 8
+          for i in [1..seqLen+1]
+            retval.cellAtTile(x++, y).setType takeNibble(), undefined, -1
+        else
+          type = takeNibble()
+          for i in [1..seqLen-6]
+            retval.cellAtTile(x++, y).setType type, undefined, -1
 
-    x = sx
-    while x < ex
-      seqLen = takeNibble()
-      if seqLen < 8
-        for i in [1..seqLen+1]
-          retval.cellAtTile(x++, y).setType takeNibble(), undefined, -1
-      else
-        type = takeNibble()
-        for i in [1..seqLen-6]
-          retval.cellAtTile(x++, y).setType type, undefined, -1
+    # Link pills and bases to their cells.
+    for pill in retval.pills
+      pill.cell = retval.cells[pill.y][pill.x]
+      pill.cell.pill = pill
+    for base in retval.bases
+      base.cell = retval.cells[base.y][base.x]
+      base.cell.base = base
+      # Override cell type.
+      base.cell.setType '=', no, -1
 
-  # Link pills and bases to their cells.
-  for pill in retval.pills
-    pill.cell = retval.cells[pill.y][pill.x]
-    pill.cell.pill = pill
-  for base in retval.bases
-    base.cell = retval.cells[base.y][base.x]
-    base.cell.base = base
-    # Override cell type.
-    base.cell.setType '=', no, -1
+    retval
 
-  retval
+  @extended: (child) ->
+    child.load = @load unless child.load
 
 
 # Exports.
@@ -682,4 +636,3 @@ exports.TERRAIN_TYPES = TERRAIN_TYPES
 exports.MapCell = MapCell
 exports.MapView = MapView
 exports.Map = Map
-exports.load = load

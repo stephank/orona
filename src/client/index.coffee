@@ -12,7 +12,7 @@ the Free Software Foundation; either version 2 of the License, or
 Simulation       = require '..'
 WorldObject      = require '../world_object'
 net              = require '../net'
-map              = require '../map'
+{SimulationMap}  = require '../simulation_map'
 {unpack}         = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 ClientContext    = require './net'
@@ -46,8 +46,8 @@ class BaseGame
     loader.finish()
 
   # Common initialization once the map is available
-  commonInitialization: (gameMap) ->
-    @sim = new Simulation(gameMap)
+  commonInitialization: (map) ->
+    @sim = new Simulation(map)
     @renderer = new DefaultRenderer(@resources.images, @sim)
     @sim.map.setView(@renderer)
 
@@ -91,8 +91,8 @@ class BaseGame
 
 class LocalGame extends BaseGame
   startup: ->
-    gameMap = map.load decodeBase64(EverardIsland)
-    @commonInitialization(gameMap)
+    map = SimulationMap.load decodeBase64(EverardIsland)
+    @commonInitialization(map)
     @sim.player = @sim.addTank()
     @start()
 
@@ -132,8 +132,8 @@ class NetworkGame extends BaseGame
       @receiveMap(e.originalEvent)
 
   receiveMap: (e) ->
-    gameMap = map.load decodeBase64(e.data)
-    @commonInitialization(gameMap)
+    map = SimulationMap.load decodeBase64(e.data)
+    @commonInitialization(map)
     @netctx = new ClientContext(@sim)
     $(@ws).bind 'message', (e) =>
       @handleMessage(e.originalEvent) if @ws?

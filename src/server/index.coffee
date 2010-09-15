@@ -14,15 +14,15 @@ WebSocket        = require './websocket'
 ServerContext    = require './net'
 Simulation       = require '..'
 Tank             = require '../tank'
-map              = require '../map'
+{SimulationMap}  = require '../simulation_map'
 net              = require '../net'
 {pack}           = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 
 
 class Game
-  constructor: (gameMap) ->
-    @sim = new Simulation(gameMap)
+  constructor: (map) ->
+    @sim = new Simulation(map)
     @netctx = new ServerContext(@sim)
     @oddTick = no
 
@@ -148,8 +148,8 @@ class Application
 
     # FIXME: this is for the demo
     data = fs.readFileSync 'maps/everard-island.map'
-    gameMap = map.load data
-    @games.push new Game(gameMap)
+    map = SimulationMap.load data
+    @games.push new Game(map)
 
   destroy: ->
     # FIXME: The interval should be deactivated automatically when
