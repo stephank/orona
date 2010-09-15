@@ -60,7 +60,17 @@ class Shell extends WorldObject
 
   update: ->
     @move()
-    return if @collide()
+    if mode = @collide()
+      {x, y} = this
+      if mode == 'cell'
+        # Spawn the explosion at the cell coordinates.
+        x = (@cell.x + 0.5) * TILE_SIZE_WORLD
+        y = (@cell.y + 0.5) * TILE_SIZE_WORLD
+        # FIXME: play rumble sound.
+      else # mode == 'tank'
+        # FIXME: play metallic sound.
+      @sim.spawn Explosion, x, y
+      @sim.destroy this
 
     return unless @lifespan-- == 0
     @sim.destroy this
@@ -77,10 +87,7 @@ class Shell extends WorldObject
     if pill = @cell.pill
       # FIXME: implement pillbox takeShellHit.
       #pill.takeShellHit(this)
-      @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
-      # FIXME: play sound.
-      @sim.destroy this
-      return yes
+      return 'cell'
 
     # Check for collision with tanks.
     for tank in @sim.tanks when tank != @owner
@@ -88,19 +95,14 @@ class Shell extends WorldObject
       distance = sqrt(dx*dx + dy*dy)
       if distance <= 127
         tank.takeShellHit(this)
-        # FIXME: play sound.
-        @sim.destroy this
-        return yes
+        return 'tank'
 
     # Check for collision with enemy base.
     if base = @cell.base
       if @onWater or (base.armour > 4 and base?.owner? and not base.owner.isAlly(@owner))
         # FIXME: implement base takeShellHit.
         #base.takeShellHit(this)
-        @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
-        # FIXME: play sound.
-        @sim.destroy this
-        return yes
+        return 'cell'
 
     # Check for terrain collision
     terrainCollision =
@@ -111,9 +113,7 @@ class Shell extends WorldObject
     if terrainCollision
       # FIXME: implement cell takeShellHit.
       #@cell.takeShellHit()
-      @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
-      # FIXME: play sound.
-      @sim.destroy this
+      return 'cell'
 
     return no
 
