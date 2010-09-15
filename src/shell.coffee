@@ -102,7 +102,18 @@ class Shell extends WorldObject
         @sim.destroy this
         return yes
 
-    # FIXME: implement terrain collision
+    # Check for terrain collision
+    terrainCollision =
+      if @onWater
+        not @cell.isType('^', ' ', '%')
+      else
+        @cell.isType('|', '}', '#', 'b')
+    if terrainCollision
+      # FIXME: implement cell takeShellHit.
+      #@cell.takeShellHit()
+      @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
+      # FIXME: play sound.
+      @sim.destroy this
 
     return no
 
