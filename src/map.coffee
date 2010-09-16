@@ -461,25 +461,25 @@ class Map
       octets
 
     # Build the header.
-    retval = c.charCodeAt(0) for c in 'BMAPBOLO'
-    retval.push(1, @pills.length, @bases.length, @starts.length)
-    retval.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in @pills
-    retval.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in @bases
-    retval.push(s.x, s.y, s.direction) for s in @starts
+    data = c.charCodeAt(0) for c in 'BMAPBOLO'
+    data.push(1, @pills.length, @bases.length, @starts.length)
+    data.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in @pills
+    data.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in @bases
+    data.push(s.x, s.y, s.direction) for s in @starts
 
     # While building the map data, we collect sequences and runs.
-    # What follows are helpers to deal with flushing these two arrays to retval.
+    # What follows are helpers to deal with flushing these two arrays to data.
     run = seq = sx = ex = y = null
 
-    # Flush the current run, and push it to retval.
+    # Flush the current run, and push it to data.
     flushRun = ->
       return unless run?
 
       flushSequence()
 
       octets = encodeNibbles(run)
-      retval.push(octets.length + 4, y, sx, ex)
-      retval = retval.concat(octets)
+      data.push(octets.length + 4, y, sx, ex)
+      data = data.concat(octets)
 
       run = null
 
@@ -545,9 +545,9 @@ class Map
     flushRun()
 
     # The sentinel.
-    retval.push(4, 0xFF, 0xFF, 0xFF)
+    data.push(4, 0xFF, 0xFF, 0xFF)
 
-    retval
+    data
 
   # Load a map from +buffer+. The buffer is treated as an array of numbers
   # representing octets. So a node.js Buffer will work.
@@ -570,7 +570,7 @@ class Map
     throw "Unsupported map version: #{version}" unless version == 1
 
     # Allocate the map.
-    retval = new this()
+    map = new this()
 
     # Helper for reading the map attributes.
     extractAttributes = (names...) ->
@@ -580,11 +580,11 @@ class Map
         obj[name] = data[index]
       obj
 
-    retval.pills = for i in [1..numPills]
+    map.pills = for i in [1..numPills]
       extractAttributes 'x', 'y', 'owner_idx', 'armour', 'speed'
-    retval.bases = for i in [1..numBases]
+    map.bases = for i in [1..numBases]
       extractAttributes 'x', 'y', 'owner_idx', 'armour', 'shells', 'mines'
-    retval.starts = for i in [1..numStarts]
+    map.starts = for i in [1..numStarts]
       extractAttributes 'x', 'y', 'direction'
 
     # Read map data.
@@ -609,23 +609,23 @@ class Map
         seqLen = takeNibble()
         if seqLen < 8
           for i in [1..seqLen+1]
-            retval.cellAtTile(x++, y).setType takeNibble(), undefined, -1
+            map.cellAtTile(x++, y).setType takeNibble(), undefined, -1
         else
           type = takeNibble()
           for i in [1..seqLen-6]
-            retval.cellAtTile(x++, y).setType type, undefined, -1
+            map.cellAtTile(x++, y).setType type, undefined, -1
 
     # Link pills and bases to their cells.
-    for pill in retval.pills
-      pill.cell = retval.cells[pill.y][pill.x]
+    for pill in map.pills
+      pill.cell = map.cells[pill.y][pill.x]
       pill.cell.pill = pill
-    for base in retval.bases
-      base.cell = retval.cells[base.y][base.x]
+    for base in map.bases
+      base.cell = map.cells[base.y][base.x]
       base.cell.base = base
       # Override cell type.
       base.cell.setType '=', no, -1
 
-    retval
+    map
 
   @extended: (child) ->
     child.load = @load unless child.load
