@@ -1,11 +1,7 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This module contains everything needed to read, manipulate and save the BMAP format for Bolo
+# maps. It's the same format that's used by the original Bolo and WinBolo. This is one of the few
+# modules that is useful on it's own.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 {floor, min}     = Math
 {MAP_SIZE_TILES} = require './constants'

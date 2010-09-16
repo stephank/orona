@@ -1,11 +1,9 @@
-###
-Orona, © 2010 Stéphan Kochen
+# Functions that provide functionality somewhat like Python's `struct` module. Using a format
+# string, a bunch of values can be packed into and unpacked from binary data.
+#
+# Because there's no standard way for dealing with binary data in JavaScript (yet), these functions
+# deal with arrays of byte values instead.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 # The following methods pack Fixnums in an array of bytes, in network byte order (MSB).
 

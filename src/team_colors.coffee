@@ -1,13 +1,6 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This module contains just a list of team colours and descriptive names.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
-# This module contains just a large map of team colours and descriptive their names.
 TEAM_COLORS = [
   # Primaries:
   { r: 255, g:   0, b:   0, name: 'red'     }

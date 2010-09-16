@@ -1,12 +1,3 @@
-###
-Orona, © 2010 Stéphan Kochen
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
-
 # Orona uses two WebSocket connections during play. The first is the lobby connection, which is
 # always open, and is also used for in-game chat. The second is used for world synchronization,
 # which is kept separate so that the lobby connection cannot impede network performance of game
@@ -26,9 +17,6 @@ the Free Software Foundation; either version 2 of the License, or
 # In order to do the right thing in different situations without complicating simulation code,
 # a global networking context object is used that handles all networking state. The simulation
 # only calls into a couple of methods, and is ignorant of what happens from there.
-
-# FIXME: still missing here is synchronization of pills and bases.
-# Perhaps those should be objects too?
 
 
 # The interface provided by network contexts. Unused, but here for documentation.

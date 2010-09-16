@@ -1,6 +1,7 @@
 # Brequire - CommonJS support for the browser.
 # This version is slightly modified, and rewritten in CoffeeScript.
 
+
 require = (path) ->
   unless m = require.modules[path]
     throw "Couldn't find module for: #{path}"

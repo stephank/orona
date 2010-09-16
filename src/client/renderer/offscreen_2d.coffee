@@ -1,11 +1,10 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This renderer builds on the Direct2dRenderr, but caches segments of the map, and then blits these
+# larger segments rather than individual tiles. The idea is to reduce the large amount of drawImage
+# calls.
+#
+# At the time of writing, this doesn't appear to increase performance in Chromium at all, compared
+# to Direct2dRenderer. However, Firefox does get a really nice speed boost out of it.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 {floor}            = Math
 {TILE_SIZE_PIXELS,
@@ -13,17 +12,7 @@ the Free Software Foundation; either version 2 of the License, or
 Common2dRenderer   = require './common_2d'
 
 
-# This renderer builds on the Direct2dRenderr, but caches segments of the
-# map, and then blits these larger segments rather than individual tiles.
-# The idea is to reduce the large amount of drawImage calls.
-
-# At the time of writing, this doesn't appear to increase performance in
-# Chromium at all, compared to Direct2dRenderer. However, Firefox does get
-# a really nice speed boost out of it.
-
-
-# The width and height of segments. The total map size in tiles should be
-# divisible by this number.
+# The width and height of segments. The total map size in tiles should be divisible by this number.
 SEGMENT_SIZE_TILES = 16
 # The width and height of the map in segments.
 MAP_SIZE_SEGMENTS = MAP_SIZE_TILES / SEGMENT_SIZE_TILES
@@ -50,8 +39,7 @@ class CachedSegment
 
   isInView: (sx, sy, ex, ey) ->
     # Compare canvas pixel bounds to our own.
-    # We can reduce the number of conditions by checking if we don't overlap,
-    # rather than if we do.
+    # We can reduce the number of conditions by checking if we don't overlap, rather than if we do.
     if      ex < @psx or ey < @psy then false
     else if sx > @pex or sy > @pey then false
     else true

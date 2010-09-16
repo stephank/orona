@@ -1,15 +1,8 @@
-###
-Orona, © 2010 Stéphan Kochen
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
-
 # The client networking context. It does it's best to keep the object list in sync with the server,
 # while allowing the local simulation to continue. This is done by keeping track of changes made
 # locally and marking them as transient, until the next server update.
+
+
 class ClientContext
   constructor: (@sim) ->
     @transientMapCells = {}

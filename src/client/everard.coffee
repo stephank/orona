@@ -1,13 +1,5 @@
-###
-Orona, © 2010 Stéphan Kochen
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
-
-# This is the Everard Island BMAP, encoded in base64.
+# This is the Everard Island BMAP, encoded in base64. It is used to start local games in the
+# browser. For networked games, the server handles base64 encoding of BMAPs instead.
 
 module.exports = '''
 Qk1BUEJPTE8BEAsQW5H/D2Vjbv8PZV90/w9lVHX/D2VwbP8PZYFr/w9lq27/D2WueP8PZa58/w9l

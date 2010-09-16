@@ -1,19 +1,14 @@
-###
-Orona, © 2010 Stéphan Kochen
+# The base class for all renderers is defined here. A renderer is responsible for drawing the map,
+# objects on the map, HUD map overlays and HUD screen overlays. Especially of the last two points,
+# a lot of shared code lives in this base class. Methods that need to be implemented by subclasses
+# are stubbed out here. All renderers also implement the `MapView` interface.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 {round, cos, sin, PI} = Math
 {TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD}    = require '../../constants'
 
 
-# This is the base class for renderers. Some methods that need to be implemented by subclasses
-# are stubbed out here. All renderers also implement the `MapView` interface.
 class BaseRenderer
   # The constructor takes a reference to the Image resources and the Simulation it needs to draw.
   # Once the constructor finishes, `Map#setView` is called to hook up this renderer instance, which

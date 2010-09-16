@@ -1,11 +1,6 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This module extends the classes defined in the `map` module, and provides the logic, data and
+# hooks that are needed for a game to be simulated on a map.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 {round, random,
  floor}            = Math

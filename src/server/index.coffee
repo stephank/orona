@@ -1,11 +1,8 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This module contains all the juicy code related to the server. It exposes a factory function
+# that returns a Connect-based HTTP server. A single server is capable of hosting multiple games,
+# sharing the interval timer and the lobby across these games. Each game is represented by an
+# instance of the `Game` class, which keeps track of a single simulation and its clients.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 fs               = require 'fs'
 url              = require 'url'
@@ -157,8 +154,7 @@ class Application
     # Maybe we shouldn't update empty games either?
     clearInterval @timer
 
-  # Determine what will handle a WebSocket's 'connect' event, based on
-  # the resource that was requested.
+  # Determine what will handle a WebSocket's 'connect' event, based on the requested resource.
   getSocketPathHandler: (path) ->
     # FIXME: Simple lobby with chat and match making.
     if path == '/lobby' then false

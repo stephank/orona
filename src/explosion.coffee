@@ -1,11 +1,5 @@
-###
-Orona, © 2010 Stéphan Kochen
+# An explosion is really just a static animation.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 {floor}        = Math
 WorldObject    = require './world_object'

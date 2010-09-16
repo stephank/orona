@@ -1,18 +1,11 @@
-###
-Orona, © 2010 Stéphan Kochen
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
-
 # A base64 decoder, because we don't have one in the browser.
 # The output is an array of byte values as numbers, much like a node.js Buffer.
-
+#
 # Note that this is a very simple implementation. It doesn't cope with whitespace, and breaks on
 # otherwise invalid input. For example, it's known to break when the padding character is injected
 # in the middle.
+
+
 decodeBase64 = (input) ->
   unless input.length % 4 == 0
     throw new Error "Invalid base64 input length, not properly padded?"

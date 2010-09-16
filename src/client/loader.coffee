@@ -1,16 +1,10 @@
-###
-Orona, © 2010 Stéphan Kochen
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
-
 # The loader takes care of loading a bunch of resources, providing progress information,
 # firing a single event when everything is complete, and exposing resources in a tidy structure.
+
+
 # FIXME: Add audio file support. Needs to be smart about supported formats.
 # FIXME: Implement progress notification.
+
 class Loader
   constructor: ->
     @resources =

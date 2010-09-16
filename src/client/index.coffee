@@ -1,11 +1,10 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This module contains all the guts of the browser client. There are two types of browser play:
+#
+#  * The `LocalGame` class implements a non-networked game, local to the player's computer/browser.
+#  * The `NetworkGame` class implements a networked game using a WebSocket.
+#
+# Both of these inherit from `BaseGame`, which handles all the common stuff.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 # FIXME: Better error handling all around.
 

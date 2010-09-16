@@ -1,12 +1,3 @@
-###
-Orona, © 2010 Stéphan Kochen
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
-
 # Portions of this are based on: (both are MIT-licensed)
 # - CoffeeScript's command.coffee, © 2010 Jeremy Ashkenas
 # - Yabble's yabbler.js, © 2010 James Brantly

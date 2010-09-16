@@ -1,19 +1,12 @@
-###
-Orona, © 2010 Stéphan Kochen
+# The server networking context. It records changes in the object list —the critical updates— and
+# makes them available in the 'changes' attribute. It also provides a method 'dump' that provides
+# the attribute updates.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 net    = require '../net'
 {pack} = require '../struct'
 
 
-# The server networking context. It records changes in the object list, the critical updates, and
-# makes them available in the 'changes' attribute. It also provides a method 'dump' that provides
-# the attribute updates.
 class ServerContext
   constructor: (@sim) ->
 

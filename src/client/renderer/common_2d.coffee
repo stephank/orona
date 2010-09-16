@@ -1,11 +1,7 @@
-###
-Orona, © 2010 Stéphan Kochen
+# This is a base class used to share common code between the Canvas2D renderers. It deals with a
+# fair amount of work concerning canvas initialization, preparing styled tilemaps and drawing
+# individual tiles. Subclasses differ mostly in the way they deal with drawing the map.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
 
 {min, round}       = Math
 BaseRenderer       = require '.'

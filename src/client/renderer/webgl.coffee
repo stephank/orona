@@ -1,11 +1,10 @@
-###
-Orona, © 2010 Stéphan Kochen
+# The WebGL renderer works much like the Direct2D renderer, but uses WebGL to accomplish it.
+# The advantage is that we can draw individual tiles, but actually feed them in large batches to
+# the graphics hardware using Vertex Buffer Objects. Another advantage is that we can do all the
+# styling we need in a fragment shader.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-###
+# All in all, this is the least CPU intensive drawing method, but strangely not the smoothest.
+
 
 {round, floor, ceil} = Math
 BaseRenderer         = require '.'
@@ -80,9 +79,6 @@ compileShader = (ctx, type, source) ->
   shader
 
 
-# The WebGL renderer works much like the Direct2D renderer,
-# but uses WebGL to accomplish it, of course.
-
 class WebglRenderer extends BaseRenderer
   constructor: (images, sim) ->
     super
@@ -96,8 +92,7 @@ class WebglRenderer extends BaseRenderer
       throw "Could not initialize WebGL canvas: #{e.message}"
     @canvas.appendTo('body')
 
-    # Because we do a lot of calls here, and it feels more natural,
-    # assign the context to a local variable 'gl'.
+    # This makes WebGL calls feel slightly more natural.
     gl = @ctx
 
     # We use 2D textures and blending.
