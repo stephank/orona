@@ -3,12 +3,11 @@
 
 
 {round, random,
- floor}            = Math
+ floor}              = Math
 {TILE_SIZE_WORLD,
- TILE_SIZE_PIXELS} = require './constants'
-{Map, MapCell,
- TERRAIN_TYPES}    = require './map'
-net                = require './net'
+ TILE_SIZE_PIXELS}   = require './constants'
+{Map, TERRAIN_TYPES} = require './map'
+net                  = require './net'
 
 
 TERRAIN_TYPE_ATTRIBUTES =
