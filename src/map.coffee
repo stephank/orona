@@ -370,7 +370,7 @@ class MapView
 
 # This class holds a complete map.
 class Map
-  cellClass: MapCell
+  CellClass: MapCell
 
   # Initialize the map array.
   constructor: ->
@@ -384,7 +384,7 @@ class Map
     for y in [0...MAP_SIZE_TILES]
       row = @cells[y] = new Array(MAP_SIZE_TILES)
       for x in [0...MAP_SIZE_TILES]
-        row[x] = new @cellClass(this, x, y)
+        row[x] = new @CellClass(this, x, y)
 
   setView: (@view) ->
     @retile()
@@ -392,7 +392,7 @@ class Map
   # Get the cell at the given tile coordinates, or return a dummy cell.
   cellAtTile: (x, y) ->
     if cell = @cells[y]?[x] then cell
-    else new @cellClass(this, x, y, isDummy: yes)
+    else new @CellClass(this, x, y, isDummy: yes)
 
   # Iterate over the map cells, either the complete map or a specific area.
   # The callback function will have each cell available as +this+.
@@ -633,6 +633,5 @@ class Map
 
 # Exports.
 exports.TERRAIN_TYPES = TERRAIN_TYPES
-exports.MapCell = MapCell
 exports.MapView = MapView
 exports.Map = Map

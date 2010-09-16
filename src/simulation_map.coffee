@@ -38,7 +38,7 @@ extendTerrainMap = ->
 extendTerrainMap()
 
 
-class SimulationMapCell extends MapCell
+class SimulationMapCell extends Map::CellClass
   getTankSpeed: (tank) ->
     # Check for a pillbox.
     return 0 if @pill?.armour > 0
@@ -80,7 +80,7 @@ class SimulationMapCell extends MapCell
 
 
 class SimulationMap extends Map
-  cellClass: SimulationMapCell
+  CellClass: SimulationMapCell
 
   # Get the cell at the given pixel coordinates, or return a dummy cell.
   cellAtPixel: (x, y) ->
