@@ -368,9 +368,35 @@ class MapView
   onRetile: (cell, tx, ty) ->
 
 
+# The following are (base) classes for objects on the map.
+
+class Pillbox
+  constructor: (@map, @x, @y, @owner_idx, @armour, @speed) ->
+    @updateCell()
+
+  updateCell: ->
+    delete @cell.pill if @cell
+    @cell = @map.cellAtTile(@x, @y)
+    @cell.pill = this
+
+class Base
+  constructor: (@map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
+    @cell = @map.cellAtTile(@x, @y)
+    @cell.base = this
+    # Override cell type.
+    @cell.setType '=', no, -1
+
+class Start
+  constructor: (@map, @x, @y, @direction) ->
+    @cell = @map.cellAtTile(@x, @y)
+
+
 # This class holds a complete map.
 class Map
   CellClass: MapCell
+  PillboxClass: Pillbox
+  BaseClass: Base
+  StartClass: Start
 
   # Initialize the map array.
   constructor: ->
@@ -556,7 +582,9 @@ class Map
     filePos = 0
     readBytes = (num, msg) ->
       sub = try
-        buffer.slice(filePos, filePos + num)
+        # FIXME: This is lame, but ensures we're not dealing with a Buffer object.
+        # The only reason for that is because we can't pass a Buffer as a splat.
+        x for x in buffer.slice(filePos, filePos + num)
       catch e
         throw msg
       filePos += num
@@ -572,20 +600,10 @@ class Map
     # Allocate the map.
     map = new this()
 
-    # Helper for reading the map attributes.
-    extractAttributes = (names...) ->
-      obj = {}
-      data = readBytes(names.length, "Incomplete header")
-      for name, index in names
-        obj[name] = data[index]
-      obj
-
-    map.pills = for i in [1..numPills]
-      extractAttributes 'x', 'y', 'owner_idx', 'armour', 'speed'
-    map.bases = for i in [1..numBases]
-      extractAttributes 'x', 'y', 'owner_idx', 'armour', 'shells', 'mines'
-    map.starts = for i in [1..numStarts]
-      extractAttributes 'x', 'y', 'direction'
+    # Read the map objects.
+    pillsData  = readBytes(5, "Incomplete pillbox data")      for i in [1..numPills]
+    basesData  = readBytes(6, "Incomplete base data")         for i in [1..numBases]
+    startsData = readBytes(3, "Incomplete player start data") for i in [1..numStarts]
 
     # Read map data.
     loop
@@ -615,15 +633,10 @@ class Map
           for i in [1..seqLen-6]
             map.cellAtTile(x++, y).setType type, undefined, -1
 
-    # Link pills and bases to their cells.
-    for pill in map.pills
-      pill.cell = map.cells[pill.y][pill.x]
-      pill.cell.pill = pill
-    for base in map.bases
-      base.cell = map.cells[base.y][base.x]
-      base.cell.base = base
-      # Override cell type.
-      base.cell.setType '=', no, -1
+    # Instantiate the map objects. Late, so they can do postprocessing on the map.
+    map.pills  = new map.PillboxClass(map, args...) for args in pillsData
+    map.bases  = new    map.BaseClass(map, args...) for args in basesData
+    map.starts = new   map.StartClass(map, args...) for args in startsData
 
     map
 
