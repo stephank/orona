@@ -69,26 +69,24 @@ class Tank extends WorldObject
   serialization: (isCreate, p) ->
     super
 
-    @team = p('B', @team)
+    # Team is only set once.
+    @team = p('B', @team) if isCreate
 
     @direction = p('B', @direction)
-
-    @speed        = p('B', @speed * 4) / 4
-    @accelerating = p('f', @accelerating)
-    @braking      = p('f', @braking)
-
-    @turningClockwise        = p('f', @turningClockwise)
-    @turningCounterClockwise = p('f', @turningCounterClockwise)
-    @turnSpeedup             = p('B', @turnSpeedup)
-
+    @speed = p('B', @speed * 4) / 4
+    @turnSpeedup = p('B', @turnSpeedup)
     @shells = p('B', @shells)
-    @mines  = p('B', @mines)
+    @mines = p('B', @mines)
     @armour = p('B', @armour)
-    @trees  = p('B', @trees)
+    @trees = p('B', @trees)
+    @reload = p('B', @reload)
 
-    @reload   = p('B', @reload)
+    # Group bit fields.
+    @accelerating = p('f', @accelerating)
+    @braking = p('f', @braking)
+    @turningClockwise = p('f', @turningClockwise)
+    @turningCounterClockwise = p('f', @turningCounterClockwise)
     @shooting = p('f', @shooting)
-
     @onBoat = p('f', @onBoat)
 
 

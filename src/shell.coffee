@@ -27,10 +27,14 @@ class Shell extends WorldObject
 
   serialization: (isCreate, p) ->
     super
-    @direction = p('B', @direction)
-    @owner     = p('O', @owner)
-    @lifespan  = p('B', @lifespan)
-    @onWater   = p('f', @onWater)
+
+    # These are only set once.
+    if isCreate
+      @direction = p('B', @direction)
+      @owner = p('O', @owner)
+      @onWater = p('f', @onWater)
+
+    @lifespan = p('B', @lifespan)
 
   # Helper, called in several places that change shell position.
   updateCell: ->
