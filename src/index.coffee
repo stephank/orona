@@ -1,7 +1,8 @@
 # The simulation keeps track of everything concerning the game world.
 
 
-net = require './net'
+net             = require './net'
+{buildUnpacker} = require './struct'
 
 # These requires are to ensure that all world objects are registered.
 require './tank'
@@ -44,11 +45,12 @@ class Simulation
     obj.idx = @objects.length
     @objects.push obj
     # Deserialize.
-    bytes = obj.loadStateFromData(data, offset, yes)
+    unpacker = buildUnpacker(data, offset)
+    obj.serialization(yes, @buildDeserializer(unpacker))
     # Invoke the callback.
     obj.postInitialize()
     # Return the number of bytes taken.
-    bytes
+    unpacker.finish()
 
   # Destroy an object, as the authority or simulated.
   destroy: (obj) ->
@@ -75,6 +77,23 @@ class Simulation
     # Update the indices of everything that follows.
     for i in [obj.idx...@objects.length]
       @objects[i].idx--
+
+  # Serialization
+
+  buildSerializer: (packer) ->
+    (specifier, value) ->
+      if specifier == 'O'
+        packer('H', value.idx)
+      else
+        packer(specifier, value)
+      value
+
+  buildDeserializer: (unpacker) ->
+    (specifier, value) =>
+      if specifier == 'O'
+        @objects[unpacker('H')]
+      else
+        unpacker(specifier)
 
   # Player management.
 

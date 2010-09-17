@@ -12,7 +12,8 @@ Simulation       = require '..'
 WorldObject      = require '../world_object'
 net              = require '../net'
 {SimulationMap}  = require '../simulation_map'
-{unpack}         = require '../struct'
+{buildUnpacker,
+ unpack}         = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 ClientContext    = require './net'
 Loader           = require './loader'
@@ -217,12 +218,10 @@ class NetworkGame extends BaseGame
         bytes
 
       when net.UPDATE_MESSAGE
-        bytes = 0
-        for obj in @sim.objects
-          bytes += obj.loadStateFromData data, offset + bytes, no
-          obj.postNetUpdate()
-        # The sum of what each object needed to deserialize.
-        bytes
+        unpacker = buildUnpacker(data, offset)
+        deserializer = @sim.buildDeserializer(unpacker)
+        obj.serialization(no, deserializer) for obj in @sim.objects
+        unpacker.finish()
 
       else
         # FIXME: Do something better than this when console is not available.
