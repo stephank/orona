@@ -25,7 +25,7 @@ class Shell extends WorldObject
     @x = @owner.x; @y = @owner.y
     @move()
 
-  serialization: (p) ->
+  serialization: (isCreate, p) ->
     super
     @direction = p('B', @direction)
     @owner     = p('O', @owner)

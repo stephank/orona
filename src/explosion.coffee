@@ -13,7 +13,7 @@ class Explosion extends WorldObject
     super
     @lifespan = 23
 
-  serialization: (p) ->
+  serialization: (isCreate, p) ->
     super
     @lifespan = p('B', @lifespan)
 

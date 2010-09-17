@@ -75,20 +75,20 @@ class WorldObject
   # deserialize, then the value parameter is ignored, and the return value is the received value.
   #
   # Subclasses may override this, but should always call super.
-  serialization: (p) ->
+  serialization: (isCreate, p) ->
     @x = p('H', @x)
     @y = p('H', @y)
 
   # This method returns an array of bytes, containing the object's state. The default
   # implementation prepares a function and passes it to `serialization`. Subclasses normally
   # need not override this method.
-  getSerializedState: ->
+  getSerializedState: (isCreate) ->
     specifiers = []
     values = []
     flags = []
 
     # Call the serialization function, with our property serializer function.
-    @serialization (specifier, value) ->
+    @serialization isCreate, (specifier, value) ->
       # Group flags.
       if specifier == 'f'
         flags.push value
@@ -115,12 +115,12 @@ class WorldObject
   #
   # The default implementation prepares a function and passes it to `serialization`. Subclasses
   # normally need not override this method.
-  loadStateFromData: (data, offset) ->
+  loadStateFromData: (data, offset, isCreate) ->
     # We actually make two passes: one to get the complete format string, and one to
     # finally set the properties' new values.
     specifiers = []
     flags = 0
-    @serialization (specifier, value) ->
+    @serialization isCreate, (specifier, value) ->
       # Group flags.
       if specifier == 'f'
         flags++
@@ -140,7 +140,7 @@ class WorldObject
     [values, bytes] = unpack specifiers.join(''), data, offset
     i = 0
     fi = firstFlag
-    @serialization (specifier, value) =>
+    @serialization isCreate, (specifier, value) =>
       if specifier == 'f'
         values[fi++]
       else if specifier == 'O'

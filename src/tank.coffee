@@ -66,7 +66,7 @@ class Tank extends WorldObject
 
     @onBoat = yes
 
-  serialization: (p) ->
+  serialization: (isCreate, p) ->
     super
 
     @team = p('B', @team)

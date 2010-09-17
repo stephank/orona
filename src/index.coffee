@@ -44,7 +44,7 @@ class Simulation
     obj.idx = @objects.length
     @objects.push obj
     # Deserialize.
-    bytes = obj.loadStateFromData(data, offset)
+    bytes = obj.loadStateFromData(data, offset, yes)
     # Invoke the callback.
     obj.postInitialize()
     # Return the number of bytes taken.

@@ -21,7 +21,7 @@ class ServerContext
   created: (obj) ->
     @changes = @changes
       .concat pack('BB', net.CREATE_MESSAGE, obj.charCodeId)
-      .concat obj.getSerializedState()
+      .concat obj.getSerializedState(yes)
 
   # Record the destruction.
   destroyed: (obj) ->
@@ -38,7 +38,7 @@ class ServerContext
   dump: ->
     data = [net.UPDATE_MESSAGE]
     for obj in @sim.objects
-      data = data.concat obj.getSerializedState()
+      data = data.concat obj.getSerializedState(no)
     data
 
 

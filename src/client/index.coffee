@@ -219,7 +219,7 @@ class NetworkGame extends BaseGame
       when net.UPDATE_MESSAGE
         bytes = 0
         for obj in @sim.objects
-          bytes += obj.loadStateFromData data, offset + bytes
+          bytes += obj.loadStateFromData data, offset + bytes, no
           obj.postNetUpdate()
         # The sum of what each object needed to deserialize.
         bytes
