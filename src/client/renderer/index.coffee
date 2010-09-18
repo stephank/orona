@@ -48,7 +48,7 @@ class BaseRenderer
 
     # Remember or restore the last center position. We use this after tank
     # death, so as to keep drawing something useful while we fade.
-    if x == -1 or y == -1
+    unless x? and y?
       [x, y] = @lastCenter
     else
       @lastCenter = [x, y]
@@ -56,7 +56,7 @@ class BaseRenderer
     @centerOn x, y, (left, top, width, height) =>
       # Draw all canvas elements.
       @drawMap(left, top, width, height)
-      for obj in @sim.objects when obj.x? and obj.x != -1 and obj.y? and obj.y != -1
+      for obj in @sim.objects when obj.styled? and obj.x? and obj.y?
         [tx, ty] = obj.getTile()
         ox = round(obj.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
         oy = round(obj.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2

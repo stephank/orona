@@ -20,10 +20,10 @@ class WorldObject
   # Callbacks. All of the following are optional.
 
   # These are properties containing the world coordinates of this object. These are actually
-  # defined in the constructor. A special value of -1 for either means that the object is
-  # 'not in the world'. For now, only used by dead tanks.
-  x: -1
-  y: -1
+  # defined in the constructor. The value `null` for either means that the object is not physical
+  # or 'not in the world' at this moment (ie. dead tanks).
+  x: null
+  y: null
 
   # Instantiating a WorldObject is usually done using `sim.spawn MyObject, params...`. This wraps
   # the call to the actual constructor, and the simulation can thus keep track of the object.

@@ -69,14 +69,22 @@ class Tank
     # Team is only set once.
     @team = p('B', @team) if isCreate
 
+    @armour = p('B', @armour)
+
+    # Are we dead?
+    if @armour == 255
+      @x = @y = null
+      return
+
     @x = p('H', @x)
     @y = p('H', @y)
     @direction = p('B', @direction)
+    # Uses 0.25 increments, so we can pack this as a byte.
     @speed = p('B', @speed * 4) / 4
-    @turnSpeedup = p('B', @turnSpeedup)
+    # FIXME: should simply be a signed byte.
+    @turnSpeedup = p('B', @turnSpeedup + 50) - 50
     @shells = p('B', @shells)
     @mines = p('B', @mines)
-    @armour = p('B', @armour)
     @trees = p('B', @trees)
     @reload = p('B', @reload)
 
@@ -118,7 +126,7 @@ class Tank
     # FIXME: Reveal hidden mines nearby
 
   death: ->
-    return no if @armour != -1
+    return no unless @armour == 255
 
     # Count down ticks from 255, before respawning.
     if net.isAuthority() and --@respawnTimer == 0
@@ -193,7 +201,7 @@ class Tank
 
     # Also check if we're on top of another tank.
     for other in @sim.tanks when other != this
-      continue if other.x == -1 # He's dead, Jim.
+      continue if other.armour == 255 # He's dead, Jim.
 
       dx = other.x - @x; dy = other.y - @y
       distance = sqrt(dx*dx + dy*dy)
@@ -271,7 +279,8 @@ class Tank
 
   kill: ->
     # FIXME: Message the other players. Probably want a scoreboard too.
-    @x = @y = @armour = -1
+    @x = @y = null
+    @armour = 255
     # The respawnTimer attribute exists only on the server.
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
