@@ -220,7 +220,9 @@ class NetworkGame extends BaseGame
       when net.UPDATE_MESSAGE
         unpacker = buildUnpacker(data, offset)
         deserializer = @sim.buildDeserializer(unpacker)
-        obj.serialization?(no, deserializer) for obj in @sim.objects
+        for obj in @sim.objects
+          obj.serialization?(no, deserializer)
+          obj.postNetUpdate?()
         unpacker.finish()
 
       else
