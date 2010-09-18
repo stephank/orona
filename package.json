@@ -1,0 +1,38 @@
+{
+  "name": "orona",
+  "version": "0.1.1",
+  "description": "Bolo, a game of tank warfare, rewritten for modern browsers.",
+
+  "homepage": "http://stephank.github.com/orona/",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/stephank/orona.git"
+  },
+  "author": {
+    "name": "Stéphan Kochen",
+    "email": "stephan@kochen.nl",
+    "url": "http://stephan.kochen.nl/"
+  },
+
+  "engines: ": {
+    "node": ">=0.2.0"
+  },
+  "dependencies": {
+    "coffee-script": ">=0.9.4",
+    "connect": ">=0.2.4"
+  },
+
+  "scripts": {
+    "preinstall": "cake build"
+  },
+  "main": "./lib/simulation",
+  "modules": {
+    "map": "./lib/map",
+    "simulation": "./lib/simulation",
+    "server": "./lib/server",
+    "client": "./lib/client"
+  },
+  "bin": {
+    "bolo-server": "./bin/bolo-server"
+  }
+}
