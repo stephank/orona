@@ -9,6 +9,7 @@
 {Map, TERRAIN_TYPES} = require './map'
 net                  = require './net'
 WorldObject          = require './world_object'
+SimPillbox           = require './sim_pillbox'
 
 
 # Extend `TERRAIN_TYPES` with additional attributes that matter to the simulation.
@@ -91,47 +92,6 @@ class SimMapCell extends Map::CellClass
 
 class SimMapObject
   postMapObjectInitialize: (sim) ->
-
-
-class SimPillbox
-  charId: 'p'
-
-  # Save our attributes when constructed on the authority.
-  constructor: (map, @x, @y, @owner_idx, @armour, @speed) ->
-
-  # Still on the authority, receive our simulation reference.
-  postMapObjectInitialize: (@sim) ->
-
-  # After initialization on client and server set-up the cell reference.
-  postInitialize: ->
-    @updateCell()
-
-  # Keep our non-synchronized attributes up-to-date on the client.
-  postNetUpdate: ->
-    @updateCell()
-    # FIXME: retile when owner changes.
-    @owner_idx = if @owner then @owner.tank_idx else 255
-
-  # Helper that updates the cell reference, and ensures a back-reference as well.
-  updateCell: ->
-    newCell = @sim.map.cellAtTile(@x, @y)
-    return if @cell == newCell
-
-    delete @cell.pill if @cell
-    @cell = newCell
-    @cell.pill = this
-    @cell.retile()
-
-  # The state information to synchronize.
-  serialization: (isCreate, p) ->
-    @x = p('B', @x)
-    @y = p('B', @y)
-
-    @owner = p('T', @owner)
-    @armour = p('B', @armour)
-    @speed = p('B', @speed)
-
-WorldObject.register SimPillbox
 
 
 class SimBase

@@ -80,9 +80,9 @@ class Shell
   collide: ->
     # Check for a collision with a pillbox.
     if pill = @cell.pill
-      # FIXME: implement pillbox takeShellHit.
-      #pill.takeShellHit(this)
-      return 'cell'
+      if pill.armour > 0
+        pill.takeShellHit(this)
+        return 'cell'
 
     # Check for collision with tanks.
     for tank in @sim.tanks when tank != @owner
