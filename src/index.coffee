@@ -20,7 +20,7 @@ class Simulation
   tick: ->
     # Work on a shallow copy of the object list.
     for obj in @objects.slice(0)
-      obj.update()
+      obj.update?()
     return
 
   # Spawn an object, as the authority or simulated.
@@ -30,7 +30,7 @@ class Simulation
     obj.idx = @objects.length
     @objects.push obj
     # Invoke the callback.
-    obj.postInitialize()
+    obj.postInitialize?()
     # Notify networking.
     net.created obj
     # Return the new object.
@@ -46,18 +46,18 @@ class Simulation
     @objects.push obj
     # Deserialize.
     unpacker = buildUnpacker(data, offset)
-    obj.serialization(yes, @buildDeserializer(unpacker))
+    obj.serialization?(yes, @buildDeserializer(unpacker))
     # Invoke the callback.
-    obj.postInitialize()
+    obj.postInitialize?()
     # Return the number of bytes taken.
     unpacker.finish()
 
   # Destroy an object, as the authority or simulated.
   destroy: (obj) ->
     # Invoke the callback.
-    obj.preRemove()
+    obj.preRemove?()
     # Call the destructor.
-    obj.destroy()
+    obj.destroy?()
     # Remove it from the list.
     @objects.splice obj.idx, 1
     # Update the indices of everything that follows.
@@ -71,7 +71,7 @@ class Simulation
   # Destroy an object, as received from the network.
   netDestroy: (obj) ->
     # Invoke the callback.
-    obj.preRemove()
+    obj.preRemove?()
     # Remove it from the list.
     @objects.splice obj.idx, 1
     # Update the indices of everything that follows.

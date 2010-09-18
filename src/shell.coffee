@@ -8,12 +8,11 @@ WorldObject         = require './world_object'
 Explosion           = require './explosion'
 
 
-class Shell extends WorldObject
+class Shell
   charId: 'S'
   styled: false
 
-  constructor: (sim, @owner, options) ->
-    super
+  constructor: (@sim, @owner, options) ->
     options ||= {}
     # Default direction is the owner's.
     @direction = options.direction || @owner.direction
@@ -26,14 +25,14 @@ class Shell extends WorldObject
     @move()
 
   serialization: (isCreate, p) ->
-    super
-
     # These are only set once.
     if isCreate
       @direction = p('B', @direction)
       @owner = p('O', @owner)
       @onWater = p('f', @onWater)
 
+    @x = p('H', @x)
+    @y = p('H', @y)
     @lifespan = p('B', @lifespan)
 
   # Helper, called in several places that change shell position.
@@ -113,7 +112,7 @@ class Shell extends WorldObject
 
     return no
 
-Shell.register()
+WorldObject.register Shell
 
 
 # Exports.

@@ -23,7 +23,7 @@ class ServerContext
     packer = buildPacker()
     packer 'B', net.CREATE_MESSAGE
     packer 'B', obj.charCodeId
-    obj.serialization(yes, @sim.buildSerializer(packer))
+    obj.serialization?(yes, @sim.buildSerializer(packer))
     @changes = @changes.concat packer.finish()
 
   # Record the destruction.
@@ -42,7 +42,7 @@ class ServerContext
     packer = buildPacker()
     packer 'B', net.UPDATE_MESSAGE
     serializer = @sim.buildSerializer(packer)
-    obj.serialization(no, serializer) for obj in @sim.objects
+    obj.serialization?(no, serializer) for obj in @sim.objects
     packer.finish()
 
 

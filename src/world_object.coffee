@@ -1,15 +1,13 @@
-# All objects that a `Simulation` keeps track of inherit from `WorldObject`. This base class mostly
-# deals with state synchronisation and defines an interface for tick updates and graphics.
-
-
-{buildPacker, buildUnpacker} = require './struct'
+# All objects that a `Simulation` keeps track of implement `WorldObject`. This interface mostly
+# concerns itself with state synchronisation, tick updates and graphics.
 
 
 # The types indexed by their charId.
 types = {}
 
 
-# The base class of world objects.
+# An interface that all objects in the world simulation should implement. It is not necessary
+# to subclass this, it's mostly here for documentation.
 class WorldObject
   # This is a single character identifier for this class. It's handy for type checks without
   # having to require the module, but is also used as the network identifier.
@@ -18,6 +16,8 @@ class WorldObject
   # Whether objects of this class are drawn using the regular 'base' tilemap, or the styled
   # tilemap. May also be `null`, in which case the object is not drawn at all.
   styled: null
+
+  # Callbacks. All of the following are optional.
 
   # These are properties containing the world coordinates of this object. These are actually
   # defined in the constructor. A special value of -1 for either means that the object is
@@ -28,14 +28,12 @@ class WorldObject
   # Instantiating a WorldObject is usually done using `sim.spawn MyObject, params...`. This wraps
   # the call to the actual constructor, and the simulation can thus keep track of the object.
   #
-  # Even though not specified in `params`, the first parameter is always the Simulation instance,
-  # and should always be passed on to this base class its constructor using a call such as
-  # `super(sim)` as one of the first things.
+  # Even though not specified in `params`, the first parameter is always the Simulation instance.
   #
   # Note that this constructor is *not* invoked for objects instantiated from the network code.
   # The network code instead instantiates using a blank constructor, calls `deserialize`, and
   # then proceeds as normal with `postInitialize` and further updates.
-  constructor: (@sim) ->
+  constructor: (sim) ->
 
   # Return the (x,y) index in the tilemap (base or styled, selected above) that the object should
   # be drawn with. May be a no-op if the object is never actually drawn.
@@ -74,18 +72,9 @@ class WorldObject
   # If the function is called to serialize, then parameters are collected to form a packet, and
   # the return value is the same as the value parameter verbatim. If the function is called to
   # deserialize, then the value parameter is ignored, and the return value is the received value.
-  #
-  # Subclasses may override this, but should always call super.
   serialization: (isCreate, p) ->
-    @x = p('H', @x)
-    @y = p('H', @y)
 
-  # Class methods.
-
-  # Called by CoffeeScript when subclassed.
-  @extended: (child) ->
-    # Make the register class method available on the subclass.
-    child.register = @register
+  # Static methods.
 
   # Find a type by character or character code.
   @getType: (c) ->
@@ -94,11 +83,11 @@ class WorldObject
 
   # This should be called after a class is defined, as for example `MyObject.register()`.
   # FIXME: Would be neat if this were automagic somehow.
-  @register: ->
+  @register: (type) ->
     # Add to the index.
-    types[@::charId] = this
+    types[type::charId] = type
     # Set the character code, which is the network identifier.
-    @::charCodeId = @::charId.charCodeAt(0)
+    type::charCodeId = type::charId.charCodeAt(0)
 
 
 # Exports.

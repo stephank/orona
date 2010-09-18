@@ -11,14 +11,13 @@ Explosion               = require './explosion'
 Shell                   = require './shell'
 
 
-class Tank extends WorldObject
+class Tank
   charId: 'T'
   styled: true
 
   # The Tank constructor and destructor are never simulated.
   # They are only ever called on the server.
-  constructor: (sim) ->
-    super
+  constructor: (@sim) ->
     # FIXME: Proper way to select teams.
     @team = @sim.tanks.length % 2
     # Initialize.
@@ -67,11 +66,11 @@ class Tank extends WorldObject
     @onBoat = yes
 
   serialization: (isCreate, p) ->
-    super
-
     # Team is only set once.
     @team = p('B', @team) if isCreate
 
+    @x = p('H', @x)
+    @y = p('H', @y)
     @direction = p('B', @direction)
     @speed = p('B', @speed * 4) / 4
     @turnSpeedup = p('B', @turnSpeedup)
@@ -277,7 +276,7 @@ class Tank extends WorldObject
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
 
-Tank.register()
+WorldObject.register Tank
 
 
 # Exports.
