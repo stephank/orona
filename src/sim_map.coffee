@@ -79,6 +79,9 @@ class SimMapCell extends Map::CellClass
     super
     net.mapChanged this, oldType, hadMine
 
+  takeShellHit: (shell) ->
+    # FIXME: degrade terrain
+
 
 #### Map objects
 

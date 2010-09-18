@@ -8,6 +8,16 @@ WorldObject         = require '../world_object'
 Explosion           = require './explosion'
 
 
+# This is the interface the handful of destructable objects implement. I'm talking about terrain
+# (thus map cells), tanks, bases and pillboxes. Actually, bases are indestructable. But Hittable
+# sounds too cheesy.
+#
+# The basic premise is a single method `takeShellHit` that receives the Shell object, so that it
+# may possibly inspect its owner. The return value should be an impact sound effect name.
+class Destructable
+  takeShellHit: (shell) ->
+
+
 class Shell
   charId: 'S'
   styled: false
@@ -55,15 +65,16 @@ class Shell
 
   update: ->
     @move()
-    if mode = @collide()
-      {x, y} = this
+    collision = @collide()
+    if collision
+      [mode, victim] = collision
+      sfx = victim.takeShellHit(this)
+      # FIXME: play sound effect.
       if mode == 'cell'
-        # Spawn the explosion at the cell coordinates.
         x = (@cell.x + 0.5) * TILE_SIZE_WORLD
         y = (@cell.y + 0.5) * TILE_SIZE_WORLD
-        # FIXME: play rumble sound.
       else # mode == 'tank'
-        # FIXME: play metallic sound.
+        {x, y} = this
       @sim.spawn Explosion, x, y
       @sim.destroy this
 
@@ -80,24 +91,18 @@ class Shell
   collide: ->
     # Check for a collision with a pillbox.
     if pill = @cell.pill
-      if pill.armour > 0
-        pill.takeShellHit(this)
-        return 'cell'
+      return ['cell', pill] if pill.armour > 0
 
     # Check for collision with tanks.
     for tank in @sim.tanks when tank != @owner
       dx = tank.x - @x; dy = tank.y - @y
       distance = sqrt(dx*dx + dy*dy)
-      if distance <= 127
-        tank.takeShellHit(this)
-        return 'tank'
+      return ['tank', tank] if distance <= 127
 
     # Check for collision with enemy base.
     if base = @cell.base
       if @onWater or (base.armour > 4 and base?.owner? and not base.owner.isAlly(@owner))
-        # FIXME: implement base takeShellHit.
-        #base.takeShellHit(this)
-        return 'cell'
+        return ['cell', base]
 
     # Check for terrain collision
     terrainCollision =
@@ -105,12 +110,7 @@ class Shell
         not @cell.isType('^', ' ', '%')
       else
         @cell.isType('|', '}', '#', 'b')
-    if terrainCollision
-      # FIXME: implement cell takeShellHit.
-      #@cell.takeShellHit()
-      return 'cell'
-
-    return no
+    return ['cell', @cell] if terrainCollision
 
 WorldObject.register Shell
 

@@ -35,6 +35,9 @@ class SimBase
     @shells = p('B', @shells)
     @mines = p('B', @mines)
 
+  takeShellHit: (shell) ->
+    # FIXME: do something to armour and shells
+
 WorldObject.register SimBase
 
 
