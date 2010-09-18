@@ -2,7 +2,7 @@
 
 
 {floor}        = Math
-WorldObject    = require './world_object'
+WorldObject    = require '../world_object'
 
 
 class Explosion

@@ -11,7 +11,7 @@
 Simulation       = require '../simulation'
 WorldObject      = require '../world_object'
 net              = require '../net'
-{SimulationMap}  = require '../simulation_map'
+{SimMap}         = require '../sim_map'
 {buildUnpacker,
  unpack}         = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
@@ -96,7 +96,7 @@ class BaseGame
 
 class LocalGame extends BaseGame
   startup: ->
-    map = SimulationMap.load decodeBase64(EverardIsland)
+    map = SimMap.load decodeBase64(EverardIsland)
     @commonInitialization(map)
     @sim.player = @sim.addTank()
     @renderer.initHud()
@@ -140,7 +140,7 @@ class NetworkGame extends BaseGame
       @receiveMap(e.originalEvent)
 
   receiveMap: (e) ->
-    map = SimulationMap.load decodeBase64(e.data)
+    map = SimMap.load decodeBase64(e.data)
     @commonInitialization(map)
     @netctx = new ClientContext(@sim)
     $(@ws).bind 'message', (e) =>

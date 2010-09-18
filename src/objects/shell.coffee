@@ -3,8 +3,8 @@
 
 {round, floor, sqrt
  cos, sin, PI}      = Math
-WorldObject         = require './world_object'
-{TILE_SIZE_WORLD}   = require './constants'
+WorldObject         = require '../world_object'
+{TILE_SIZE_WORLD}   = require '../constants'
 Explosion           = require './explosion'
 
 

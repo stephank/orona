@@ -10,8 +10,8 @@ connect          = require 'connect'
 WebSocket        = require './websocket'
 ServerContext    = require './net'
 Simulation       = require '../simulation'
-Tank             = require '../tank'
-{SimulationMap}  = require '../simulation_map'
+Tank             = require '../objects/tank'
+{SimMap}         = require '../sim_map'
 net              = require '../net'
 {pack}           = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
@@ -148,7 +148,7 @@ class Application
 
     # FIXME: this is for the demo
     data = fs.readFileSync 'maps/everard-island.map'
-    map = SimulationMap.load data
+    map = SimMap.load data
     @games.push new Game(map)
 
   destroy: ->

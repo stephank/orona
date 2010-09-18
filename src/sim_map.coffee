@@ -9,8 +9,8 @@
 {Map, TERRAIN_TYPES} = require './map'
 net                  = require './net'
 WorldObject          = require './world_object'
-SimPillbox           = require './sim_pillbox'
-SimBase              = require './sim_base'
+SimPillbox           = require './objects/sim_pillbox'
+SimBase              = require './objects/sim_base'
 
 
 # Extend `TERRAIN_TYPES` with additional attributes that matter to the simulation.
@@ -115,4 +115,5 @@ class SimMap extends Map
 
 
 #### Exports
-exports.SimulationMap = SimMap
+exports.SimMapObject = SimMapObject
+exports.SimMap = SimMap

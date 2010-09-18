@@ -5,9 +5,11 @@ net             = require './net'
 {buildUnpacker} = require './struct'
 
 # These requires are to ensure that all world objects are registered.
-require './tank'
-require './explosion'
-require './shell'
+require './objects/sim_pillbox'
+require './objects/sim_base'
+require './objects/tank'
+require './objects/explosion'
+require './objects/shell'
 
 
 class Simulation
@@ -17,7 +19,7 @@ class Simulation
 
     @spawnMapObjects()
 
-  #### Basic object management.
+  #### Basic object management
 
   tick: ->
     # Work on a shallow copy of the object list.

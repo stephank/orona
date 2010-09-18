@@ -1,6 +1,6 @@
 # The pillbox is a map object, and thus a slightly special case of world object.
 
-WorldObject = require './world_object'
+WorldObject = require '../world_object'
 
 
 class SimBase

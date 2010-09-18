@@ -4,9 +4,9 @@
 
 {round, ceil, min, sqrt
  max, sin, cos, PI}     = Math
-{TILE_SIZE_WORLD}       = require './constants'
-WorldObject             = require './world_object'
-net                     = require './net'
+{TILE_SIZE_WORLD}       = require '../constants'
+WorldObject             = require '../world_object'
+net                     = require '../net'
 Explosion               = require './explosion'
 Shell                   = require './shell'
 
