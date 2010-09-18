@@ -364,27 +364,18 @@ class MapView
   onRetile: (cell, tx, ty) ->
 
 
-# The following are (base) classes for objects on the map.
+# The following are interfaces and dummy default implementations of map objects. If a subclass
+# of `Map` wishes to use different classes for map objects, it simply needs to define new classes
+# with similar constructors and exposing the same attributes.
 
 class Pillbox
-  constructor: (@map, @x, @y, @owner_idx, @armour, @speed) ->
-    @updateCell()
-
-  updateCell: ->
-    delete @cell.pill if @cell
-    @cell = @map.cellAtTile(@x, @y)
-    @cell.pill = this
+  constructor: (map, @x, @y, @owner_idx, @armour, @speed) ->
 
 class Base
-  constructor: (@map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
-    @cell = @map.cellAtTile(@x, @y)
-    @cell.base = this
-    # Override cell type.
-    @cell.setType '=', no, -1
+  constructor: (map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
 
 class Start
-  constructor: (@map, @x, @y, @direction) ->
-    @cell = @map.cellAtTile(@x, @y)
+  constructor: (map, @x, @y, @direction) ->
 
 
 # This class holds a complete map.

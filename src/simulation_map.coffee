@@ -32,7 +32,7 @@ extendTerrainMap = ->
 extendTerrainMap()
 
 
-class SimulationMapCell extends Map::CellClass
+class SimMapCell extends Map::CellClass
   getTankSpeed: (tank) ->
     # Check for a pillbox.
     return 0 if @pill?.armour > 0
@@ -73,8 +73,28 @@ class SimulationMapCell extends Map::CellClass
     net.mapChanged this, oldType, hadMine
 
 
-class SimulationMap extends Map
-  CellClass: SimulationMapCell
+class SimPillbox
+  constructor: (@map, @x, @y, @owner_idx, @armour, @speed) ->
+    @updateCell()
+
+  updateCell: ->
+    delete @cell.pill if @cell
+    @cell = @map.cellAtTile(@x, @y)
+    @cell.pill = this
+
+
+class SimBase
+  constructor: (@map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
+    @cell = @map.cellAtTile(@x, @y)
+    @cell.base = this
+    # Override cell type.
+    @cell.setType '=', no, -1
+
+
+class SimMap extends Map
+  CellClass: SimMapCell
+  PillboxClass: SimPillbox
+  BaseClass: SimBase
 
   # Get the cell at the given pixel coordinates, or return a dummy cell.
   cellAtPixel: (x, y) ->
@@ -89,5 +109,4 @@ class SimulationMap extends Map
 
 
 # Exports.
-exports.SimulationMapCell = SimulationMapCell
-exports.SimulationMap = SimulationMap
+exports.SimulationMap = SimMap
