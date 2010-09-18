@@ -23,7 +23,7 @@ class Game
     @netctx = new ServerContext(@sim)
     @oddTick = no
 
-  # Connection handling.
+  #### Connection handling.
 
   onConnect: (ws) ->
     # In order to create the tank object, we need to be in the networking context.
@@ -108,7 +108,7 @@ class Game
       client.sendMessage(message) unless client.heartbeatTimer > 20
     return
 
-  # Simulation updates.
+  #### Simulation updates.
 
   tick: ->
     net.inContext @netctx, => @sim.tick()
@@ -134,6 +134,8 @@ class Game
 
     return
 
+
+#### HTTP server application
 
 class Application
   constructor: ->
@@ -180,6 +182,8 @@ class Application
     ws.on 'connect', -> handler(ws)
 
 
+#### Entry point
+
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
 createBoloServer = ->
@@ -195,5 +199,5 @@ createBoloServer = ->
   server
 
 
-# Exports.
+#### Exports
 module.exports = createBoloServer

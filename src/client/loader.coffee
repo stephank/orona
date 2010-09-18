@@ -2,8 +2,9 @@
 # firing a single event when everything is complete, and exposing resources in a tidy structure.
 
 
-# FIXME: Add audio file support. Needs to be smart about supported formats.
-# FIXME: Implement progress notification.
+# FIXME:
+#  * Add audio file support. Needs to be smart about supported formats.
+#  * Implement progress notification.
 
 class Loader
   constructor: ->
@@ -52,5 +53,5 @@ class Loader
   onError: ->
 
 
-# Exports.
+#### Exports
 module.exports = Loader

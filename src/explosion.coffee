@@ -38,5 +38,5 @@ class Explosion
 WorldObject.register Explosion
 
 
-# Exports.
+#### Exports
 module.exports = Explosion

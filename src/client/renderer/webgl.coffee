@@ -1,8 +1,8 @@
 # The WebGL renderer works much like the Direct2D renderer, but uses WebGL to accomplish it.
 # The advantage is that we can draw individual tiles, but actually feed them in large batches to
-# the graphics hardware using Vertex Buffer Objects. Another advantage is that we can do all the
-# styling we need in a fragment shader.
-
+# the graphics hardware using Vertex Buffer Objects (VBO). Another advantage is that we can do all
+# the styling we need in a fragment shader.
+#
 # All in all, this is the least CPU intensive drawing method, but strangely not the smoothest.
 
 
@@ -13,6 +13,10 @@ BaseRenderer         = require '.'
 TEAM_COLORS          = require '../../team_colors'
 
 
+
+#### Shaders
+
+# The vertex shader simply applies the transformation matrix, and interpolates texture coordinates.
 VERTEX_SHADER =
   '''
   /* Input variables. */
@@ -30,6 +34,8 @@ VERTEX_SHADER =
   }
   '''
 
+# The fragment shader makes the decision which tilemap to sample from, and combines the styled
+# tilemap with the styling overlay. Three texture units are used.
 FRAGMENT_SHADER =
   '''
   #ifdef GL_ES
@@ -68,7 +74,6 @@ FRAGMENT_SHADER =
   }
   '''
 
-
 # Helper function that is used to compile the above shaders.
 compileShader = (ctx, type, source) ->
   shader = ctx.createShader type
@@ -78,6 +83,8 @@ compileShader = (ctx, type, source) ->
     throw "Could not compile shader: #{ctx.getShaderInfoLog(shader)}"
   shader
 
+
+#### Renderer
 
 class WebglRenderer extends BaseRenderer
   constructor: (images, sim) ->
@@ -175,8 +182,9 @@ class WebglRenderer extends BaseRenderer
     @handleResize()
     $(window).resize => @handleResize()
 
+  # On resize, we update the canvas size, and recalculate the translation matrix. Because this is
+  # called at convenient times, we also check the GL error state at this point.
   handleResize: ->
-    # Update the canvas size.
     @canvas[0].width  = window.innerWidth
     @canvas[0].height = window.innerHeight
     @canvas.css(
@@ -185,42 +193,40 @@ class WebglRenderer extends BaseRenderer
     )
     @ctx.viewport(0, 0, window.innerWidth, window.innerHeight)
 
-    # Recalculate the transformation matrix.
     @setTranslation(0, 0)
 
-    # This seems like a good spot to do a quick check for errors.
     @checkError()
 
+  # This function checks the GL error state and throws an exception if necessary.
   checkError: ->
     gl = @ctx
     unless (err = gl.getError()) == gl.NO_ERROR
       throw "WebGL error: #{err}"
     return
 
+  # Rebuild the translation matrix. The translation matrix accomplishes the following:
+  #
+  # A. Apply the requested translation by (px,py).
+  # B. The WebGL coordinate space runs from -1 to 1. Scale the pixel coordinates to fit in the
+  #    range 0 to 2.
+  # C. Then translate to fit in the range -1 to 1.
+  # D. The WebGL y-axis is inverted compared to what we want. So multiply the y-axis by -1.
+  #
+  # To chain all this into one matrix, we have to apply these into reverse order. The math then
+  # looks as follows:
+  #
+  #               D                     C                     B                     A
+  #     |   1   0   0   0 |   |   1   0   0  -1 |   |  xt   0   0   0 |   |   1   0   0  px |
+  # T = |   0  -1   0   0 | x |   0   1   0  -1 | x |   0  xy   0   0 | x |   0   1   0  py |
+  #     |   0   0   1   0 |   |   0   0   1   0 |   |   0   0   1   0 |   |   0   0   1   0 |
+  #     |   0   0   0   1 |   |   0   0   0   1 |   |   0   0   0   1 |   |   0   0   0   1 |
+  #
+  # To top that off, WebGL expects things in column major order. So the array indices should be
+  # read as being transposed.
   setTranslation: (px, py) ->
-    # Rebuild the translation matrix.
-
-    # A. Apply the requested translation by (px,py).
-    # B. The WebGL coordinate space runs from -1 to 1.
-    #    Scale the pixel coordinates to fit in the range 0 to 2.
-    # C. Then translate to fit in the range -1 to 1.
-    # D. The WebGL y-axis is inverted compared to what we want.
-    #    So multiply the y-axis by -1.
-
-    # To chain all this into one matrix, we have to apply these into reverse order.
-    # The math then looks as follows:
 
     xt = 2 / window.innerWidth
     yt = 2 / window.innerHeight
-
-    #               D                     C                     B                     A
-    #     |   1   0   0   0 |   |   1   0   0  -1 |   |  xt   0   0   0 |   |   1   0   0  px |
-    # T = |   0  -1   0   0 | x |   0   1   0  -1 | x |   0  xy   0   0 | x |   0   1   0  py |
-    #     |   0   0   1   0 |   |   0   0   1   0 |   |   0   0   1   0 |   |   0   0   1   0 |
-    #     |   0   0   0   1 |   |   0   0   0   1 |   |   0   0   0   1 |   |   0   0   0   1 |
-
-    # To top that off, WebGL expects things in column major order.
-    # So the array indices below should be read as being transposed.
 
     arr = @transformArray
     arr[0] =  xt
@@ -229,8 +235,8 @@ class WebglRenderer extends BaseRenderer
     arr[13] = py * -yt + 1
     @ctx.uniformMatrix4fv(@uTransform, no, arr)
 
+  # Apply a translation that centers everything around the given coordinates.
   centerOn: (x, y, cb) ->
-    # Apply a translation that centers everything around the player.
     {width, height} = @canvas[0]
     left = round(x / PIXEL_SIZE_WORLD - width  / 2)
     top =  round(y / PIXEL_SIZE_WORLD - height / 2)
@@ -240,8 +246,10 @@ class WebglRenderer extends BaseRenderer
 
     @setTranslation(0, 0)
 
+  # Helper function that adds a tile to an array that is used to prepare the VBO. It takes care
+  # of calculating texture coordinates based on tile coordinates `tx` and `ty`, and adds entries
+  # for two triangles to the given `buffer` at the given `offset`.
   bufferTile: (buffer, offset, tx, ty, styled, sdx, sdy) ->
-    # Calculate texture coordinate bounds for the tile.
     if styled
       stx =  tx * @hStyledTileSizeTexture
       sty =  ty * @vStyledTileSizeTexture
@@ -253,11 +261,9 @@ class WebglRenderer extends BaseRenderer
       etx = stx + @hTileSizeTexture
       ety = sty + @vTileSizeTexture
 
-    # Calculate pixel coordinate bounds for the destination.
     edx = sdx + TILE_SIZE_PIXELS
     edy = sdy + TILE_SIZE_PIXELS
 
-    # Update the quad array.
     buffer.set([
       sdx, sdy, stx, sty,
       sdx, edy, stx, ety,
@@ -267,45 +273,35 @@ class WebglRenderer extends BaseRenderer
       edx, edy, etx, ety
     ], offset * (6*4))
 
+  # Draw a single tile, unstyled.
   drawTile: (tx, ty, sdx, sdy) ->
     gl = @ctx
-
-    # Initialize the uniforms, so the shader knows this is an unstyled tile.
     gl.uniform1i(@uUseStyled, 0)
-
-    # Update the quad array.
     @bufferTile(@vertexArray, 0, tx, ty, no, sdx, sdy)
-
-    # Draw.
     gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
     gl.drawArrays(gl.TRIANGLES, 0, 6)
 
+  # Draw a single tile, styled with a team color.
   drawStyledTile: (tx, ty, style, sdx, sdy) ->
     gl = @ctx
-
-    # Initialize the uniforms, to tell the uniform the style color.
     gl.uniform1i(@uUseStyled, 1)
     if color = TEAM_COLORS[style]
       gl.uniform1i(@uIsStyled, 1)
       gl.uniform3f(@uStyleColor, color.r / 255, color.g / 255, color.b / 255)
     else
       gl.uniform1i(@uIsStyled, 0)
-
-    # Update the quad array.
     @bufferTile(@vertexArray, 0, tx, ty, yes, sdx, sdy)
-
-    # Draw.
     gl.bufferData(gl.ARRAY_BUFFER, @vertexArray, gl.DYNAMIC_DRAW)
     gl.drawArrays(gl.TRIANGLES, 0, 6)
 
+  # When a cell is retiled, we simply store the tile index for the upcoming frames.
   onRetile: (cell, tx, ty) ->
-    # Simply cache the tile index.
     cell.tile = [tx, ty]
 
+  # Draw the map.
   drawMap: (sx, sy, w, h) ->
     gl = @ctx
 
-    # Calculate pixel boundaries.
     ex = sx + w - 1
     ey = sy + h - 1
 
@@ -326,16 +322,14 @@ class WebglRenderer extends BaseRenderer
       gl.drawArrays(gl.TRIANGLES, 0, arrayTileIndex * 6)
       arrayTileIndex = 0
 
-    # Iterate each tile in view.
+    # Only draw unstyled tiles, but build an index of styled tiles by color.
     gl.uniform1i(@uUseStyled, 0)
     @sim.map.each (cell) =>
       if obj = cell.pill || cell.base
-        # Only draw unstyled tiles, but index styled tiles by color.
         style = obj.owner?.team
         style = 255 unless TEAM_COLORS[style]
         (styledCells[style] ||= []).push(cell)
       else
-        # Add the tile to the vertex buffer.
         @bufferTile @vertexArray, arrayTileIndex, cell.tile[0], cell.tile[1], no,
             cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
         if ++arrayTileIndex == maxTiles
@@ -360,5 +354,5 @@ class WebglRenderer extends BaseRenderer
       flushArray()
 
 
-# Exports.
+#### Exports
 module.exports = WebglRenderer

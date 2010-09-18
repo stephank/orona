@@ -35,5 +35,5 @@ class Direct2dRenderer extends Common2dRenderer
     , stx, sty, etx, ety
 
 
-# Exports
+#### Exports
 module.exports = Direct2dRenderer

@@ -118,5 +118,5 @@ class Common2dRenderer extends BaseRenderer
     @ctx.restore()
 
 
-# Exports.
+#### Exports
 module.exports = Common2dRenderer

@@ -22,6 +22,9 @@ DefaultRenderer  = require './renderer/offscreen_2d'
 EverardIsland    = require './everard'
 
 
+
+#### Common logic
+
 class BaseGame
   constructor: ->
     # Setup the key handlers.
@@ -51,12 +54,11 @@ class BaseGame
     @renderer = new DefaultRenderer(@resources.images, @sim)
     @sim.map.setView(@renderer)
 
-  # Game loop.
+  ##### Game loop.
 
   start: ->
     return if @gameTimer?
 
-    # Are we networked or not?
     @tick()
     @lastTick = Date.now()
 
@@ -76,7 +78,7 @@ class BaseGame
       @lastTick += TICK_LENGTH_MS
     @renderer.draw()
 
-  # Abstract methods.
+  ##### Abstract methods.
 
   # Called after resources are loaded.
   startup: ->
@@ -89,6 +91,9 @@ class BaseGame
   handleKeyup: (e) ->
 
 
+
+#### Local game simulation
+
 class LocalGame extends BaseGame
   startup: ->
     map = SimulationMap.load decodeBase64(EverardIsland)
@@ -100,7 +105,7 @@ class LocalGame extends BaseGame
   tick: ->
     @sim.tick()
 
-  # Key press handlers.
+  ##### Key press handlers.
 
   handleKeydown: (e) ->
     switch e.which
@@ -121,6 +126,8 @@ class LocalGame extends BaseGame
       else return
     e.preventDefault()
 
+
+#### Networked game simulation
 
 class NetworkGame extends BaseGame
   constructor: ->
@@ -155,7 +162,7 @@ class NetworkGame extends BaseGame
       @heartbeatTimer = 0
       @ws.send('')
 
-  # Key press handlers.
+  ##### Key press handlers.
 
   handleKeydown: (e) ->
     return unless @ws?
@@ -179,7 +186,7 @@ class NetworkGame extends BaseGame
       else return
     e.preventDefault()
 
-  # Network message handlers.
+  ##### Network message handlers.
 
   handleMessage: (e) ->
     @netctx.authoritative = yes
@@ -238,6 +245,8 @@ class NetworkGame extends BaseGame
         -1
 
 
+#### Entry point
+
 game = null
 
 init = ->
@@ -247,7 +256,7 @@ init = ->
     game = new NetworkGame()
 
 
-# Exports.
+#### Exports
 exports.init  = init
 exports.start = -> game.start()
 exports.stop  = -> game.stop()

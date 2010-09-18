@@ -17,7 +17,7 @@ class Simulation
 
     @spawnMapObjects()
 
-  # Basic object management.
+  #### Basic object management.
 
   tick: ->
     # Work on a shallow copy of the object list.
@@ -80,7 +80,7 @@ class Simulation
     for i in [obj.idx...@objects.length]
       @objects[i].idx--
 
-  # Serialization
+  #### Serialization
 
   buildSerializer: (packer) ->
     (specifier, value) ->
@@ -97,7 +97,7 @@ class Simulation
         when 'T' then @tanks[unpacker('B')]
         else          unpacker(specifier)
 
-  # Player management.
+  #### Player management.
 
   addTank: (tank) ->
     tank.tank_idx = @tanks.length
@@ -108,7 +108,7 @@ class Simulation
     @tanks.splice tank.tank_idx, 1
     @resolveMapObjectOwners()
 
-  # Map object management.
+  #### Map object management.
 
   getAllMapObjects: -> @map.pills.concat @map.bases
 
@@ -143,5 +143,5 @@ class Simulation
       obj.cell.retile()
     return
 
-# Exports.
+#### Exports
 module.exports = Simulation

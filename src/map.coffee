@@ -30,7 +30,8 @@ createTerrainMap = ->
 createTerrainMap()
 
 
-# A class to represent a cell on the map.
+#### Cell class
+
 class MapCell
   constructor: (@map, @x, @y) ->
     @type = TERRAIN_TYPES['^']
@@ -354,6 +355,8 @@ class MapCell
     else @setTile 11, 6
 
 
+#### View class
+
 # This is an interface for map views. Map views are responsible for actually displaying the map on
 # the screen. This class also functions as the do-nothing dummy implementation. You need not
 # inherit from this class, just make sure whatever view object you use responds to the methods
@@ -363,6 +366,8 @@ class MapView
   # This is also called on Map#setView, once for every tile.
   onRetile: (cell, tx, ty) ->
 
+
+#### Map objects
 
 # The following are interfaces and dummy default implementations of map objects. If a subclass
 # of `Map` wishes to use different classes for map objects, it simply needs to define new classes
@@ -378,7 +383,8 @@ class Start
   constructor: (map, @x, @y, @direction) ->
 
 
-# This class holds a complete map.
+#### Map class
+
 class Map
   CellClass: MapCell
   PillboxClass: Pillbox
@@ -435,6 +441,8 @@ class Map
     @each (cell) ->
       cell.retile()
     , sx, sy, ex, ey
+
+  #### Saving and loading
 
   # Dump the map to an array of octets in BMAP format.
   dump: (options) ->
@@ -638,7 +646,7 @@ class Map
     child.load = @load unless child.load
 
 
-# Exports.
+#### Exports
 exports.TERRAIN_TYPES = TERRAIN_TYPES
 exports.MapView = MapView
 exports.Map = Map

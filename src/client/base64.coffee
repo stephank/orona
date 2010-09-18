@@ -31,17 +31,17 @@ decodeBase64 = (input) ->
     else if       cc ==  47 then 63      # /
     else if       cc ==  61 then -1      # Padding
     else throw new Error "Invalid base64 input character: #{c}"
-    # Did we complete a quad?
-    continue unless quadIndex == 3
 
-    # Calculate the octet values.
+    # Did we complete a quad? If so, calculate the octet values and add them to the output.
     # We take bits from the character values as follows: 000000 001111 111122 222222
+    continue unless quadIndex == 3
     output[outputIndex++] = ((quad[0] & 0x3F) << 2) + ((quad[1] & 0x30) >> 4)
     output[outputIndex++] = ((quad[1] & 0x0F) << 4) + ((quad[2] & 0x3C) >> 2) unless quad[2] == -1
     output[outputIndex++] = ((quad[2] & 0x03) << 6) + ((quad[3] & 0x3F)     ) unless quad[3] == -1
 
+  # Return output.
   output
 
 
-# Exports.
+#### Exports
 exports.decodeBase64 = decodeBase64

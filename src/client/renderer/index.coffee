@@ -39,7 +39,7 @@ class BaseRenderer
   # Inherited from MapView.
   onRetile: (cell, tx, ty) ->
 
-  # Common functions.
+  #### Common functions.
 
   # Draw a single frame.
   draw: ->
@@ -66,6 +66,8 @@ class BaseRenderer
 
     # Update all DOM HUD elements.
     @updateHud()
+
+  #### HUD elements
 
   # Draw HUD elements that overlay the map. These are elements that need to be drawn in regular
   # game coordinates, rather than screen coordinates.
@@ -126,5 +128,5 @@ class BaseRenderer
       $(node).attr('status', 'neutral')
 
 
-# Exports.
+#### Exports
 module.exports = BaseRenderer

@@ -16,5 +16,5 @@ TEAM_COLORS = [
 ]
 
 
-# Exports.
+#### Exports
 module.exports = TEAM_COLORS

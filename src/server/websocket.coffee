@@ -214,5 +214,5 @@ class WebSocket extends EventEmitter
   _onClose: (had_error) -> @emit 'close', had_error
 
 
-# Exports
+#### Exports
 module.exports = WebSocket

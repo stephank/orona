@@ -11,6 +11,8 @@ net                  = require './net'
 WorldObject          = require './world_object'
 
 
+# Extend `TERRAIN_TYPES` with additional attributes that matter to the simulation.
+
 TERRAIN_TYPE_ATTRIBUTES =
   '|': { tankSpeed:  0, tankTurn: 0.00, manSpeed:  0 }
   ' ': { tankSpeed:  3, tankTurn: 0.25, manSpeed:  0 }
@@ -32,6 +34,8 @@ extendTerrainMap = ->
 
 extendTerrainMap()
 
+
+#### Cell class
 
 class SimMapCell extends Map::CellClass
   getTankSpeed: (tank) ->
@@ -74,7 +78,7 @@ class SimMapCell extends Map::CellClass
     net.mapChanged this, oldType, hadMine
 
 
-# Map objects.
+#### Map objects
 
 # These implement the interface of each kind of map object, and also implement WorldObject. The
 # latter is so that we may synchronize their state across the network. Drawing is not done like
@@ -165,6 +169,8 @@ class SimBase
 WorldObject.register SimBase
 
 
+#### Map class
+
 class SimMap extends Map
   CellClass: SimMapCell
   PillboxClass: SimPillbox
@@ -182,5 +188,5 @@ class SimMap extends Map
     @starts[round(random() * (@starts.length - 1))]
 
 
-# Exports.
+#### Exports
 exports.SimulationMap = SimMap

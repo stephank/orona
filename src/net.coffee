@@ -55,7 +55,7 @@ inContext = (ctx, cb) ->
   retval
 
 
-# Exports.
+#### Exports
 exports.inContext       = inContext
 
 # Delegate the functions used by the simulation to the active context.

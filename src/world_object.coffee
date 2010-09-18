@@ -17,8 +17,6 @@ class WorldObject
   # tilemap. May also be `null`, in which case the object is not drawn at all.
   styled: null
 
-  # Callbacks. All of the following are optional.
-
   # These are properties containing the world coordinates of this object. These are actually
   # defined in the constructor. The value `null` for either means that the object is not physical
   # or 'not in the world' at this moment (ie. dead tanks).
@@ -35,12 +33,13 @@ class WorldObject
   # then proceeds as normal with `postInitialize` and further updates.
   constructor: (sim) ->
 
+  #### Callbacks
+
+  # *The following are optional callbacks.*
+
   # Return the (x,y) index in the tilemap (base or styled, selected above) that the object should
   # be drawn with. May be a no-op if the object is never actually drawn.
   getTile: ->
-
-  # The following are optional callbacks, and thus no-ops by default.
-  # It's not hard to implement more, but these are the ones currently used.
 
   # Called after the object has been added to the Simulation, either through normal means or
   # through the network code.
@@ -61,34 +60,29 @@ class WorldObject
   # or simulated on the client.
   update: ->
 
-  # The following govern serialization, and are normally not overridden.
-
   # This method is called to serialize and deserialize an object's state. The parameter `p`
   # is a function which should be repeatedly called for each property of the object. It takes as
-  # it's first parameter a format specifier for `struct`, and as it's second parameter the current
-  # value of the property. A special format specifier 'O' may be used to (de-)serialize a reference
-  # to another WorldObject.
+  # its first parameter a format specifier for `struct`, and as it's second parameter the current
+  # value of the property. A special format specifier `O` may be used to (de-)serialize a reference
+  # to another WorldObject, and `T` may be used for a reference to a Tank.
   #
   # If the function is called to serialize, then parameters are collected to form a packet, and
   # the return value is the same as the value parameter verbatim. If the function is called to
   # deserialize, then the value parameter is ignored, and the return value is the received value.
   serialization: (isCreate, p) ->
 
-  # Static methods.
+  #### Static methods
 
   # Find a type by character or character code.
   @getType: (c) ->
     c = String.fromCharCode(c) if typeof(c) != 'string'
     types[c]
 
-  # This should be called after a class is defined, as for example `MyObject.register()`.
-  # FIXME: Would be neat if this were automagic somehow.
+  # This should be called after a class is defined, as for example `WorldObject.register MyObject`.
   @register: (type) ->
-    # Add to the index.
     types[type::charId] = type
-    # Set the character code, which is the network identifier.
     type::charCodeId = type::charId.charCodeAt(0)
 
 
-# Exports.
+#### Exports
 module.exports = WorldObject

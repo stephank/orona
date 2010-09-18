@@ -9,6 +9,8 @@
 # deal with arrays of byte values instead.
 
 
+#### Helpers
+
 # The following methods pack Fixnums in an array of bytes, in network byte order (MSB).
 
 toUint8  = (n) -> [
@@ -34,6 +36,8 @@ fromUint8  = (d, o) -> d[o]
 fromUint16 = (d, o) -> (d[o] << 8) + d[o+1]
 fromUint32 = (d, o) -> (d[o] << 24) + (d[o+1] << 16) + (d[o+2] << 8) + d[o+3]
 
+
+#### Streaming packers
 
 # Return a generator function, that is used to generate binary data. Basic usage is as follows:
 #
@@ -143,7 +147,9 @@ buildUnpacker = (data, offset) ->
   retval
 
 
-# The following are non-streaming variants, that work more like Python's `struct`.
+#### Non-streaming packers
+
+# These work more like Python's `struct`.
 
 # The `pack` function takes a format string, and the respective values as its arguments. It then
 # returns the binary data as an array of byte values.
@@ -162,7 +168,7 @@ unpack = (fmt, data, offset) ->
   [values, unpacker.finish()]
 
 
-# Exports
+#### Exports
 exports.buildPacker = buildPacker
 exports.buildUnpacker = buildUnpacker
 exports.pack = pack

@@ -20,7 +20,9 @@ MAP_SIZE_SEGMENTS = MAP_SIZE_TILES / SEGMENT_SIZE_TILES
 SEGMENT_SIZE_PIXEL = SEGMENT_SIZE_TILES * TILE_SIZE_PIXELS
 
 
-# This class represents a single segment.
+#### Cached segment
+
+# This class represents a single map segment.
 class CachedSegment
   constructor: (@renderer, x, y) ->
     # Tile bounds
@@ -71,31 +73,34 @@ class CachedSegment
           cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, @ctx
 
 
+#### Renderer
+
+# The off-screen renderer keeps a 2D array of instances of MapSegment.
 class Offscreen2dRenderer extends Common2dRenderer
   constructor: (images, sim) ->
     super
 
-    # Build a 2D array of map segments.
     @cache = new Array(MAP_SIZE_SEGMENTS)
     for y in [0...MAP_SIZE_SEGMENTS]
       row = @cache[y] = new Array(MAP_SIZE_SEGMENTS)
       for x in [0...MAP_SIZE_SEGMENTS]
         row[x] = new CachedSegment(this, x, y)
 
+  # When a cell is retiled, we store the tile index and update the segment.
   onRetile: (cell, tx, ty) ->
-    # Remember the tilemap index.
     cell.tile = [tx, ty]
 
-    # Notify the segment, so it can update it's buffer if it has one.
     segx = floor(cell.x / SEGMENT_SIZE_TILES)
     segy = floor(cell.y / SEGMENT_SIZE_TILES)
     @cache[segy][segx].onRetile(cell, tx, ty)
 
+  # Drawing the map is a matter of iterating the map segments that are on-screen, and blitting
+  # the off-screen canvas to the main canvas. The segments are prepared on-demand from here, and
+  # extra care is taken to only build one segment per frame.
   drawMap: (sx, sy, w, h) ->
     ex = sx + w - 1
     ey = sy + h - 1
 
-    # Iterate all cache segments.
     alreadyBuiltOne = no
     for row in @cache
       for segment in row
@@ -106,7 +111,6 @@ class Offscreen2dRenderer extends Common2dRenderer
 
         # Make sure the segment buffer is available.
         unless segment.canvas
-          # Let's only draw one segment per frame, to keep things smooth.
           continue if alreadyBuiltOne
           segment.build()
           alreadyBuiltOne = yes
@@ -119,5 +123,5 @@ class Offscreen2dRenderer extends Common2dRenderer
     return
 
 
-# Exports
+#### Exports
 module.exports = Offscreen2dRenderer

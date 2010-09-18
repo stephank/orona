@@ -115,5 +115,5 @@ class Shell
 WorldObject.register Shell
 
 
-# Exports.
+#### Exports
 module.exports = Shell

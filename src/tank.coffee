@@ -113,7 +113,7 @@ class Tank
     # FIXME
 
 
-  # The following methods all update the simulation.
+  #### Simulation update
 
   update: ->
     return if @death()
@@ -288,5 +288,5 @@ class Tank
 WorldObject.register Tank
 
 
-# Exports.
+#### Exports
 module.exports = Tank
