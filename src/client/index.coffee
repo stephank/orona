@@ -222,9 +222,11 @@ class NetworkGame extends BaseGame
         bytes
 
       when net.MAPCHANGE_MESSAGE
-        [[x, y, code, mine], bytes] = unpack('BBBf', data, offset)
+        [[x, y, code, life, mine], bytes] = unpack('BBBBf', data, offset)
         ascii = String.fromCharCode(code)
-        @sim.map.cells[y][x].setType(ascii, mine)
+        cell = @sim.map.cells[y][x]
+        cell.setType(ascii, mine)
+        cell.life = life
         bytes
 
       when net.UPDATE_MESSAGE

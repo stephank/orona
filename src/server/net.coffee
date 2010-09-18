@@ -31,9 +31,9 @@ class ServerContext
     @changes = @changes.concat pack('BH', net.DESTROY_MESSAGE, obj.idx)
 
   # Record the map change.
-  mapChanged: (cell, oldType, hadMine) ->
-    @changes = @changes.concat(pack('BBBBf', net.MAPCHANGE_MESSAGE,
-      cell.x, cell.y, cell.type.ascii.charCodeAt(0), cell.mine
+  mapChanged: (cell, oldType, hadMine, oldLife) ->
+    @changes = @changes.concat(pack('BBBBBf', net.MAPCHANGE_MESSAGE,
+      cell.x, cell.y, cell.type.ascii.charCodeAt(0), cell.life, cell.mine
     ))
 
   # This method is specific to the server. It serializes all objects and concatenates the

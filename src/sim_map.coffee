@@ -40,6 +40,10 @@ extendTerrainMap()
 #### Cell class
 
 class SimMapCell extends Map::CellClass
+  constructor: (map, x, y) ->
+    super
+    @life = 0
+
   getTankSpeed: (tank) ->
     # Check for a pillbox.
     return 0 if @pill?.armour > 0
@@ -75,12 +79,40 @@ class SimMapCell extends Map::CellClass
     @type.manSpeed
 
   setType: (newType, mine, retileRadius) ->
-    oldType = @type; hadMine = @mine
+    [oldType, hadMine, oldLife] = [@type, @mine, @life]
     super
-    net.mapChanged this, oldType, hadMine
+    @life = switch @type.ascii
+      when '.' then 5
+      when '}' then 5
+      when ':' then 5
+      when '~' then 4
+      else 0
+    net.mapChanged this, oldType, hadMine, oldLife
 
   takeShellHit: (shell) ->
-    # FIXME: degrade terrain
+    # FIXME: check for a mine
+    sfx = 'shot_building'
+    if @isType '.', '}', ':', '~'
+      if --@life == 0
+        nextType = switch @type.ascii
+          when '.' then '~'
+          when '}' then ':'
+          when ':' then ' '
+          when '~' then ' '
+        @setType nextType
+      else
+        net.mapChanged this, @type, @mine
+    else if @isType '#'
+      @setType '.'
+      sfx = 'shot_tree'
+    else if @isType '='
+      # FIXME
+    else
+      nextType = switch @type.ascii
+        when '|' then '}'
+        when 'b' then ' '
+      @setType nextType
+    sfx
 
 
 #### Map objects

@@ -38,7 +38,7 @@ class Context
   destroyed: (obj) ->
 
   # Notification sent by the simulation that the given map cell has changed.
-  mapChanged: (cell, oldType, hadMine) ->
+  mapChanged: (cell, oldType, hadMine, oldLife) ->
 
 
 # All updates are processed by the active context.

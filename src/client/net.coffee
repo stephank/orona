@@ -30,6 +30,7 @@ class ClientContext
     # Now, restore locally changed map cells.
     for idx, cell of @transientMapCells
       cell.setType cell._net_oldType, cell._net_hadMine
+      cell.life = cell._net_oldLife
     @transientMapCells = {}
 
     # And revive destroyed objects in reverse order.
@@ -51,10 +52,11 @@ class ClientContext
   # Keep track of map changes that we made locally. We only remember the last state of a cell
   # that the server told us about, so we can restore it to that state before processing
   # server updates.
-  mapChanged: (cell, oldType, hadMine) ->
+  mapChanged: (cell, oldType, hadMine, oldLife) ->
     unless @authoritative or @transientMapCells[cell.idx]?
       cell._net_oldType = oldType
       cell._net_hadMine = hadMine
+      cell._net_oldLife = oldLife
       @transientMapCells[cell.idx] = cell
     return
 
