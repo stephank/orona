@@ -94,6 +94,7 @@ class LocalGame extends BaseGame
     map = SimulationMap.load decodeBase64(EverardIsland)
     @commonInitialization(map)
     @sim.player = @sim.addTank()
+    @renderer.initHud()
     @start()
 
   tick: ->
@@ -140,6 +141,8 @@ class NetworkGame extends BaseGame
 
   receiveWelcome: (tank) ->
     @sim.player = tank
+    @sim.rebuildMapObjects()
+    @renderer.initHud()
     @start()
 
   tick: ->

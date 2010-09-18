@@ -437,7 +437,9 @@ class Map
     , sx, sy, ex, ey
 
   # Dump the map to an array of octets in BMAP format.
-  dump: ->
+  dump: (options) ->
+    options ||= {}
+
     # Private helper for collecting consecutive cells of the same type.
     consecutiveCells = (row, cb) ->
       currentType = null
@@ -473,12 +475,17 @@ class Map
       octets.push val if val?
       octets
 
+    # Process options.
+    pills =  if options.noPills  then [] else @pills
+    bases =  if options.noBases  then [] else @bases
+    starts = if options.noStarts then [] else @starts
+
     # Build the header.
     data = c.charCodeAt(0) for c in 'BMAPBOLO'
-    data.push(1, @pills.length, @bases.length, @starts.length)
-    data.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in @pills
-    data.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in @bases
-    data.push(s.x, s.y, s.direction) for s in @starts
+    data.push(1, pills.length, bases.length, starts.length)
+    data.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in pills
+    data.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in bases
+    data.push(s.x, s.y, s.direction) for s in starts
 
     # While building the map data, we collect sequences and runs.
     # What follows are helpers to deal with flushing these two arrays to data.
@@ -588,9 +595,9 @@ class Map
     map = new this()
 
     # Read the map objects.
-    pillsData  = readBytes(5, "Incomplete pillbox data")      for i in [1..numPills]
-    basesData  = readBytes(6, "Incomplete base data")         for i in [1..numBases]
-    startsData = readBytes(3, "Incomplete player start data") for i in [1..numStarts]
+    pillsData  = readBytes(5, "Incomplete pillbox data")      for i in [0...numPills]
+    basesData  = readBytes(6, "Incomplete base data")         for i in [0...numBases]
+    startsData = readBytes(3, "Incomplete player start data") for i in [0...numStarts]
 
     # Read map data.
     loop

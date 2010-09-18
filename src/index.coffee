@@ -15,6 +15,8 @@ class Simulation
     @objects = []
     @tanks = []
 
+    @spawnMapObjects()
+
   # Basic object management.
 
   tick: ->
@@ -82,38 +84,64 @@ class Simulation
 
   buildSerializer: (packer) ->
     (specifier, value) ->
-      if specifier == 'O'
-        packer('H', value.idx)
-      else
-        packer(specifier, value)
+      switch specifier
+        when 'O' then packer('H', if value then value.idx else 65535)
+        when 'T' then packer('B', if value then value.tank_idx else 255)
+        else          packer(specifier, value)
       value
 
   buildDeserializer: (unpacker) ->
     (specifier, value) =>
-      if specifier == 'O'
-        @objects[unpacker('H')]
-      else
-        unpacker(specifier)
+      switch specifier
+        when 'O' then @objects[unpacker('H')]
+        when 'T' then @tanks[unpacker('B')]
+        else          unpacker(specifier)
 
   # Player management.
 
   addTank: (tank) ->
     tank.tank_idx = @tanks.length
     @tanks.push tank
-    @resolveMapObjects()
+    @resolveMapObjectOwners()
 
   removeTank: (tank) ->
     @tanks.splice tank.tank_idx, 1
-    @resolveMapObjects()
+    @resolveMapObjectOwners()
 
-  # Resolve pillbox and base owner indices to the actual tanks.
-  resolveMapObjects: ->
-    mapObjects = @map.pills.concat @map.bases
-    for obj in mapObjects
+  # Map object management.
+
+  getAllMapObjects: -> @map.pills.concat @map.bases
+
+  # The special spawning logic for map objects. This happens way early in the game, and because
+  # there's very little and especially no clients yet, we can drop some of `spawn`'s logic.
+  spawnMapObjects: ->
+    for obj in @getAllMapObjects()
+      obj.idx = @objects.length
+      @objects.push obj
+      obj.postMapObjectInitialize?(this)
+      obj.postInitialize?()
+    return
+
+  # Resolve pillbox and base owner indices to the actual tanks. This method is only really useful
+  # on the server. Because of the way serialization works, the client doesn't get the see invalid
+  # owner indices. (As can be seen in `buildSerializer`.)
+  resolveMapObjectOwners: ->
+    return unless net.isAuthority()
+    for obj in @getAllMapObjects()
       obj.owner = @tanks[obj.owner_idx]
       obj.cell.retile()
     return
 
+  # Called on the client to fill `map.pills` and `map.bases` based on the current object list.
+  rebuildMapObjects: ->
+    @map.pills = []; @map.bases = []
+    for obj in @objects
+      switch obj.charId
+        when 'p' then @map.pills.push(obj)
+        when 'b' then @map.bases.push(obj)
+        else continue
+      obj.cell.retile()
+    return
 
 # Exports.
 module.exports = Simulation

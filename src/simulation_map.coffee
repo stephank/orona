@@ -8,6 +8,7 @@
  TILE_SIZE_PIXELS}   = require './constants'
 {Map, TERRAIN_TYPES} = require './map'
 net                  = require './net'
+WorldObject          = require './world_object'
 
 
 TERRAIN_TYPE_ATTRIBUTES =
@@ -73,22 +74,95 @@ class SimMapCell extends Map::CellClass
     net.mapChanged this, oldType, hadMine
 
 
+# Map objects.
+
+# These implement the interface of each kind of map object, and also implement WorldObject. The
+# latter is so that we may synchronize their state across the network. Drawing is not done like
+# a WorldObject however, but it done in the map drawing code.
+#
+# Constructors are also a special case. These objects are now actually `spawn`'d, but instead are
+# created during map load, at which point the simulation is not yet available. The solution is a
+# special method `postMapObjectInitialize` which receives the simulation reference.
+
+
+class SimMapObject
+  postMapObjectInitialize: (sim) ->
+
+
 class SimPillbox
-  constructor: (@map, @x, @y, @owner_idx, @armour, @speed) ->
+  charId: 'p'
+
+  # Save our attributes when constructed on the authority.
+  constructor: (map, @x, @y, @owner_idx, @armour, @speed) ->
+
+  # Still on the authority, receive our simulation reference.
+  postMapObjectInitialize: (@sim) ->
+
+  # After initialization on client and server set-up the cell reference.
+  postInitialize: ->
     @updateCell()
 
+  # Keep our non-synchronized attributes up-to-date on the client.
+  postNetUpdate: ->
+    @updateCell()
+    # FIXME: retile when owner changes.
+    @owner_idx = if @owner then @owner.tank_idx else 255
+
+  # Helper that updates the cell reference, and ensures a back-reference as well.
   updateCell: ->
+    newCell = @sim.map.cellAtTile(@x, @y)
+    return if @cell == newCell
+
     delete @cell.pill if @cell
-    @cell = @map.cellAtTile(@x, @y)
+    @cell = newCell
     @cell.pill = this
+    @cell.retile()
+
+  # The state information to synchronize.
+  serialization: (isCreate, p) ->
+    @x = p('B', @x)
+    @y = p('B', @y)
+
+    @owner = p('T', @owner)
+    @armour = p('B', @armour)
+    @speed = p('B', @speed)
+
+WorldObject.register SimPillbox
 
 
 class SimBase
-  constructor: (@map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
-    @cell = @map.cellAtTile(@x, @y)
+  charId: 'b'
+
+  # Save our attributes when constructed on the authority, and override the cell's type.
+  constructor: (map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
+    map.cellAtTile(@x, @y).setType '=', no, -1
+
+  # Still on the authority, receive our simulation reference.
+  postMapObjectInitialize: (@sim) ->
+
+  # After initialization on client and server set-up the cell reference.
+  postInitialize: ->
+    @cell = @sim.map.cellAtTile(@x, @y)
     @cell.base = this
-    # Override cell type.
-    @cell.setType '=', no, -1
+
+  # Keep our non-synchronized attributes up-to-date on the client.
+  postNetUpdate: ->
+    @owner_idx = if @owner then @owner.tank_idx else 255
+    # FIXME: retile when owner changes.
+    @cell.retile()
+
+  # The state information to synchronize.
+  serialization: (isCreate, p) ->
+    if isCreate
+      @x = p('B', @x)
+      @y = p('B', @y)
+
+    @owner = p('T', @owner)
+    @armour = p('B', @armour)
+    @shells = p('B', @shells)
+    @mines = p('B', @mines)
+
+WorldObject.register SimBase
 
 
 class SimMap extends Map

@@ -42,8 +42,9 @@ class Game
     ws.on 'timeout', => @onError(tank, 'Timed out')
 
     ws.buffered =>
-      # Send the current map state.
-      mapData = new Buffer(@sim.map.dump())
+      # Send the current map state. We don't send pillboxes and bases, because the client
+      # receives create messages for those, and then fills the map structure based on those.
+      mapData = new Buffer(@sim.map.dump(noPills: yes, noBases: yes))
       ws.sendMessage mapData.toString('base64')
 
       # To synchronize the object list to the client, we simulate creation of all objects.

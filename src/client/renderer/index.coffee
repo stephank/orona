@@ -14,7 +14,6 @@ class BaseRenderer
   # Once the constructor finishes, `Map#setView` is called to hook up this renderer instance, which
   # causes onRetile to be invoked once for each tile to initialize.
   constructor: (@images, @sim) ->
-    @initHud()
     @lastCenter = [0, 0]
 
   # This methods takes x and y coordinates to center the screen on. The callback provided should be
