@@ -8,7 +8,7 @@
 
 # FIXME: Better error handling all around.
 
-Simulation       = require '..'
+Simulation       = require '../simulation'
 WorldObject      = require '../world_object'
 net              = require '../net'
 {SimulationMap}  = require '../simulation_map'

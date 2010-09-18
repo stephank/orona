@@ -4,7 +4,7 @@
 
 
 {min, round}       = Math
-BaseRenderer       = require '.'
+BaseRenderer       = require './base'
 {TILE_SIZE_PIXELS,
  PIXEL_SIZE_WORLD} = require '../../constants'
 TEAM_COLORS        = require '../../team_colors'
