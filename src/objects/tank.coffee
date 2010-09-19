@@ -200,9 +200,7 @@ class Tank
       @speed = max(0.00, @speed - 1)
 
     # Also check if we're on top of another tank.
-    for other in @sim.tanks when other != this
-      continue if other.armour == 255 # He's dead, Jim.
-
+    for other in @sim.tanks when other != this and other.armour != 255
       dx = other.x - @x; dy = other.y - @y
       distance = sqrt(dx*dx + dy*dy)
       continue if distance > 255

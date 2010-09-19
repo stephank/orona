@@ -24,13 +24,13 @@ decodeBase64 = (input) ->
     # Gather the numerical values of the next group of 4 characters.
     quadIndex = i % 4
     quad[quadIndex] =
-    if      65 <= cc <=  90 then cc - 65 # A-Z
-    else if 97 <= cc <= 122 then cc - 71 # a-z
-    else if 48 <= cc <=  57 then cc + 4  # 0-9
-    else if       cc ==  43 then 62      # +
-    else if       cc ==  47 then 63      # /
-    else if       cc ==  61 then -1      # Padding
-    else throw new Error "Invalid base64 input character: #{c}"
+      if      65 <= cc <=  90 then cc - 65 # A-Z
+      else if 97 <= cc <= 122 then cc - 71 # a-z
+      else if 48 <= cc <=  57 then cc + 4  # 0-9
+      else if       cc ==  43 then 62      # +
+      else if       cc ==  47 then 63      # /
+      else if       cc ==  61 then -1      # Padding
+      else throw new Error "Invalid base64 input character: #{c}"
 
     # Did we complete a quad? If so, calculate the octet values and add them to the output.
     # We take bits from the character values as follows: 000000 001111 111122 222222
