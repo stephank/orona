@@ -106,7 +106,12 @@ class SimMapCell extends Map::CellClass
       @setType '.'
       sfx = 'shot_tree'
     else if @isType '='
-      # FIXME
+      neigh =
+        if      shell.direction >= 224  or shell.direction <  32 then @neigh( 1,  0)
+        else if shell.direction >=  32 and shell.direction <  96 then @neigh( 0, -1)
+        else if shell.direction >=  96 and shell.direction < 160 then @neigh(-1,  0)
+        else @neigh(0, 1)
+      @setType(' ') if neigh.isType(' ', '^')
     else
       nextType = switch @type.ascii
         when '|' then '}'
