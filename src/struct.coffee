@@ -11,7 +11,7 @@
 
 #### Helpers
 
-# The following methods pack Fixnums in an array of bytes, in network byte order (MSB).
+# The following methods pack numbers in an array of bytes, in network byte order.
 
 toUint8  = (n) -> [
     n & 0xFF
@@ -49,13 +49,12 @@ fromUint32 = (d, o) -> (d[o] << 24) + (d[o+1] << 16) + (d[o+2] << 8) + d[o+3]
 #     data = packer.finish()
 #
 # The format characters match those of Python's `struct`. However, only a subset is supported,
-# namely 'B', 'H', and 'I'. In addition to these, there's also a way to tightly pack bit fields,
-# simply by using the 'f' format character in repetition. The caller should take care to group
+# namely `B`, `H`, and `I`. In addition to these, there's also a way to tightly pack bit fields,
+# simply by using the `f` format character in repetition. The caller should take care to group
 # bit fields, though.
 buildPacker = ->
   data = []
 
-  # These are to handle bit fields.
   bits = null
   bitIndex = 0
   flushBitFields = ->
@@ -63,21 +62,17 @@ buildPacker = ->
     data.push bits
     bits = null
 
-  # Build the generator function.
   retval = (type, value) ->
     if type == 'f'
-      # A bit field.
       if bits == null
         bits = if !!value then 1 else 0
         bitIndex = 1
       else
         bits |= 1 << bitIndex if !!value
         bitIndex++
-        # We've collected eight, so add the byte.
         flushBitFields() if bitIndex == 8
     else
       flushBitFields()
-      # Simple byte-aligned data types.
       data = data.concat(switch type
         when 'B' then toUint8(value)
         when 'H' then toUint16(value)
@@ -85,12 +80,10 @@ buildPacker = ->
         else throw new Error("Unknown format character #{type}")
       )
 
-  # This is called by the user to signal he's done, and wants to get his data.
   retval.finish = ->
     flushBitFields()
     data
 
-  # Return the generator.
   retval
 
 
@@ -107,48 +100,37 @@ buildUnpacker = (data, offset) ->
   offset ||= 0
   idx = offset
 
-  # This is to handle bit fields.
   bitIndex = 0
 
-  # Build the generator function.
   retval = (type) ->
     if type == 'f'
-      # A bit field.
       bit = (1 << bitIndex) & data[idx]
       value = bit > 0
       bitIndex++
-      # If we've collected eight, skip to the next byte.
       if bitIndex == 8
         idx++
         bitIndex = 0
     else
-      # If we were processing bitfields, skip to the next byte.
       if bitIndex != 0
         idx++
         bitIndex = 0
-      # Simple byte-aligned data types.
       [value, bytes] = switch type
         when 'B' then [ fromUint8(data, idx), 1]
         when 'H' then [fromUint16(data, idx), 2]
         when 'I' then [fromUint32(data, idx), 4]
         else throw new Error("Unknown format character #{type}")
       idx += bytes
-    # Return the value.
     value
 
-  # This is called by the user to signal he's done, after which he is told how many bytes we ate.
   retval.finish = ->
-    # Make sure we account for trailing bitfields.
     idx++ if bitIndex != 0
-    # Return the bytes taken.
     idx - offset
 
-  # Return the generator.
   retval
 
 
 #### Non-streaming packers
-
+#
 # These work more like Python's `struct`.
 
 # The `pack` function takes a format string, and the respective values as its arguments. It then

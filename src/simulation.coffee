@@ -4,7 +4,7 @@
 net             = require './net'
 {buildUnpacker} = require './struct'
 
-# These requires are to ensure that all world objects are registered.
+# These requires are here to ensure that all object types are registered.
 require './objects/sim_pillbox'
 require './objects/sim_base'
 require './objects/tank'
@@ -21,68 +21,77 @@ class Simulation
 
   #### Basic object management
 
+  # Process a single simulation tick. This simply calls `update` on all objects that have it.
   tick: ->
-    # Work on a shallow copy of the object list.
     for obj in @objects.slice(0)
       obj.update?()
     return
 
-  # Spawn an object, as the authority or simulated.
+  # Updates the indices of objects. Notably called when something is removed. The optional
+  # `startIdx` is the object index to start processing. Usually the index of the object that was
+  # just removed, so that all that follow may be updated.
+  updateIndices: (startIdx) ->
+    startIdx ||= 0
+    for i in [startIdx...@objects.length]
+      @objects[i].idx = i
+    return
+
+  # Spawn an object, as the authority or simulated. This method is meant to be a wrapper around
+  # the actual object's constructor. It is invoked as for example:
+  #
+  #     sim.spawn Explosion, x, y
+  #
+  # The function will then call the `Explosion` constructor with arguments `sim, x, y`. Note the
+  # implicit simulation parameter.
+  #
+  # After the object has been instantiated, it is assigned an index, its optional callback
+  # `postInitialized` is invoked, and the networking context is notified. Finally, `spawn` returns
+  # the object much like a regular constructor.
   spawn: (type, args...) ->
     obj = new type(this, args...)
-    # Register it.
-    obj.idx = @objects.length
-    @objects.push obj
-    # Invoke the callback.
+    obj.idx = @objects.length; @objects.push obj
+
     obj.postInitialize?()
-    # Notify networking.
     net.created obj
-    # Return the new object.
     obj
 
-  # Create an object received from the network.
+  # Create an object received from the network. The `type` parameter is a class that will be
+  # instiated with a blank constructor. The new instance will be assigned an index. Following this
+  # the data at `data` and `offset` is deserialized as normal, but with the `isCreate` flag set.
+  # Finally, the optional `postInitialized` callback is invoked, and `netSpawn` returns the number
+  # of bytes that deserialization needed.
   netSpawn: (type, data, offset) ->
     blankConstructor = (@sim) -> this
     blankConstructor.prototype = type.prototype
     obj = new blankConstructor(this)
-    # Register it.
-    obj.idx = @objects.length
-    @objects.push obj
-    # Deserialize.
+    obj.idx = @objects.length; @objects.push obj
+
     unpacker = buildUnpacker(data, offset)
     obj.serialization?(yes, @buildDeserializer(unpacker))
-    # Invoke the callback.
     obj.postInitialize?()
-    # Return the number of bytes taken.
     unpacker.finish()
 
-  # Destroy an object, as the authority or simulated.
+  # Destroy an object, as the authority or simulated. The callbacks `preRemove` and `destroy` are
+  # invoked, before the object is removed from the simulation. After this, networking is notified,
+  # before `destroy` returns the object again.
   destroy: (obj) ->
-    # Invoke the callback.
     obj.preRemove?()
-    # Call the destructor.
     obj.destroy?()
-    # Remove it from the list.
-    @objects.splice obj.idx, 1
-    # Update the indices of everything that follows.
-    for i in [obj.idx...@objects.length]
-      @objects[i].idx--
-    # Notify networking.
+    @objects.splice(obj.idx, 1); @updateIndices(obj.idx)
     net.destroyed obj
-    # Return the same object.
     obj
 
-  # Destroy an object, as received from the network.
+  # Destroy an object, as received from the network. The `preRemove` callback is invoked, before
+  # the object is removed from the simulation.
   netDestroy: (obj) ->
-    # Invoke the callback.
     obj.preRemove?()
-    # Remove it from the list.
-    @objects.splice obj.idx, 1
-    # Update the indices of everything that follows.
-    for i in [obj.idx...@objects.length]
-      @objects[i].idx--
+    @objects.splice(obj.idx, 1); @updateIndices(obj.idx)
 
   #### Serialization
+
+  # These functions build the generators used in the `serialization` callback of objects. They
+  # wrap `struct.packer` and `struct.unpacker` with the function signature that we want, and also
+  # add the necessary support to process the object reference format specifiers `O` and `T`.
 
   buildSerializer: (packer) ->
     (specifier, value) ->
@@ -99,7 +108,9 @@ class Simulation
         when 'T' then @tanks[unpacker('B')]
         else          unpacker(specifier)
 
-  #### Player management.
+  #### Player management
+
+  # The `Tank` class calls these, so that the we may keep a player list.
 
   addTank: (tank) ->
     tank.tank_idx = @tanks.length
@@ -110,12 +121,14 @@ class Simulation
     @tanks.splice tank.tank_idx, 1
     @resolveMapObjectOwners()
 
-  #### Map object management.
+  #### Map object management
 
+  # A helper method which returns all simulated map objects.
   getAllMapObjects: -> @map.pills.concat @map.bases
 
   # The special spawning logic for map objects. This happens way early in the game, and because
-  # there's very little and especially no clients yet, we can drop some of `spawn`'s logic.
+  # there's very little, and especially no clients yet, we can drop some of `spawn`'s logic.
+  # Otherwise, the only difference is the extra `postMapObjectInitialize` callback.
   spawnMapObjects: ->
     for obj in @getAllMapObjects()
       obj.idx = @objects.length
@@ -126,7 +139,8 @@ class Simulation
 
   # Resolve pillbox and base owner indices to the actual tanks. This method is only really useful
   # on the server. Because of the way serialization works, the client doesn't get the see invalid
-  # owner indices. (As can be seen in `buildSerializer`.)
+  # owner indices. (As can be seen in `buildSerializer`.) It is called whenever a player joins
+  # or leaves the game.
   resolveMapObjectOwners: ->
     return unless net.isAuthority()
     for obj in @getAllMapObjects()
@@ -144,6 +158,7 @@ class Simulation
         else continue
       obj.cell.retile()
     return
+
 
 #### Exports
 module.exports = Simulation
