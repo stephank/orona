@@ -209,9 +209,7 @@ class Tank
 
       # FIXME: winbolo actually does an increasing size of nudges while the tanks are colliding,
       # keeping a static/global variable. But perhaps this should be combined with tank sliding?
-      dx = Math.random() - 0.5 if dx == 0
       if dx < 0 then @x++ else @x--
-      dy = Math.random() - 0.5 if dy == 0
       if dy < 0 then @y++ else @y--
 
   move: ->
