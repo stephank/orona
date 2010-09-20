@@ -132,11 +132,17 @@ task 'build:client', 'Compile the Bolo client-side module bundle', ->
     closure.stderr.on 'data', (buffer) -> process.stdout.write buffer
     closure.on 'exit', -> realOutput.end()
 
-  brequireFile = 'src/client/brequire.coffee'
+  brequireFile = 'src/client/util/brequire.coffee'
   brequireCode = fs.readFileSync brequireFile, 'utf-8'
   js = CoffeeScript.compile brequireCode, fileName: brequireFile
   output.write js
   puts "Compiled '#{brequireFile}'."
+
+  eventsFile = 'src/client/util/events.js'
+  eventsCode = fs.readFileSync eventsFile, 'utf-8'
+  wrappedJs = wrapModule { name: 'events', directory: no }, eventsCode
+  output.write wrappedJs
+  puts "Compiled '#{eventsFile}'."
 
   iterateDependencyTree 'src/client/index.coffee', 'bolo/client', (module) ->
     js = CoffeeScript.compile module.code, fileName: module.file, noWrap: yes

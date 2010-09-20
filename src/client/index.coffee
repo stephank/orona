@@ -17,7 +17,7 @@ net              = require '../net'
 {TICK_LENGTH_MS} = require '../constants'
 ClientContext    = require './net'
 Loader           = require './loader'
-{decodeBase64}   = require './base64'
+{decodeBase64}   = require './util/base64'
 DefaultRenderer  = require './renderer/offscreen_2d'
 EverardIsland    = require './everard'
 
