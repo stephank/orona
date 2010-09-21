@@ -119,6 +119,8 @@ class Simulation
 
   removeTank: (tank) ->
     @tanks.splice tank.tank_idx, 1
+    for i in [tank.tank_idx...@tanks.length]
+      @tanks[i].tank_idx = i
     @resolveMapObjectOwners()
 
   #### Map object management
