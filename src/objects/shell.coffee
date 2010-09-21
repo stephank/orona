@@ -18,24 +18,30 @@ class Destructable
   takeShellHit: (shell) ->
 
 
-class Shell
+class Shell extends WorldObject
   charId: 'S'
   styled: false
 
-  constructor: (@sim, @owner, options) ->
-    options ||= {}
-    # Default direction is the owner's.
-    @direction = options.direction || @owner.direction
-    # Default lifespan (fired by pillboxes) is 7 tiles.
-    @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
-    # Default for onWater (fired by pillboxes) is no.
-    @onWater = options.onWater || no
-    # Start the owner's location, and move one step away.
-    @x = @owner.x; @y = @owner.y
-    @move()
+  constructor: ->
+    super
+
+    @on 'postCreate', (@owner, options) =>
+      options ||= {}
+      # Default direction is the owner's.
+      @direction = options.direction || @owner.direction
+      # Default lifespan (fired by pillboxes) is 7 tiles.
+      @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
+      # Default for onWater (fired by pillboxes) is no.
+      @onWater = options.onWater || no
+      # Start the owner's location, and move one step away.
+      @x = @owner.x; @y = @owner.y
+      @move()
+
+    # Track position updates.
+    @on 'postNetUpdate', =>
+      @updateCell()
 
   serialization: (isCreate, p) ->
-    # These are only set once.
     if isCreate
       @direction = p('B', @direction)
       @owner = p('O', @owner)
@@ -48,10 +54,6 @@ class Shell
   # Helper, called in several places that change shell position.
   updateCell: ->
     @cell = @sim.map.cellAtWorld @x, @y
-
-  # Track position updates.
-  postNetUpdate: ->
-    @updateCell()
 
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16
@@ -112,7 +114,7 @@ class Shell
         @cell.isType('|', '}', '#', 'b')
     return ['cell', @cell] if terrainCollision
 
-WorldObject.register Shell
+Shell.register()
 
 
 #### Exports

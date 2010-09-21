@@ -1,14 +1,18 @@
-# All objects that a `Simulation` keeps track of implement `WorldObject`. This interface mostly
-# concerns itself with state synchronisation, tick updates and graphics.
+# All objects that a `Simulation` keeps track of are subclasses of `WorldObject`.
+
+
+{EventEmitter}  = require 'events'
+{buildUnpacker,
+ buildPacker}   = require './struct'
 
 
 # The types indexed by their charId.
 types = {}
 
 
-# An interface that all objects in the world simulation should implement. It is not necessary
-# to subclass this, it's mostly here for documentation.
-class WorldObject
+# This base class mostly concerns itself with network synchronisation, while defining an interface
+# for tick updates and graphics.
+class WorldObject extends EventEmitter
   # This is a single character identifier for this class. It's handy for type checks without
   # having to require the module, but is also used as the network identifier.
   charId: null
@@ -23,42 +27,32 @@ class WorldObject
   x: null
   y: null
 
-  # Instantiating a WorldObject is usually done using `sim.spawn MyObject, params...`. This wraps
-  # the call to the actual constructor, and the simulation can thus keep track of the object.
+  # Instantiating a WorldObject is done using `sim.spawn MyObject, params...`. This wraps the call
+  # to the actual constructor, and the simulation can thus keep track of the object.
   #
-  # Even though not specified in `params`, the first parameter is always the Simulation instance.
-  #
-  # Note that this constructor is *not* invoked for objects instantiated from the network code.
-  # The network code instead instantiates using a blank constructor, calls `deserialize`, and
-  # then proceeds as normal with `postInitialize` and further updates.
-  constructor: (sim) ->
+  # Any `spawn` parameters are passed to the `postCreate` event. Subclasses of WorldObject normally
+  # don't implement any logic in the constructor, directly call `super`, and only install event
+  # handlers.
+  constructor: (@sim) ->
 
-  #### Callbacks
+  # This method is called to dump the object's state in an array of bytes. The default
+  # implementation will suit most purposes. It uses `serialization` below, which is normally what
+  # you want to override instead.
+  serialize: (isCreate) ->
+    packer = buildPacker()
+    serializer = @sim.buildSerializer(packer)
+    @serialization(isCreate, serializer)
+    packer.finish()
 
-  # *The following are optional callbacks.*
+  # This method is the opposite of the above. It is called to load the object's state from an
+  # array of bytes. Again, you probably want to override `serialization` instead.
+  deserialize: (isCreate, data, offset) ->
+    unpacker = buildUnpacker(data, offset)
+    deserializer = @sim.buildDeserializer(unpacker)
+    @serialization(isCreate, deserializer)
+    unpacker.finish()
 
-  # Return the (x,y) index in the tilemap (base or styled, selected above) that the object should
-  # be drawn with. May be a no-op if the object is never actually drawn.
-  getTile: ->
-
-  # Called after the object has been added to the Simulation, either through normal means or
-  # through the network code.
-  postInitialize: ->
-
-  # Called after a network update has been processed.
-  postNetUpdate: ->
-
-  # Called before the object is about the be removed from the Simulation, either through normal
-  # means or through the network code.
-  preRemove: ->
-
-  # Called when the object is destroyed through normal means. This may happen on the simulation
-  # authority (local game or server), but also simulated on a client.
-  destroy: ->
-
-  # Called on every tick, either on the authority (local game or server)
-  # or simulated on the client.
-  update: ->
+  #### Abstract methods
 
   # This method is called to serialize and deserialize an object's state. The parameter `p`
   # is a function which should be repeatedly called for each property of the object. It takes as
@@ -67,9 +61,35 @@ class WorldObject
   # to another WorldObject, and `T` may be used for a reference to a Tank.
   #
   # If the function is called to serialize, then parameters are collected to form a packet, and
-  # the return value is the same as the value parameter verbatim. If the function is called to
+  # the return value is the same as the `value` parameter verbatim. If the function is called to
   # deserialize, then the value parameter is ignored, and the return value is the received value.
   serialization: (isCreate, p) ->
+
+  # Called on every tick, either on the authority (local game or server)
+  # or simulated on the client.
+  update: ->
+
+  # Return the (x,y) index in the tilemap (base or styled, selected above) that the object should
+  # be drawn with. May be a no-op if the object is never actually drawn.
+  getTile: ->
+
+  #### Events
+
+  # The following events are emitted on an object:
+  #
+  # * `postCreate`: Called after the object is created, as the authority or simulated.
+  # * `postUpdate`: Called after the update is processed, as the authority or simulated.
+  # * `preDestroy`: Called before the object is destroyed, as the authority or simulated.
+  # * `postNetCreate`: Called after the object is created, as received from the network.
+  # * `postNetUpdate`: Called after the update is processed, as received from the network.
+  # * `preNetDestroy`: Called before the object is destroyed, as received from the network.
+  # * `postInitialize`: Always called after the object is created.
+  # * `postChanged`: Always called after the update is processed.
+  # * `preRemove`: Always called before the object is destroyed.
+  #
+  # You'll notice there's three key events: after creation, after an update, and before
+  # destruction. They are fired in three situations: simulated, through networking, or always.
+  # The 'always' kind of event is always fired after the others.
 
   #### Static methods
 
@@ -78,10 +98,14 @@ class WorldObject
     c = String.fromCharCode(c) if typeof(c) != 'string'
     types[c]
 
-  # This should be called after a class is defined, as for example `WorldObject.register MyObject`.
-  @register: (type) ->
-    types[type::charId] = type
-    type::charCodeId = type::charId.charCodeAt(0)
+  # This should be called after a class is defined, as for example `MyObject.register()`.
+  @register: ->
+    types[this::charId] = this
+    this::charCodeId = this::charId.charCodeAt(0)
+
+  # Called automatically by CoffeeScript. Make `register` available on our subclass.
+  @extended: (child) ->
+    child.register = @register
 
 
 #### Exports

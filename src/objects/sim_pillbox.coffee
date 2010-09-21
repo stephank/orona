@@ -4,24 +4,28 @@
 WorldObject = require '../world_object'
 
 
-class SimPillbox
+class SimPillbox extends WorldObject
   charId: 'p'
 
-  # Save our attributes when constructed on the authority.
+  # This is a MapObject; it is constructed differently.
   constructor: (map, @x, @y, @owner_idx, @armour, @speed) ->
+    if arguments.length == 1
+      super
+    else
+      super(null)
 
-  # Still on the authority, receive our simulation reference.
-  postMapObjectInitialize: (@sim) ->
+    # The Simulation is passed to us by `spawnMapObjects`.
+    @on 'postCreate', (@sim) =>
 
-  # After initialization on client and server set-up the cell reference.
-  postInitialize: ->
-    @updateCell()
+    # After initialization on client and server set-up the cell reference.
+    @on 'postInitialize', =>
+      @updateCell()
 
-  # Keep our non-synchronized attributes up-to-date on the client.
-  postNetUpdate: ->
-    @updateCell()
-    # FIXME: retile when owner changes.
-    @owner_idx = if @owner then @owner.tank_idx else 255
+    # Keep our non-synchronized attributes up-to-date on the client.
+    @on 'postNetUpdate', =>
+      @updateCell()
+      # FIXME: retile when owner changes.
+      @owner_idx = if @owner then @owner.tank_idx else 255
 
   # Helper that updates the cell reference, and ensures a back-reference as well.
   updateCell: ->
@@ -51,7 +55,7 @@ class SimPillbox
     @cell.retile()
     # FIXME: do something with speed
 
-WorldObject.register SimPillbox
+SimPillbox.register()
 
 
 #### Exports

@@ -11,33 +11,35 @@ Explosion               = require './explosion'
 Shell                   = require './shell'
 
 
-class Tank
+class Tank extends WorldObject
   charId: 'T'
   styled: true
 
   # The Tank constructor and destructor are never simulated.
   # They are only ever called on the server.
-  constructor: (@sim) ->
-    # FIXME: Proper way to select teams.
-    @team = @sim.tanks.length % 2
-    # Initialize.
-    @reset()
+  constructor: ->
+    super
+
+    @on 'postCreate', =>
+      # FIXME: Proper way to select teams.
+      @team = @sim.tanks.length % 2
+      # Initialize.
+      @reset()
+
+    # Keep the player list updated.
+    @on 'postInitialize', =>
+      @updateCell()
+      @sim.addTank(this)
+    @on 'preRemove', =>
+      @sim.removeTank(this)
+
+    # Track position updates.
+    @on 'postNetUpdate', =>
+      @updateCell()
 
   # Helper, called in several places that change tank position.
   updateCell: ->
     @cell = @sim.map.cellAtWorld @x, @y
-
-  # Use postInitialize and preRemove to keep the player list updated.
-  postInitialize: ->
-    @updateCell()
-    @sim.addTank(this)
-
-  preRemove: ->
-    @sim.removeTank(this)
-
-  # Track position updates.
-  postNetUpdate: ->
-    @updateCell()
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->
@@ -281,7 +283,7 @@ class Tank
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
 
-WorldObject.register Tank
+Tank.register()
 
 
 #### Exports

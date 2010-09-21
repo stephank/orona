@@ -1,8 +1,9 @@
 # The simulation keeps track of everything concerning the game world.
 
 
-net             = require './net'
-{buildUnpacker} = require './struct'
+net         = require './net'
+{unpack}    = require './struct'
+WorldObject = require './world_object'
 
 # These requires are here to ensure that all object types are registered.
 require './objects/sim_pillbox'
@@ -21,73 +22,85 @@ class Simulation
 
   #### Basic object management
 
-  # Process a single simulation tick. This simply calls `update` on all objects that have it.
-  tick: ->
-    for obj in @objects.slice(0)
-      obj.update?()
-    return
-
-  # Updates the indices of objects. Notably called when something is removed. The optional
-  # `startIdx` is the object index to start processing. Usually the index of the object that was
-  # just removed, so that all that follow may be updated.
-  updateIndices: (startIdx) ->
-    startIdx ||= 0
-    for i in [startIdx...@objects.length]
-      @objects[i].idx = i
-    return
-
-  # Spawn an object, as the authority or simulated. This method is meant to be a wrapper around
-  # the actual object's constructor. It is invoked as for example:
-  #
-  #     sim.spawn Explosion, x, y
-  #
-  # The function will then call the `Explosion` constructor with arguments `sim, x, y`. Note the
-  # implicit simulation parameter.
-  #
-  # After the object has been instantiated, it is assigned an index, its optional callback
-  # `postInitialized` is invoked, and the networking context is notified. Finally, `spawn` returns
-  # the object much like a regular constructor.
+  # Spawn an object, as the authority or simulated. The `type` parameter is a class that will be
+  # instantiated. The remaining arguments are passed to the `postCreate` event handlers.
   spawn: (type, args...) ->
-    obj = new type(this, args...)
-    obj.idx = @objects.length; @objects.push obj
-
-    obj.postInitialize?()
+    obj = @insert new type(this)
+    obj.emit 'postCreate', args...
+    obj.emit 'postInitialize'
     net.created obj
     obj
 
-  # Create an object received from the network. The `type` parameter is a class that will be
-  # instiated with a blank constructor. The new instance will be assigned an index. Following this
-  # the data at `data` and `offset` is deserialized as normal, but with the `isCreate` flag set.
-  # Finally, the optional `postInitialized` callback is invoked, and `netSpawn` returns the number
-  # of bytes that deserialization needed.
-  netSpawn: (type, data, offset) ->
-    blankConstructor = (@sim) -> this
-    blankConstructor.prototype = type.prototype
-    obj = new blankConstructor(this)
-    obj.idx = @objects.length; @objects.push obj
+  # Update the given object, as the authority or simulated.
+  update: (obj) ->
+    obj.update()
+    obj.emit 'postUpdate'
+    obj.emit 'postChanged'
 
-    unpacker = buildUnpacker(data, offset)
-    obj.serialization?(yes, @buildDeserializer(unpacker))
-    obj.postInitialize?()
-    unpacker.finish()
-
-  # Destroy an object, as the authority or simulated. The callbacks `preRemove` and `destroy` are
-  # invoked, before the object is removed from the simulation. After this, networking is notified,
-  # before `destroy` returns the object again.
+  # Destroy the given object, as the authority or simulated.
   destroy: (obj) ->
-    obj.preRemove?()
-    obj.destroy?()
-    @objects.splice(obj.idx, 1); @updateIndices(obj.idx)
+    obj.emit 'preDestroy'
+    obj.emit 'preRemove'
+    @remove obj
     net.destroyed obj
     obj
 
-  # Destroy an object, as received from the network. The `preRemove` callback is invoked, before
-  # the object is removed from the simulation.
-  netDestroy: (obj) ->
-    obj.preRemove?()
-    @objects.splice(obj.idx, 1); @updateIndices(obj.idx)
+  # Process a single simulation tick. This simply calls `update` for all objects.
+  tick: ->
+    for obj in @objects.slice(0)
+      @update obj
+    return
 
-  #### Serialization
+  #### Object synchronization
+
+  # Spawn an object received from the network, as received from the network.
+  netSpawn: (data, offset) ->
+    type = WorldObject.getType data[offset]
+    obj = @insert new type(this)
+    bytes = obj.deserialize(yes, data, offset + 1)
+    obj.emit 'postNetCreate'
+    obj.emit 'postInitialize'
+    bytes + 1
+
+  # Update the given object, as received from the network.
+  netUpdate: (obj, data, offset) ->
+    bytes = obj.deserialize(no, data, offset)
+    obj.emit 'postNetUpdate'
+    obj.emit 'postChanged'
+    bytes
+
+  # Destroy the given object, as received from the network.
+  netDestroy: (data, offset) ->
+    [[obj_idx], bytes] = unpack('H', data, offset)
+    obj = @objects[obj_idx]
+    obj.emit 'preNetDestroy'
+    obj.emit 'preRemove'
+    @remove obj
+    bytes
+
+  # Process a network tick, ie. update-message. This simply calls `netUpdate` for all objects.
+  netTick: (data, offset) ->
+    bytes = 0
+    for obj in @objects
+      bytes += @netUpdate obj, data, offset + bytes
+    bytes
+
+  #### Helpers
+
+  # These are methods that allow low-level manipulation of the object list, while keeping it
+  # properly sorted, and keeping object indices up-to-date. Unless you're doing something special,
+  # you will want to use `spawn` and `destroy` instead instead.
+
+  insert: (obj) ->
+    obj.idx = @objects.length
+    @objects.push obj
+    obj
+
+  remove: (obj) ->
+    @objects.splice(obj.idx, 1)
+    for i in [obj.idx...@objects.length]
+      @objects[i].idx = i
+    obj
 
   # These functions build the generators used in the `serialization` callback of objects. They
   # wrap `struct.packer` and `struct.unpacker` with the function signature that we want, and also
@@ -128,15 +141,14 @@ class Simulation
   # A helper method which returns all simulated map objects.
   getAllMapObjects: -> @map.pills.concat @map.bases
 
-  # The special spawning logic for map objects. This happens way early in the game, and because
-  # there's very little, and especially no clients yet, we can drop some of `spawn`'s logic.
-  # Otherwise, the only difference is the extra `postMapObjectInitialize` callback.
+  # The special spawning logic for MapObjects. These are created when the map is loaded, which is
+  # before the Simulation is created. We simulate `spawn` here for these objects. `postCreate`
+  # receives the back-reference to this Simulation.
   spawnMapObjects: ->
     for obj in @getAllMapObjects()
-      obj.idx = @objects.length
-      @objects.push obj
-      obj.postMapObjectInitialize?(this)
-      obj.postInitialize?()
+      @insert obj
+      obj.emit 'postCreate', this
+      obj.emit 'postInitialize'
     return
 
   # Resolve pillbox and base owner indices to the actual tanks. This method is only really useful

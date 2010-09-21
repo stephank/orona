@@ -3,26 +3,32 @@
 WorldObject = require '../world_object'
 
 
-class SimBase
+class SimBase extends WorldObject
   charId: 'b'
 
-  # Save our attributes when constructed on the authority, and override the cell's type.
+  # This is a MapObject; it is constructed differently on the authority.
   constructor: (map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
-    map.cellAtTile(@x, @y).setType '=', no, -1
+    if arguments.length == 1
+      super
+    else
+      super(null)
 
-  # Still on the authority, receive our simulation reference.
-  postMapObjectInitialize: (@sim) ->
+      # Override the cell's type.
+      map.cellAtTile(@x, @y).setType '=', no, -1
 
-  # After initialization on client and server set-up the cell reference.
-  postInitialize: ->
-    @cell = @sim.map.cellAtTile(@x, @y)
-    @cell.base = this
+    # The Simulation is passed to us by `spawnMapObjects`.
+    @on 'postCreate', (@sim) =>
 
-  # Keep our non-synchronized attributes up-to-date on the client.
-  postNetUpdate: ->
-    @owner_idx = if @owner then @owner.tank_idx else 255
-    # FIXME: retile when owner changes.
-    @cell.retile()
+    # After initialization on client and server set-up the cell reference.
+    @on 'postInitialize', =>
+      @cell = @sim.map.cellAtTile(@x, @y)
+      @cell.base = this
+
+    # Keep our non-synchronized attributes up-to-date on the client.
+    @on 'postNetUpdate', =>
+      @owner_idx = if @owner then @owner.tank_idx else 255
+      # FIXME: retile when owner changes.
+      @cell.retile()
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
@@ -38,7 +44,7 @@ class SimBase
   takeShellHit: (shell) ->
     # FIXME: do something to armour and shells
 
-WorldObject.register SimBase
+SimBase.register()
 
 
 #### Exports

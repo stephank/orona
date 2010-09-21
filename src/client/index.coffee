@@ -12,8 +12,7 @@ Simulation       = require '../simulation'
 WorldObject      = require '../world_object'
 net              = require '../net'
 {SimMap}         = require '../sim_map'
-{buildUnpacker,
- unpack}         = require '../struct'
+{unpack}         = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 ClientContext    = require './net'
 Loader           = require './loader'
@@ -211,15 +210,10 @@ class NetworkGame extends BaseGame
         bytes
 
       when net.CREATE_MESSAGE
-        type = WorldObject.getType data[offset]
-        bytes = @sim.netSpawn type, data, offset + 1
-        bytes + 1
+        @sim.netSpawn data, offset
 
       when net.DESTROY_MESSAGE
-        [[obj_idx], bytes] = unpack('H', data, offset)
-        obj = @sim.objects[obj_idx]
-        @sim.netDestroy obj
-        bytes
+        @sim.netDestroy data, offset
 
       when net.MAPCHANGE_MESSAGE
         [[x, y, code, life, mine], bytes] = unpack('BBBBf', data, offset)
@@ -230,12 +224,7 @@ class NetworkGame extends BaseGame
         bytes
 
       when net.UPDATE_MESSAGE
-        unpacker = buildUnpacker(data, offset)
-        deserializer = @sim.buildDeserializer(unpacker)
-        for obj in @sim.objects
-          obj.serialization?(no, deserializer)
-          obj.postNetUpdate?()
-        unpacker.finish()
+        @sim.netTick data, offset
 
       else
         # FIXME: Do something better than this when console is not available.

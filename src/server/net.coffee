@@ -3,9 +3,8 @@
 # the attribute updates.
 
 
-net           = require '../net'
-{buildPacker,
- pack}        = require '../struct'
+net    = require '../net'
+{pack} = require '../struct'
 
 
 class ServerContext
@@ -20,11 +19,8 @@ class ServerContext
 
   # Record the creation.
   created: (obj) ->
-    packer = buildPacker()
-    packer 'B', net.CREATE_MESSAGE
-    packer 'B', obj.charCodeId
-    obj.serialization?(yes, @sim.buildSerializer(packer))
-    @changes = @changes.concat packer.finish()
+    msg = pack('BB', net.CREATE_MESSAGE, obj.charCodeId).concat(obj.serialize(yes))
+    @changes = @changes.concat msg
 
   # Record the destruction.
   destroyed: (obj) ->
@@ -39,11 +35,10 @@ class ServerContext
   # This method is specific to the server. It serializes all objects and concatenates the
   # updates into one large data block to be sent to the clients.
   dump: ->
-    packer = buildPacker()
-    packer 'B', net.UPDATE_MESSAGE
-    serializer = @sim.buildSerializer(packer)
-    obj.serialization?(no, serializer) for obj in @sim.objects
-    packer.finish()
+    data = pack('B', net.UPDATE_MESSAGE)
+    for obj in @sim.objects
+      data = data.concat obj.serialize(no)
+    data
 
 
 #### Exports

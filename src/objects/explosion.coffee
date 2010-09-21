@@ -5,15 +5,17 @@
 WorldObject    = require '../world_object'
 
 
-class Explosion
+class Explosion extends WorldObject
   charId: 'E'
   styled: false
 
-  constructor: (@sim, @x, @y) ->
-    @lifespan = 23
+  constructor: ->
+    super
+
+    @on 'postCreate', (@x, @y) =>
+      @lifespan = 23
 
   serialization: (isCreate, p) ->
-    # These are only set once.
     if isCreate
       @x = p('H', @x)
       @y = p('H', @y)
@@ -35,7 +37,7 @@ class Explosion
       when 1 then [18, 4]
       else [19, 4]
 
-WorldObject.register Explosion
+Explosion.register()
 
 
 #### Exports
