@@ -6,7 +6,7 @@
 class ClientContext
   constructor: (@sim) ->
     @transientMapCells = {}
-    @transientDestructions = []
+    @transientChanges = []
 
   # The client context is no simulation authority.
   authority: no
@@ -21,23 +21,19 @@ class ClientContext
   activated: ->
     return unless @authoritative
 
-    # Find the first object that is marked transient.
-    for obj, i in @sim.objects
-      break if obj._net_transient
-    # We can assume all objects after this are transient as well.
-    @sim.objects.splice i, @sim.objects.length - i
-
-    # Now, restore locally changed map cells.
+    # Restore locally changed map cells.
     for idx, cell of @transientMapCells
       cell.setType cell._net_oldType, cell._net_hadMine
       cell.life = cell._net_oldLife
     @transientMapCells = {}
 
-    # And revive destroyed objects in reverse order.
-    return unless @transientDestructions.length > 0
-    for obj in @transientDestructions
-      @sim.objects.splice obj.idx, 0, obj
-    @transientDestructions = []
+    # Undo transient changes reverse order.
+    return unless @transientChanges.length > 0
+    for [type, idx, obj] in @transientChanges
+      switch type
+        when 'C' then @sim.objects.splice idx, 1
+        when 'D' then @sim.objects.splice idx, 0, obj
+    @transientChanges = []
 
     # At this point, we need to reset all indices.
     for obj, i in @sim.objects
@@ -45,9 +41,18 @@ class ClientContext
 
     return
 
-  # Mark the object as transient if needed, so we can delete it on the next server update.
+  # Keep track of object creations and destructions that we did locally. We remember these
+  # operations in order, so that we me undo them once we start processing updates from the
+  # server / authority.
+
   created: (obj) ->
-    obj._net_transient = not @authoritative
+    unless @authoritative
+      @transientChanges.unshift ['C', obj.idx, obj]
+
+  destroyed: (obj) ->
+    unless @authoritative
+      @transientChanges.unshift ['D', obj.idx, obj]
+    return
 
   # Keep track of map changes that we made locally. We only remember the last state of a cell
   # that the server told us about, so we can restore it to that state before processing
@@ -58,14 +63,6 @@ class ClientContext
       cell._net_hadMine = hadMine
       cell._net_oldLife = oldLife
       @transientMapCells[cell.idx] = cell
-    return
-
-  # We need to keep track of objects that are deleted locally, but managed by the server.
-  # So if this is not a server update, and not a locally created object either, add it to a list
-  # of things to restore later on.
-  destroyed: (obj) ->
-    unless @authoritative or obj._net_transient
-      @transientDestructions.unshift obj
     return
 
 

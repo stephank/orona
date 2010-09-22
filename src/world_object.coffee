@@ -17,6 +17,11 @@ class WorldObject extends EventEmitter
   # having to require the module, but is also used as the network identifier.
   charId: null
 
+  # A arbitrary value that is used to sort the objects in the Simulation object list. Purpose of
+  # this is to have some control over the order in which objects are updated. Objects are sorted
+  # in descending order of priority, so high priority objects get updated before others.
+  updatePriority: 0
+
   # Whether objects of this class are drawn using the regular 'base' tilemap, or the styled
   # tilemap. May also be `null`, in which case the object is not drawn at all.
   styled: null

@@ -92,8 +92,11 @@ class Simulation
   # you will want to use `spawn` and `destroy` instead instead.
 
   insert: (obj) ->
-    obj.idx = @objects.length
-    @objects.push obj
+    for other, i in @objects
+      break if obj.updatePriority > other.updatePriority
+    @objects.splice(i, 0, obj)
+    for i in [i...@objects.length]
+      @objects[i].idx = i
     obj
 
   remove: (obj) ->

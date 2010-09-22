@@ -20,6 +20,7 @@ class Destructable
 
 class Shell extends WorldObject
   charId: 'S'
+  updatePriority: 20
   styled: false
 
   constructor: ->
