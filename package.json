@@ -18,13 +18,9 @@
     "node": ">=0.2.0"
   },
   "dependencies": {
-    "coffee-script": ">=0.9.4",
     "connect": ">=0.2.4"
   },
 
-  "scripts": {
-    "preinstall": "cake build"
-  },
   "main": "./lib/simulation",
   "modules": {
     "map": "./lib/map",
