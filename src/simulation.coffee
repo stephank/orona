@@ -152,12 +152,13 @@ class Simulation
   getAllMapObjects: -> @map.pills.concat @map.bases
 
   # The special spawning logic for MapObjects. These are created when the map is loaded, which is
-  # before the Simulation is created. We simulate `spawn` here for these objects. `postCreate`
+  # before the Simulation is created. We simulate `spawn` here for these objects. `simCreate`
   # receives the back-reference to this Simulation.
   spawnMapObjects: ->
     for obj in @getAllMapObjects()
       @insert obj
       obj.emit 'simCreate', this
+      obj.emit 'authCreate'
       obj.emit 'create'
     return
 
