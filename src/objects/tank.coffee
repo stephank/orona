@@ -20,21 +20,21 @@ class Tank extends WorldObject
   constructor: ->
     super
 
-    @on 'postCreate', =>
+    @on 'simCreate', =>
       # FIXME: Proper way to select teams.
       @team = @sim.tanks.length % 2
       # Initialize.
       @reset()
 
     # Keep the player list updated.
-    @on 'postInitialize', =>
+    @on 'authCreate', =>
       @updateCell()
       @sim.addTank(this)
-    @on 'preRemove', =>
+    @on 'authDestroy', =>
       @sim.removeTank(this)
 
     # Track position updates.
-    @on 'postNetUpdate', =>
+    @on 'netUpdate', =>
       @updateCell()
 
   # Helper, called in several places that change tank position.

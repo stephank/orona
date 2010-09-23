@@ -25,22 +25,26 @@ class Simulation
   # Spawn an object, as the authority or simulated. The `type` parameter is a class that will be
   # instantiated. The remaining arguments are passed to the `postCreate` event handlers.
   spawn: (type, args...) ->
-    obj = @insert new type(this)
-    obj.emit 'postCreate', args...
-    obj.emit 'postInitialize'
+    obj = new type(this)
+    obj.emit 'simCreate', args...
+    obj.emit 'authCreate' if net.isAuthority()
+    obj.emit 'create'
+    @insert obj
     net.created obj
     obj
 
   # Update the given object, as the authority or simulated.
   update: (obj) ->
     obj.update()
-    obj.emit 'postUpdate'
-    obj.emit 'postChanged'
+    obj.emit 'simUpdate'
+    obj.emit 'authUpdate' if net.isAuthority()
+    obj.emit 'update'
 
   # Destroy the given object, as the authority or simulated.
   destroy: (obj) ->
-    obj.emit 'preDestroy'
-    obj.emit 'preRemove'
+    obj.emit 'simDestroy'
+    obj.emit 'authDestroy' if net.isAuthority()
+    obj.emit 'destroy'
     @remove obj
     net.destroyed obj
     obj
@@ -58,23 +62,26 @@ class Simulation
     type = WorldObject.getType data[offset]
     obj = @insert new type(this)
     bytes = obj.deserialize(yes, data, offset + 1)
-    obj.emit 'postNetCreate'
-    obj.emit 'postInitialize'
+    obj.emit 'netCreate'
+    obj.emit 'authCreate'
+    obj.emit 'create'
     bytes + 1
 
   # Update the given object, as received from the network.
   netUpdate: (obj, data, offset) ->
     bytes = obj.deserialize(no, data, offset)
-    obj.emit 'postNetUpdate'
-    obj.emit 'postChanged'
+    obj.emit 'netUpdate'
+    obj.emit 'authUpdate'
+    obj.emit 'update'
     bytes
 
   # Destroy the given object, as received from the network.
   netDestroy: (data, offset) ->
     [[obj_idx], bytes] = unpack('H', data, offset)
     obj = @objects[obj_idx]
-    obj.emit 'preNetDestroy'
-    obj.emit 'preRemove'
+    obj.emit 'netDestroy'
+    obj.emit 'authDestroy'
+    obj.emit 'destroy'
     @remove obj
     bytes
 
@@ -150,8 +157,8 @@ class Simulation
   spawnMapObjects: ->
     for obj in @getAllMapObjects()
       @insert obj
-      obj.emit 'postCreate', this
-      obj.emit 'postInitialize'
+      obj.emit 'simCreate', this
+      obj.emit 'create'
     return
 
   # Resolve pillbox and base owner indices to the actual tanks. This method is only really useful

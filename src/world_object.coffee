@@ -26,18 +26,18 @@ class WorldObject extends EventEmitter
   # tilemap. May also be `null`, in which case the object is not drawn at all.
   styled: null
 
-  # These are properties containing the world coordinates of this object. These are actually
-  # defined in the constructor. The value `null` for either means that the object is not physical
-  # or 'not in the world' at this moment (ie. dead tanks).
+  # These are properties containing the world coordinates of this object. The value `null` for
+  # either means that the object is not physical or 'not in the world' at this moment
+  # (ie. dead tanks).
   x: null
   y: null
 
   # Instantiating a WorldObject is done using `sim.spawn MyObject, params...`. This wraps the call
   # to the actual constructor, and the simulation can thus keep track of the object.
   #
-  # Any `spawn` parameters are passed to the `postCreate` event. Subclasses of WorldObject normally
-  # don't implement any logic in the constructor, directly call `super`, and only install event
-  # handlers.
+  # Any `spawn` parameters are passed to the `postSimCreate` event. Subclasses of WorldObject
+  # normally don't implement any logic in the constructor, directly call `super`, and only install
+  # event handlers.
   constructor: (@sim) ->
 
   # This method is called to dump the object's state in an array of bytes. The default
@@ -80,21 +80,33 @@ class WorldObject extends EventEmitter
 
   #### Events
 
-  # The following events are emitted on an object:
+  # The following three kinds of events are defined: after creation, after an update, and before
+  # destruction. Each of these events may happen in four different situations. The list of
+  # available events thus looks as follows (in the order emitted):
   #
-  # * `postCreate`: Called after the object is created, as the authority or simulated.
-  # * `postUpdate`: Called after the update is processed, as the authority or simulated.
-  # * `preDestroy`: Called before the object is destroyed, as the authority or simulated.
-  # * `postNetCreate`: Called after the object is created, as received from the network.
-  # * `postNetUpdate`: Called after the update is processed, as received from the network.
-  # * `preNetDestroy`: Called before the object is destroyed, as received from the network.
-  # * `postInitialize`: Always called after the object is created.
-  # * `postChanged`: Always called after the update is processed.
-  # * `preRemove`: Always called before the object is destroyed.
-  #
-  # You'll notice there's three key events: after creation, after an update, and before
-  # destruction. They are fired in three situations: simulated, through networking, or always.
-  # The 'always' kind of event is always fired after the others.
+  # * The following are called as part of the simulation. They can happen both on the server and
+  #   the client, considering they both run a simulation. These are the only kind that run inside
+  #   the simulation. If you want to create or destroy other objects in response to events, you
+  #   need to use these.
+  #    * `simCreate`: Called after the object is created. Additional parameters to `spawn` will
+  #      be passed on to handlers of this event.
+  #    * `simUpdate`: Called after the update is processed.
+  #    * `simDestroy`: Called before the object is destroyed.
+  # * The following are called when network updates arrive. You'd use these, for example, to update
+  #   attributes that are cache and depend on synchronized properties.
+  #    * `netCreate`: Called after the object is created.
+  #    * `netUpdate`: Called after the update is processed.
+  #    * `netDestroy`: Called before the object is destroyed.
+  # * The following are called when an authoritive change is made. The authority is either the
+  #   server in a networked game, or just the local game. You can be sure that the change reported
+  #   is definitive. It's a good place to clean up any event handlers on referenced objects.
+  #    * `authCreate`: Called after the object is created.
+  #    * `authUpdate`: Called after the update is processed.
+  #    * `authDestroy`: Called before the object is destroyed.
+  # * The following are called in any situation.
+  #    * `create`: Called after the object is created.
+  #    * `update`: Called after the update is processed.
+  #    * `destroy`: Called before the object is destroyed.
 
   #### Static methods
 

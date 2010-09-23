@@ -17,15 +17,15 @@ class SimBase extends WorldObject
       map.cellAtTile(@x, @y).setType '=', no, -1
 
     # The Simulation is passed to us by `spawnMapObjects`.
-    @on 'postCreate', (@sim) =>
+    @on 'simCreate', (@sim) =>
 
     # After initialization on client and server set-up the cell reference.
-    @on 'postInitialize', =>
+    @on 'create', =>
       @cell = @sim.map.cellAtTile(@x, @y)
       @cell.base = this
 
     # Keep our non-synchronized attributes up-to-date on the client.
-    @on 'postNetUpdate', =>
+    @on 'netUpdate', =>
       @owner_idx = if @owner then @owner.tank_idx else 255
       # FIXME: retile when owner changes.
       @cell.retile()

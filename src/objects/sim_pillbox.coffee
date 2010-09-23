@@ -15,14 +15,14 @@ class SimPillbox extends WorldObject
       super(null)
 
     # The Simulation is passed to us by `spawnMapObjects`.
-    @on 'postCreate', (@sim) =>
+    @on 'simCreate', (@sim) =>
 
     # After initialization on client and server set-up the cell reference.
-    @on 'postInitialize', =>
+    @on 'create', =>
       @updateCell()
 
     # Keep our non-synchronized attributes up-to-date on the client.
-    @on 'postNetUpdate', =>
+    @on 'netUpdate', =>
       @updateCell()
       # FIXME: retile when owner changes.
       @owner_idx = if @owner then @owner.tank_idx else 255
