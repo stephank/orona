@@ -2,9 +2,10 @@
 
 
 {round, cos,
- sin, PI}    = Math
-WorldObject  = require '../world_object'
-Explosion    = require './explosion'
+ sin, PI}         = Math
+{TILE_SIZE_WORLD} = require '../constants'
+WorldObject       = require '../world_object'
+Explosion         = require './explosion'
 
 
 class Fireball extends WorldObject
@@ -34,7 +35,12 @@ class Fireball extends WorldObject
       return if @wreck()
       @move()
     if @lifespan == 0
-      # FIXME: Create the actual explosion, play sound.
+      cell = @sim.map.cellAtWorld(@x, @y)
+      x = cell.x * TILE_SIZE_WORLD; y = cell.y * TILE_SIZE_WORLD
+      # FIXME: Large explosion, if @largeExplosion.
+      # FIXME: Play sound.
+      @sim.spawn Explosion, x, y
+      cell.setType '%' unless cell.isType ' ', '^'
       @sim.destroy(this)
 
   wreck: ->
