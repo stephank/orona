@@ -52,9 +52,18 @@ class Fireball extends WorldObject
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
-    # FIXME: check for collision.
-    @x += round(cos(@radians) * 48)
-    @y += round(sin(@radians) * 48)
+    newx = @x + (dx = round(cos(@radians) * 48))
+    newy = @y + (dy = round(sin(@radians) * 48))
+
+    unless dx == 0
+      ahead = if dx > 0 then newx + 24 else newx - 24
+      ahead = @sim.map.cellAtWorld(ahead, newy)
+      @x = newx unless ahead.isObstacle()
+
+    unless dy == 0
+      ahead = if dy > 0 then newy + 24 else newy - 24
+      ahead = @sim.map.cellAtWorld(newx, ahead)
+      @y = newy unless ahead.isObstacle()
 
 Fireball.register()
 

@@ -44,6 +44,8 @@ class SimMapCell extends Map::CellClass
     super
     @life = 0
 
+  isObstacle: -> @pill?.armour > 0 or @type.tankSpeed == 0
+
   getTankSpeed: (tank) ->
     # Check for a pillbox.
     return 0 if @pill?.armour > 0
