@@ -31,7 +31,7 @@ class Fireball extends WorldObject
 
   update: ->
     if @lifespan-- % 2 == 0
-      @wreck()
+      return if @wreck()
       @move()
     if @lifespan == 0
       # FIXME: Create the actual explosion, play sound.
@@ -39,7 +39,16 @@ class Fireball extends WorldObject
 
   wreck: ->
     @sim.spawn Explosion, @x, @y
-    # FIXME: destroy terrain, etc.
+    cell = @sim.map.cellAtWorld(@x, @y)
+    # FIXME: Play sound for each of these.
+    if cell.isType '^'
+      @sim.destroy(this)
+      return true
+    else if cell.isType 'b'
+      cell.setType ' '
+    else if cell.isType '#'
+      cell.setType '.'
+    false
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
