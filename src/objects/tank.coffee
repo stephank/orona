@@ -48,9 +48,11 @@ class Tank extends WorldObject
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
 
-    @speed        = 0.00
-    @accelerating = no
-    @braking      = no
+    @speed          = 0.00
+    @slideTicks     = 0
+    @slideDirection = 0
+    @accelerating   = no
+    @braking        = no
 
     @turningClockwise        = no
     @turningCounterClockwise = no
@@ -83,6 +85,8 @@ class Tank extends WorldObject
     @direction = p('B', @direction)
     # Uses 0.25 increments, so we can pack this as a byte.
     @speed = p('B', @speed * 4) / 4
+    @slideTicks = p('B', @slideTicks)
+    @slideDirection = p('B', @slideDirection)
     # FIXME: should simply be a signed byte.
     @turnSpeedup = p('B', @turnSpeedup + 50) - 50
     @shells = p('B', @shells)
@@ -100,7 +104,9 @@ class Tank extends WorldObject
 
 
   # Get the 1/16th direction step.
+  # FIXME: Should move our angle-related calculations to a separate module or so.
   getDirection16th: -> round((@direction - 1) / 16) % 16
+  getSlideDirection16th: -> round((@slideDirection - 1) / 16) % 16
 
   # Get the tilemap index to draw. This is the index in styled.png.
   getTile: ->
@@ -111,8 +117,19 @@ class Tank extends WorldObject
   # Tell whether the other tank is an ally.
   isAlly: (other) -> other == this or (@team != 255 and other.team == @team)
 
+  # We've taken a hit. Check if we were killed, otherwise slide and possibly kill our boat.
   takeShellHit: (shell) ->
-    # FIXME
+    @armour -= 5
+    if @armour < 0
+      # FIXME: Create a fireball.
+      return @kill()
+
+    @slideTicks = 8
+    @slideDirection = shell.direction
+
+    if @onBoat
+      @onBoat = no
+      @speed = 0
 
 
   #### Simulation update
@@ -123,7 +140,7 @@ class Tank extends WorldObject
     @turn()
     @accelerate()
     @fixPosition()
-    @move() if @speed > 0
+    @move()
     # FIXME: check for mine impact
     # FIXME: Reveal hidden mines nearby
 
@@ -213,10 +230,18 @@ class Tank extends WorldObject
       if dy < 0 then @y++ else @y--
 
   move: ->
-    # FIXME: UGLY, and probably incorrect too.
-    rad = (256 - @getDirection16th() * 16) * 2 * PI / 256
-    newx = @x + (dx = round(cos(rad) * ceil(@speed)))
-    newy = @y + (dy = round(sin(rad) * ceil(@speed)))
+    dx = dy = 0
+    # FIXME: Our angle unit should match more closely that of JavaScript.
+    if @speed > 0
+      rad = (256 - @getDirection16th() * 16) * 2 * PI / 256
+      dx += round(cos(rad) * ceil(@speed))
+      dy += round(sin(rad) * ceil(@speed))
+    if @slideTicks > 0
+      rad = (256 - @getSlideDirection16th() * 16) * 2 * PI / 256
+      dx += round(cos(rad) * 16)
+      dy += round(sin(rad) * 16)
+      @slideTicks--
+    newx = @x + dx; newy = @y + dy
 
     slowDown = yes
 
