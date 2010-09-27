@@ -11,6 +11,7 @@ require './objects/sim_base'
 require './objects/tank'
 require './objects/explosion'
 require './objects/shell'
+require './objects/fireball'
 
 
 class Simulation

@@ -9,6 +9,7 @@ WorldObject             = require '../world_object'
 net                     = require '../net'
 Explosion               = require './explosion'
 Shell                   = require './shell'
+Fireball                = require './fireball'
 
 
 class Tank extends WorldObject
@@ -121,7 +122,8 @@ class Tank extends WorldObject
   takeShellHit: (shell) ->
     @armour -= 5
     if @armour < 0
-      # FIXME: Create a fireball.
+      largeExplosion = @shell + @mines > 20
+      @sim.spawn Fireball, @x, @y, shell.direction, largeExplosion
       return @kill()
 
     @slideTicks = 8
