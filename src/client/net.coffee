@@ -31,8 +31,12 @@ class ClientContext
     return unless @transientChanges.length > 0
     for [type, idx, obj] in @transientChanges
       switch type
-        when 'C' then @sim.objects.splice idx, 1
-        when 'D' then @sim.objects.splice idx, 0, obj
+        when 'C'
+          obj.emit 'netTransientPurge'
+          @sim.objects.splice idx, 1
+        when 'D'
+          @sim.objects.splice idx, 0, obj
+          obj.emit 'netTransientRestore'
     @transientChanges = []
 
     # At this point, we need to reset all indices.

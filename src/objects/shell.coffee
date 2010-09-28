@@ -39,7 +39,8 @@ class Shell extends WorldObject
       @move()
       # When our owner goes away, we go away.
       @owner.on 'simDestroy', ownerWatcher = => @sim.destroy this
-      @on 'authDestroy', => @owner.removeListener 'simDestroy', ownerWatcher
+      @on 'authDestroy',       => @owner.removeListener 'simDestroy', ownerWatcher
+      @on 'netTransientPurge', => @owner.removeListener 'simDestroy', ownerWatcher
 
     # Track position updates.
     @on 'netUpdate', (changes) =>

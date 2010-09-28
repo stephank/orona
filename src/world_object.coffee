@@ -115,6 +115,12 @@ class WorldObject extends EventEmitter
   #    * `create`: Called after the object is created.
   #    * `update`: Called after the update is processed.
   #    * `destroy`: Called before the object is destroyed.
+  #
+  # Finally, there are also these two special events, only ever emitted on the client:
+  # * `netTransientRestore`: A transient object that was destroyed by the client simulation has
+  #   just been restored.
+  # * `netTransientPurge`: A transient object that was created by the client simulation is about
+  #   to be purged.
 
   #### Static methods
 
