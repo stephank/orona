@@ -62,7 +62,7 @@ class Simulation
   netSpawn: (data, offset) ->
     type = WorldObject.getType data[offset]
     obj = @insert new type(this)
-    bytes = obj.deserialize(yes, data, offset + 1)
+    [bytes, changes] = obj.deserialize(yes, data, offset + 1)
     obj.emit 'netCreate'
     obj.emit 'authCreate'
     obj.emit 'create'
@@ -70,8 +70,8 @@ class Simulation
 
   # Update the given object, as received from the network.
   netUpdate: (obj, data, offset) ->
-    bytes = obj.deserialize(no, data, offset)
-    obj.emit 'netUpdate'
+    [bytes, changes] = obj.deserialize(no, data, offset)
+    obj.emit 'netUpdate', changes
     obj.emit 'authUpdate'
     obj.emit 'update'
     bytes
@@ -129,15 +129,19 @@ class Simulation
       return
 
   buildDeserializer: (object, unpacker) ->
-    (specifier, attribute, options) =>
+    gen = (specifier, attribute, options) =>
       options ||= {}
       value = switch specifier
         when 'O' then @objects[unpacker('H')]
         when 'T' then @tanks[unpacker('B')]
         else          unpacker(specifier)
       value = options.rx(value) if options.rx?
-      object[attribute] = value
+      unless object[attribute] == value
+        gen.changes[attribute] = object[attribute]
+        object[attribute] = value
       return
+    gen.changes = {}
+    gen
 
   #### Player management
 

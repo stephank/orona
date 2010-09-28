@@ -35,12 +35,19 @@ class Tank extends WorldObject
       @sim.removeTank(this)
 
     # Track position updates.
-    @on 'netUpdate', =>
-      @updateCell()
+    @on 'netUpdate', (changes) =>
+      if changes.hasOwnProperty('fireball')
+        @fireball?.on 'authDestroy', => @fireball = null
+      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+        @updateCell()
 
   # Helper, called in several places that change tank position.
   updateCell: ->
-    @cell = @sim.map.cellAtWorld @x, @y
+    @cell =
+      if @x? and @y?
+        @sim.map.cellAtWorld @x, @y
+      else
+        null
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->

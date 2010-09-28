@@ -22,20 +22,24 @@ class SimPillbox extends WorldObject
       @updateCell()
 
     # Keep our non-synchronized attributes up-to-date on the client.
-    @on 'netUpdate', =>
-      @updateCell()
-      # FIXME: retile when owner changes.
-      @owner_idx = if @owner then @owner.tank_idx else 255
+    @on 'netUpdate', (changes) =>
+      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+        @updateCell()
+      if changes.hasOwnProperty('owner')
+        @owner_idx = if @owner then @owner.tank_idx else 255
+        @cell?.retile()
 
   # Helper that updates the cell reference, and ensures a back-reference as well.
   updateCell: ->
-    newCell = @sim.map.cellAtTile(@x, @y)
-    return if @cell == newCell
-
-    delete @cell.pill if @cell
-    @cell = newCell
-    @cell.pill = this
-    @cell.retile()
+    if @cell
+      delete @cell.pill
+      @cell.retile()
+    if @x? and @y?
+      @cell = @sim.map.cellAtTile(@x, @y)
+      @cell.pill = this
+      @cell.retile()
+    else
+      @cell = null
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->

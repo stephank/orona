@@ -55,7 +55,7 @@ class WorldObject extends EventEmitter
     unpacker = buildUnpacker(data, offset)
     deserializer = @sim.buildDeserializer(this, unpacker)
     @serialization(isCreate, deserializer)
-    unpacker.finish()
+    [unpacker.finish(), deserializer.changes]
 
   #### Abstract methods
 

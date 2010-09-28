@@ -25,10 +25,10 @@ class SimBase extends WorldObject
       @cell.base = this
 
     # Keep our non-synchronized attributes up-to-date on the client.
-    @on 'netUpdate', =>
-      @owner_idx = if @owner then @owner.tank_idx else 255
-      # FIXME: retile when owner changes.
-      @cell.retile()
+    @on 'netUpdate', (changes) =>
+      if changes.hasOwnProperty('owner')
+        @owner_idx = if @owner then @owner.tank_idx else 255
+        @cell.retile()
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
