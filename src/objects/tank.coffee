@@ -78,8 +78,11 @@ class Tank extends WorldObject
 
     # Are we dead?
     if @armour == 255
+      @fireball = p('O', @fireball)
       @x = @y = null
       return
+    else
+      @fireball = null
 
     @x = p('H', @x)
     @y = p('H', @y)
@@ -123,7 +126,8 @@ class Tank extends WorldObject
     @armour -= 5
     if @armour < 0
       largeExplosion = @shell + @mines > 20
-      @sim.spawn Fireball, @x, @y, shell.direction, largeExplosion
+      @fireball = @sim.spawn Fireball, @x, @y, shell.direction, largeExplosion
+      @fireball.on 'authDestroy', => @fireball = null
       return @kill()
 
     @slideTicks = 8
