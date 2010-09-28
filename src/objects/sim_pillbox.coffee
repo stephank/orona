@@ -55,6 +55,10 @@ class SimPillbox extends WorldObject
     @cell.retile()
     # FIXME: do something with speed
 
+  takeExplosionHit: ->
+    @armour = max(0, @armour - 5)
+    @cell.retile()
+
 SimPillbox.register()
 
 

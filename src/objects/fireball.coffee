@@ -35,12 +35,7 @@ class Fireball extends WorldObject
       return if @wreck()
       @move()
     if @lifespan == 0
-      cell = @sim.map.cellAtWorld(@x, @y)
-      x = cell.x * TILE_SIZE_WORLD; y = cell.y * TILE_SIZE_WORLD
-      # FIXME: Large explosion, if @largeExplosion.
-      # FIXME: Play sound.
-      @sim.spawn Explosion, x, y
-      cell.setType '%' unless cell.isType ' ', '^'
+      @explode()
       @sim.destroy(this)
 
   wreck: ->
@@ -57,9 +52,14 @@ class Fireball extends WorldObject
     false
 
   move: ->
-    @radians ||= (256 - @direction) * 2 * PI / 256
-    newx = @x + (dx = round(cos(@radians) * 48))
-    newy = @y + (dy = round(sin(@radians) * 48))
+    unless @dx?
+      radians = (256 - @direction) * 2 * PI / 256
+      @dx = round(cos(radians) * 48)
+      @dy = round(sin(radians) * 48)
+
+    {dx, dy} = this
+    newx = @x + dx
+    newy = @y + dy
 
     unless dx == 0
       ahead = if dx > 0 then newx + 24 else newx - 24
@@ -70,6 +70,23 @@ class Fireball extends WorldObject
       ahead = if dy > 0 then newy + 24 else newy - 24
       ahead = @sim.map.cellAtWorld(newx, ahead)
       @y = newy unless ahead.isObstacle()
+
+  explode: ->
+    cell = @sim.map.cellAtWorld(@x, @y)
+
+    if @largeExplosion
+      dx = if @dx > 0 then 1 else -1
+      dy = if @dy > 0 then 1 else -1
+      for c in [cell.neigh(dx, 0), cell.neigh(0, dy), cell.neigh(dx, dy)]
+        [x, y] = c.getWorldCoordinates()
+        @sim.spawn Explosion, x, y
+        c.takeExplosionHit()
+
+    # FIXME: Play sound.
+
+    [x, y] = cell.getWorldCoordinates()
+    @sim.spawn Explosion, x, y
+    cell.takeExplosionHit()
 
 Fireball.register()
 

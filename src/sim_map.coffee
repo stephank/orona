@@ -80,6 +80,9 @@ class SimMapCell extends Map::CellClass
     # Take the land speed.
     @type.manSpeed
 
+  getPixelCoordinates: -> [(@x + 0.5) * TILE_SIZE_PIXELS, (@y + 0.5) * TILE_SIZE_PIXELS]
+  getWorldCoordinates: -> [(@x + 0.5) * TILE_SIZE_WORLD,  (@y + 0.5) * TILE_SIZE_WORLD ]
+
   setType: (newType, mine, retileRadius) ->
     [oldType, hadMine, oldLife] = [@type, @mine, @life]
     super
@@ -120,6 +123,14 @@ class SimMapCell extends Map::CellClass
         when 'b' then ' '
       @setType nextType
     sfx
+
+  takeExplosionHit: ->
+    if @pill?
+      @pill.takeExplosionHit()
+    else if @isType 'b'
+      @setType ' '
+    else unless @isType ' ', '^', 'b'
+      @setType '%'
 
 
 #### Map objects
