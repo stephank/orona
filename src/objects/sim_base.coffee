@@ -33,13 +33,13 @@ class SimBase extends WorldObject
   # The state information to synchronize.
   serialization: (isCreate, p) ->
     if isCreate
-      @x = p('B', @x)
-      @y = p('B', @y)
+      p 'B', 'x'
+      p 'B', 'y'
 
-    @owner = p('T', @owner)
-    @armour = p('B', @armour)
-    @shells = p('B', @shells)
-    @mines = p('B', @mines)
+    p 'T', 'owner'
+    p 'B', 'armour'
+    p 'B', 'shells'
+    p 'B', 'mines'
 
   takeShellHit: (shell) ->
     # FIXME: do something to armour and shells

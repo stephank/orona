@@ -17,10 +17,10 @@ class Explosion extends WorldObject
 
   serialization: (isCreate, p) ->
     if isCreate
-      @x = p('H', @x)
-      @y = p('H', @y)
+      p 'H', 'x'
+      p 'H', 'y'
 
-    @lifespan = p('B', @lifespan)
+    p 'B', 'lifespan'
 
   update: ->
     if @lifespan-- == 0

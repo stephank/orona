@@ -39,12 +39,12 @@ class SimPillbox extends WorldObject
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
-    @x = p('B', @x)
-    @y = p('B', @y)
+    p 'B', 'x'
+    p 'B', 'y'
 
-    @owner = p('T', @owner)
-    @armour = p('B', @armour)
-    @speed = p('B', @speed)
+    p 'T', 'owner'
+    p 'B', 'armour'
+    p 'B', 'speed'
 
   update: ->
     return if @armour == 0

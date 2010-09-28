@@ -20,12 +20,12 @@ class Fireball extends WorldObject
 
   serialization: (isCreate, p) ->
     if isCreate
-      @direction = p('B', @direction)
-      @largeExplosion = p('f', @largeExplosion)
+      p 'B', 'direction'
+      p 'f', 'largeExplosion'
 
-    @x = p('H', @x)
-    @y = p('H', @y)
-    @lifespan = p('B', @lifespan)
+    p 'H', 'x'
+    p 'H', 'y'
+    p 'B', 'lifespan'
 
   # Get the 1/16th direction step.
   getDirection16th: -> round((@direction - 1) / 16) % 16

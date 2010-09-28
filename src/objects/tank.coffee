@@ -72,39 +72,43 @@ class Tank extends WorldObject
 
   serialization: (isCreate, p) ->
     # Team is only set once.
-    @team = p('B', @team) if isCreate
+    p 'B', 'team' if isCreate
 
-    @armour = p('B', @armour)
+    p 'B', 'armour'
 
     # Are we dead?
     if @armour == 255
-      @fireball = p('O', @fireball)
+      p 'O', 'fireball'
       @x = @y = null
       return
     else
       @fireball = null
 
-    @x = p('H', @x)
-    @y = p('H', @y)
-    @direction = p('B', @direction)
+    p 'H', 'x'
+    p 'H', 'y'
+    p 'B', 'direction'
     # Uses 0.25 increments, so we can pack this as a byte.
-    @speed = p('B', @speed * 4) / 4
-    @slideTicks = p('B', @slideTicks)
-    @slideDirection = p('B', @slideDirection)
+    p 'B', 'speed',
+      tx: (v) -> v * 4
+      rx: (v) -> v / 4
+    p 'B', 'slideTicks'
+    p 'B', 'slideDirection'
     # FIXME: should simply be a signed byte.
-    @turnSpeedup = p('B', @turnSpeedup + 50) - 50
-    @shells = p('B', @shells)
-    @mines = p('B', @mines)
-    @trees = p('B', @trees)
-    @reload = p('B', @reload)
+    p 'B', 'turnSpeedup',
+      tx: (v) -> v + 50
+      rx: (v) -> v - 50
+    p 'B', 'shells'
+    p 'B', 'mines'
+    p 'B', 'trees'
+    p 'B', 'reload'
 
     # Group bit fields.
-    @accelerating = p('f', @accelerating)
-    @braking = p('f', @braking)
-    @turningClockwise = p('f', @turningClockwise)
-    @turningCounterClockwise = p('f', @turningCounterClockwise)
-    @shooting = p('f', @shooting)
-    @onBoat = p('f', @onBoat)
+    p 'f', 'accelerating'
+    p 'f', 'braking'
+    p 'f', 'turningClockwise'
+    p 'f', 'turningCounterClockwise'
+    p 'f', 'shooting'
+    p 'f', 'onBoat'
 
 
   # Get the 1/16th direction step.

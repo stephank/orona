@@ -117,20 +117,27 @@ class Simulation
   # wrap `struct.packer` and `struct.unpacker` with the function signature that we want, and also
   # add the necessary support to process the object reference format specifiers `O` and `T`.
 
-  buildSerializer: (packer) ->
-    (specifier, value) ->
+  buildSerializer: (object, packer) ->
+    (specifier, attribute, options) ->
+      options ||= {}
+      value = object[attribute]
+      value = options.tx(value) if options.tx?
       switch specifier
         when 'O' then packer('H', if value then value.idx else 65535)
         when 'T' then packer('B', if value then value.tank_idx else 255)
         else          packer(specifier, value)
-      value
+      return
 
-  buildDeserializer: (unpacker) ->
-    (specifier, value) =>
-      switch specifier
+  buildDeserializer: (object, unpacker) ->
+    (specifier, attribute, options) =>
+      options ||= {}
+      value = switch specifier
         when 'O' then @objects[unpacker('H')]
         when 'T' then @tanks[unpacker('B')]
         else          unpacker(specifier)
+      value = options.rx(value) if options.rx?
+      object[attribute] = value
+      return
 
   #### Player management
 

@@ -45,7 +45,7 @@ class WorldObject extends EventEmitter
   # you want to override instead.
   serialize: (isCreate) ->
     packer = buildPacker()
-    serializer = @sim.buildSerializer(packer)
+    serializer = @sim.buildSerializer(this, packer)
     @serialization(isCreate, serializer)
     packer.finish()
 
@@ -53,7 +53,7 @@ class WorldObject extends EventEmitter
   # array of bytes. Again, you probably want to override `serialization` instead.
   deserialize: (isCreate, data, offset) ->
     unpacker = buildUnpacker(data, offset)
-    deserializer = @sim.buildDeserializer(unpacker)
+    deserializer = @sim.buildDeserializer(this, unpacker)
     @serialization(isCreate, deserializer)
     unpacker.finish()
 
@@ -61,13 +61,21 @@ class WorldObject extends EventEmitter
 
   # This method is called to serialize and deserialize an object's state. The parameter `p`
   # is a function which should be repeatedly called for each property of the object. It takes as
-  # its first parameter a format specifier for `struct`, and as it's second parameter the current
-  # value of the property. A special format specifier `O` may be used to (de-)serialize a reference
-  # to another WorldObject, and `T` may be used for a reference to a Tank.
+  # its first parameter a format specifier for `struct`, and as its second parameter an attribute
+  # name.
   #
-  # If the function is called to serialize, then parameters are collected to form a packet, and
-  # the return value is the same as the `value` parameter verbatim. If the function is called to
-  # deserialize, then the value parameter is ignored, and the return value is the received value.
+  # A special format specifier `O` may be used to (de-)serialize a reference to another
+  # WorldObject, and `T` may be used for a reference to a Tank.
+  #
+  # There are also two options, `tx` and `rx`, that can be specified when calling `p`. Each of
+  # these is a function that transforms the attribute value before sending and receiving
+  # respectively.
+  #
+  # The `isCreate` parameter is true if called in response to a create message. This can be used to
+  # synchronize parameters that are only ever set once at construction.
+  #
+  # If the function is called to serialize, then attributes are collected to form a packet.
+  # If the function is called to deserialize, then attributes are filled with new values.
   serialization: (isCreate, p) ->
 
   # Called on every tick, either on the authority (local game or server)
