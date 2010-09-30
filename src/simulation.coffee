@@ -168,8 +168,9 @@ class Simulation
   # receives the back-reference to this Simulation.
   spawnMapObjects: ->
     for obj in @getAllMapObjects()
+      obj.sim = this
       @insert obj
-      obj.emit 'simCreate', this
+      obj.emit 'simCreate'
       obj.emit 'authCreate'
       obj.emit 'create'
     return

@@ -14,9 +14,6 @@ class SimPillbox extends WorldObject
     else
       super(null)
 
-    # The Simulation is passed to us by `spawnMapObjects`.
-    @on 'simCreate', (@sim) =>
-
     # After initialization on client and server set-up the cell reference.
     @on 'create', =>
       @updateCell()

@@ -16,9 +16,6 @@ class SimBase extends WorldObject
       # Override the cell's type.
       map.cellAtTile(@x, @y).setType '=', no, -1
 
-    # The Simulation is passed to us by `spawnMapObjects`.
-    @on 'simCreate', (@sim) =>
-
     # After initialization on client and server set-up the cell reference.
     @on 'create', =>
       @cell = @sim.map.cellAtTile(@x, @y)

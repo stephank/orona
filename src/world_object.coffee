@@ -13,6 +13,9 @@ types = {}
 # This base class mostly concerns itself with network synchronisation, while defining an interface
 # for tick updates and graphics.
 class WorldObject extends EventEmitter
+  # The back-reference to the Simulation.
+  sim: null
+
   # This is a single character identifier for this class. It's handy for type checks without
   # having to require the module, but is also used as the network identifier.
   charId: null
