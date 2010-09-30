@@ -25,6 +25,10 @@ class WorldObject extends EventEmitter
   # in descending order of priority, so high priority objects get updated before others.
   updatePriority: 0
 
+  # Boolean whether this object is transient or not. Transient means spawned by the client in a
+  # networked game; the object does not exist on the authoritative (server) simulation.
+  transient: no
+
   # Whether objects of this class are drawn using the regular 'base' tilemap, or the styled
   # tilemap. May also be `null`, in which case the object is not drawn at all.
   styled: null

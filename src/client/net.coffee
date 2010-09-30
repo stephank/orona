@@ -52,6 +52,7 @@ class ClientContext
   created: (obj) ->
     unless @authoritative
       @transientChanges.unshift ['C', obj.idx, obj]
+      obj.transient = yes
 
   destroyed: (obj) ->
     unless @authoritative
