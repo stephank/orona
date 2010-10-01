@@ -37,7 +37,7 @@ class Tank extends WorldObject
     # Track position updates.
     @on 'netUpdate', (changes) =>
       if changes.hasOwnProperty('fireball')
-        @fireball?.on 'authDestroy', => @fireball = null
+        @fireball?.on 'finalize', => @fireball = null
       if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
 

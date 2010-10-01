@@ -42,7 +42,7 @@ class Shell extends WorldObject
       @on 'finalize', => @owner.removeListener 'destroy', ownerWatcher
 
     # Track position updates.
-    @on 'netUpdate', (changes) =>
+    @on 'netSync', =>
       @updateCell()
 
   serialization: (isCreate, p) ->
