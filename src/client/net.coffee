@@ -32,11 +32,13 @@ class ClientContext
     for [type, idx, obj] in @transientChanges
       switch type
         when 'C'
-          obj.emit 'netTransientPurge'
+          if obj.transient and not obj._net_revived
+            obj.emit 'finalize'
+            obj.removeAllSimulationListeners()
           @sim.objects.splice idx, 1
         when 'D'
+          obj._net_revived = yes
           @sim.objects.splice idx, 0, obj
-          obj.emit 'netTransientRestore'
     @transientChanges = []
 
     # At this point, we need to reset all indices.

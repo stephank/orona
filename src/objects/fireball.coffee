@@ -15,7 +15,7 @@ class Fireball extends WorldObject
   constructor: ->
     super
 
-    @on 'simCreate', (@x, @y, @direction, @largeExplosion) =>
+    @on 'spawn', (@x, @y, @direction, @largeExplosion) =>
       @lifespan = 80
 
   serialization: (isCreate, p) ->

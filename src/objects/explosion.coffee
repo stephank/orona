@@ -12,7 +12,7 @@ class Explosion extends WorldObject
   constructor: ->
     super
 
-    @on 'simCreate', (@x, @y) =>
+    @on 'spawn', (@x, @y) =>
       @lifespan = 23
 
   serialization: (isCreate, p) ->

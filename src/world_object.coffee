@@ -95,39 +95,66 @@ class WorldObject extends EventEmitter
 
   #### Events
 
-  # The following three kinds of events are defined: after creation, after an update, and before
-  # destruction. Each of these events may happen in four different situations. The list of
-  # available events thus looks as follows (in the order emitted):
-  #
-  # * The following are called as part of the simulation. They can happen both on the server and
-  #   the client, considering they both run a simulation. These are the only kind that run inside
-  #   the simulation. If you want to create or destroy other objects in response to events, you
-  #   need to use these.
-  #    * `simCreate`: Called after the object is created. Additional parameters to `spawn` will
-  #      be passed on to handlers of this event.
-  #    * `simUpdate`: Called after the update is processed.
-  #    * `simDestroy`: Called before the object is destroyed.
-  # * The following are called when network updates arrive. You'd use these, for example, to update
-  #   attributes that are cache and depend on synchronized properties.
-  #    * `netCreate`: Called after the object is created.
-  #    * `netUpdate`: Called after the update is processed.
-  #    * `netDestroy`: Called before the object is destroyed.
-  # * The following are called when an authoritive change is made. The authority is either the
-  #   server in a networked game, or just the local game. You can be sure that the change reported
-  #   is definitive. It's a good place to clean up any event handlers on referenced objects.
-  #    * `authCreate`: Called after the object is created.
-  #    * `authUpdate`: Called after the update is processed.
-  #    * `authDestroy`: Called before the object is destroyed.
-  # * The following are called in any situation.
-  #    * `create`: Called after the object is created.
-  #    * `update`: Called after the update is processed.
-  #    * `destroy`: Called before the object is destroyed.
-  #
-  # Finally, there are also these two special events, only ever emitted on the client:
-  # * `netTransientRestore`: A transient object that was destroyed by the client simulation has
-  #   just been restored.
-  # * `netTransientPurge`: A transient object that was created by the client simulation is about
-  #   to be purged.
+  # The list of events emitted by the simulation follows. You can install handlers for these from
+  # within the constructor.
+
+  @events: [
+
+    ##### Simulation events
+
+    # These basic events happen as part of the simulation. The `create` event is basically the
+    # constructor replacement. You may use these events to implement behavior in response to an
+    # event, such as perhaps creating or destroying other objects.
+
+    # Called after an object is created. Additional parameters to `spawn` will be passed on to
+    # handlers of this event.
+    'spawn'
+
+    # Called after an update is processed.
+    'update'
+
+    # Called before the object is destroyed.
+    'destroy'
+
+    ##### Network events
+
+    # The following are called when network updates arrive. You'd use these, for example, to update
+    # attributes that are cache or depend on synchronized properties.
+
+    # Called after the object is created and attributes are synchronized.
+    'netSpawn'
+
+    # Called after attributes are synchronized in response to an update on an existing object.
+    # The handler receives a hash-like object containing properties that have changed.
+    'netUpdate'
+
+    ##### Aggregate events
+
+    # The following are convenient combinations of the above events.
+
+    # Called after both `spawn` and `netSpawn`.
+    'anySpawn'
+
+    # Called after both `update` and `netUpdate`.
+    'anyUpdate'
+
+    # Called after both a `netSpawn` and `netUpdate`.
+    'netSync'
+
+    ##### Finalize
+
+    # The finalize event is called when you can be completely sure the object is gone. This is more
+    # definitive than `destroy` for example, because networking may still revive an object after
+    # such an event.
+    'finalize'
+
+  ]
+
+  # This helper method removes all listeners for the above events.
+  removeAllSimulationListeners: ->
+    for ev in WorldObject.events
+      @removeAllListeners ev
+    return
 
   #### Static methods
 

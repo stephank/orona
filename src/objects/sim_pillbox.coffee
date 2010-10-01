@@ -15,7 +15,7 @@ class SimPillbox extends WorldObject
       super(null)
 
     # After initialization on client and server set-up the cell reference.
-    @on 'create', =>
+    @on 'anySpawn', =>
       @updateCell()
 
     # Keep our non-synchronized attributes up-to-date on the client.

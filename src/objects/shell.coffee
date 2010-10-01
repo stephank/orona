@@ -26,7 +26,7 @@ class Shell extends WorldObject
   constructor: ->
     super
 
-    @on 'simCreate', (@owner, options) =>
+    @on 'spawn', (@owner, options) =>
       options ||= {}
       # Default direction is the owner's.
       @direction = options.direction || @owner.direction
@@ -38,9 +38,8 @@ class Shell extends WorldObject
       @x = @owner.x; @y = @owner.y
       @move()
       # When our owner goes away, we go away.
-      @owner.on 'simDestroy', ownerWatcher = => @sim.destroy this
-      @on 'authDestroy',       => @owner.removeListener 'simDestroy', ownerWatcher
-      @on 'netTransientPurge', => @owner.removeListener 'simDestroy', ownerWatcher
+      @owner.on 'destroy', ownerWatcher = => @sim.destroy this
+      @on 'finalize', => @owner.removeListener 'destroy', ownerWatcher
 
     # Track position updates.
     @on 'netUpdate', (changes) =>

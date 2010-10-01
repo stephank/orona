@@ -17,7 +17,7 @@ class SimBase extends WorldObject
       map.cellAtTile(@x, @y).setType '=', no, -1
 
     # After initialization on client and server set-up the cell reference.
-    @on 'create', =>
+    @on 'anySpawn', =>
       @cell = @sim.map.cellAtTile(@x, @y)
       @cell.base = this
 
