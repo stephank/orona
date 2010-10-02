@@ -185,7 +185,7 @@ class Simulation
   resolveMapObjectOwners: ->
     return unless net.isAuthority()
     for obj in @getAllMapObjects()
-      obj.owner = @tanks[obj.owner_idx]
+      obj.ref 'owner', @tanks[obj.owner_idx]
       obj.cell.retile()
     return
 

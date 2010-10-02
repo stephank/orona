@@ -74,6 +74,7 @@ class WorldObject extends EventEmitter
   # simply by doing: `@other.$.something`. However, to add an event listener on the other object
   # you don't dereference, but instead do: `@other.on 'someEvent', someHandler`.
   ref: (attribute, other) ->
+    return this[attribute] if this[attribute]?.$ == other
     this[attribute]?.clear()
     return unless other
     this[attribute] = r = { $: other, owner: this, attribute }
