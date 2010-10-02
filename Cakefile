@@ -125,12 +125,18 @@ task 'build:client', 'Compile the Bolo client-side module bundle', ->
   output = fs.createWriteStream 'public/bolo-bundle.js'
 
   realOutput = output
-  if closure = process.env.CLOSURE
-    closure = spawn 'java', ['-jar', closure]
-    output = closure.stdin
-    closure.stdout.on 'data', (buffer) -> realOutput.write buffer
-    closure.stderr.on 'data', (buffer) -> process.stdout.write buffer
-    closure.on 'exit', -> realOutput.end()
+  compressor =
+    if closure = process.env.CLOSURE
+      spawn 'java', ['-jar', closure]
+    else if uglifyjs = process.env.UGLIFYJS
+      spawn 'node', [uglifyjs]
+    else
+      null
+  if compressor
+    output = compressor.stdin
+    compressor.stdout.on 'data', (buffer) -> realOutput.write buffer
+    compressor.stderr.on 'data', (buffer) -> process.stdout.write buffer
+    compressor.on 'exit', -> realOutput.end()
 
   brequireFile = 'src/client/util/brequire.coffee'
   brequireCode = fs.readFileSync brequireFile, 'utf-8'
@@ -151,7 +157,7 @@ task 'build:client', 'Compile the Bolo client-side module bundle', ->
     puts "Compiled '#{module.file}'."
 
   output.end()
-  puts "Waiting for Closure to finish..." if closure
+  puts "Waiting for compressor to finish..." if compressor
   realOutput.on 'close', ->
     puts "Done."
     puts ""
