@@ -295,9 +295,6 @@ class Tank extends WorldObject
       return @sink() if @cell.isType('^')
       return @enterBoat() if @cell.isType('b')
 
-    # Check if we're moving on a base.
-    @cell.base?.enter(this)
-
   leaveBoat: (oldcell) ->
     # Check if we're running over another boat; destroy it if so.
     if @cell.isType('b')
