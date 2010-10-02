@@ -52,6 +52,12 @@ class Common2dRenderer extends BaseRenderer
       height: window.innerHeight + 'px'
     )
 
+    # Adjust the body as well, to prevent accidental scrolling on some browsers.
+    $('body').css(
+      width:  window.innerWidth + 'px'
+      height: window.innerHeight + 'px'
+    )
+
   # We use an extra parameter `ctx` here, so that the offscreen renderer can
   # use the context specific to segments.
   drawTile: (tx, ty, dx, dy, ctx) ->

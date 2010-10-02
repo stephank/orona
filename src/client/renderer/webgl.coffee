@@ -191,8 +191,14 @@ class WebglRenderer extends BaseRenderer
       width:  window.innerWidth + 'px'
       height: window.innerHeight + 'px'
     )
-    @ctx.viewport(0, 0, window.innerWidth, window.innerHeight)
 
+    # Adjust the body as well, to prevent accidental scrolling on some browsers.
+    $('body').css(
+      width:  window.innerWidth + 'px'
+      height: window.innerHeight + 'px'
+    )
+
+    @ctx.viewport(0, 0, window.innerWidth, window.innerHeight)
     @setTranslation(0, 0)
 
     @checkError()
