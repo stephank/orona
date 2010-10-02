@@ -40,12 +40,12 @@ class SimBase extends WorldObject
   takeShellHit: (shell) ->
     # FIXME: do something to armour and shells
 
-  # Called by a tank as it treads over the base.
+  # Called by a tank as it treads over the base, and tries to claim it. Careful here not to cause
+  # rapid reclaiming when two tanks are on the same cell.
   enter: (tank) ->
-    # FIXME: start refueling.
-
-    # Claim the base for ourselves.
     return if @owner and @owner.$.isAlly(tank)
+    for other in @sim.tanks when other != tank and other.armour != 255
+      return if other.cell == @cell and not tank.isAlly(other)
     @ref('owner', tank); @updateOwner()
     @owner.on 'destroy', => @ref('owner', null); @updateOwner()
 
