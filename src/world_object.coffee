@@ -89,8 +89,10 @@ class WorldObject extends EventEmitter
       for event, listeners of r.events
         for listener in listeners
           other.removeListener event, listener
+      r.owner.removeListener 'finalize', r.clear
       r.owner[r.attribute] = null
     r.on 'finalize', r.clear
+    r.owner.on 'finalize', r.clear
 
     r
 
