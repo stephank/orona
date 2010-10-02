@@ -102,7 +102,7 @@ class Shell extends WorldObject
       return ['cell', pill] if pill.armour > 0
 
     # Check for collision with tanks.
-    for tank in @sim.tanks when tank != @owner.$
+    for tank in @sim.tanks when tank != @owner.$ and tank.armour != 255
       dx = tank.x - @x; dy = tank.y - @y
       distance = sqrt(dx*dx + dy*dy)
       return ['tank', tank] if distance <= 127
