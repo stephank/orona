@@ -64,6 +64,35 @@ class WorldObject extends EventEmitter
     @serialization(isCreate, deserializer)
     [unpacker.finish(), deserializer.changes]
 
+  # This helper is used to track references to other objects. The idea is to keep track of events
+  # installed on the other object, which directly or indirectly (through a closure) hold a
+  # back-reference. If we go away, or the reference is cleared, these listeners will be cleaned
+  # up as well.
+  #
+  # We can't really create proxies in JavaScript (yet), so this tries to make things as painless
+  # as possible. The `attribute` of this object is set to a thin wrapper. You may dereference
+  # simply by doing: `@other.$.something`. However, to add an event listener on the other object
+  # you don't dereference, but instead do: `@other.on 'someEvent', someHandler`.
+  ref: (attribute, other) ->
+    this[attribute]?.clear()
+    return unless other
+    this[attribute] = r = { $: other, owner: this, attribute }
+
+    r.events = {}
+    r.on = (event, listener) ->
+      other.on event, listener
+      (r.events[event] ||= []).push listener
+      r
+
+    r.clear = ->
+      for event, listeners of r.events
+        for listener in listeners
+          other.removeListener event, listener
+      r.owner[r.attribute] = null
+    r.on 'finalize', r.clear
+
+    r
+
   #### Abstract methods
 
   # This method is called to serialize and deserialize an object's state. The parameter `p`

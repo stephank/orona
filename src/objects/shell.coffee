@@ -26,20 +26,22 @@ class Shell extends WorldObject
   constructor: ->
     super
 
-    @on 'spawn', (@owner, options) =>
+    @on 'spawn', (owner, options) =>
       options ||= {}
+
+      @ref 'owner', owner
+      # When our owner goes away, we go away.
+      @owner.on 'destroy', => @sim.destroy this
+
       # Default direction is the owner's.
-      @direction = options.direction || @owner.direction
+      @direction = options.direction || @owner.$.direction
       # Default lifespan (fired by pillboxes) is 7 tiles.
       @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
       # Default for onWater (fired by pillboxes) is no.
       @onWater = options.onWater || no
       # Start the owner's location, and move one step away.
-      @x = @owner.x; @y = @owner.y
+      @x = @owner.$.x; @y = @owner.$.y
       @move()
-      # When our owner goes away, we go away.
-      @owner.on 'destroy', ownerWatcher = => @sim.destroy this
-      @on 'finalize', => @owner.removeListener 'destroy', ownerWatcher
 
     # Track position updates.
     @on 'netSync', =>
@@ -100,14 +102,14 @@ class Shell extends WorldObject
       return ['cell', pill] if pill.armour > 0
 
     # Check for collision with tanks.
-    for tank in @sim.tanks when tank != @owner
+    for tank in @sim.tanks when tank != @owner.$
       dx = tank.x - @x; dy = tank.y - @y
       distance = sqrt(dx*dx + dy*dy)
       return ['tank', tank] if distance <= 127
 
     # Check for collision with enemy base.
     if base = @cell.base
-      if @onWater or (base.armour > 4 and base?.owner? and not base.owner.isAlly(@owner))
+      if @onWater or (base.armour > 4 and base?.owner? and not base.owner.$.isAlly(@owner.$))
         return ['cell', base]
 
     # Check for terrain collision

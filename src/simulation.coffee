@@ -118,22 +118,31 @@ class Simulation
       value = object[attribute]
       value = options.tx(value) if options.tx?
       switch specifier
-        when 'O' then packer('H', if value then value.idx else 65535)
-        when 'T' then packer('B', if value then value.tank_idx else 255)
+        when 'O' then packer('H', if value then value.$.idx else 65535)
+        when 'T' then packer('B', if value then value.$.tank_idx else 255)
         else          packer(specifier, value)
       return
 
   buildDeserializer: (object, unpacker) ->
     gen = (specifier, attribute, options) =>
       options ||= {}
-      value = switch specifier
-        when 'O' then @objects[unpacker('H')]
-        when 'T' then @tanks[unpacker('B')]
-        else          unpacker(specifier)
-      value = options.rx(value) if options.rx?
-      unless object[attribute] == value
-        gen.changes[attribute] = object[attribute]
-        object[attribute] = value
+      switch specifier
+        when 'O'
+          other = @objects[unpacker('H')]
+          if (oldValue = object[attribute]?.$) != other
+            gen.changes[attribute] = oldValue
+            object.ref attribute, other
+        when 'T'
+          other = @tanks[unpacker('B')]
+          if (oldValue = object[attribute]?.$) != other
+            gen.changes[attribute] = oldValue
+            object.ref attribute, other
+        else
+          value = unpacker(specifier)
+          value = options.rx(value) if options.rx?
+          if (oldValue = object[attribute]) != value
+            gen.changes[attribute] = oldValue
+            object[attribute] = value
       return
     gen.changes = {}
     gen

@@ -23,7 +23,7 @@ class SimPillbox extends WorldObject
       if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
       if changes.hasOwnProperty('owner')
-        @owner_idx = if @owner then @owner.tank_idx else 255
+        @owner_idx = if @owner then @owner.$.tank_idx else 255
         @cell?.retile()
 
   # Helper that updates the cell reference, and ensures a back-reference as well.

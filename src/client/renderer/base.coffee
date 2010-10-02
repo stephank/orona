@@ -44,7 +44,7 @@ class BaseRenderer
   # Draw a single frame.
   draw: ->
     {x, y} = @sim.player
-    {x, y} = @sim.player.fireball if @sim.player.fireball?
+    {x, y} = @sim.player.fireball.$ if @sim.player.fireball?
 
     # Remember or restore the last center position. We use this after tank
     # death, so as to keep drawing something useful while we fade.

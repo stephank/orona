@@ -36,8 +36,6 @@ class Tank extends WorldObject
 
     # Track position updates.
     @on 'netUpdate', (changes) =>
-      if changes.hasOwnProperty('fireball')
-        @fireball?.on 'finalize', => @fireball = null
       if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
 
@@ -89,7 +87,7 @@ class Tank extends WorldObject
       @x = @y = null
       return
     else
-      @fireball = null
+      @fireball?.clear()
 
     p 'H', 'x'
     p 'H', 'y'
@@ -137,8 +135,7 @@ class Tank extends WorldObject
     @armour -= 5
     if @armour < 0
       largeExplosion = @shell + @mines > 20
-      @fireball = @sim.spawn Fireball, @x, @y, shell.direction, largeExplosion
-      @fireball.on 'finalize', => @fireball = null
+      @ref 'fireball', @sim.spawn(Fireball, @x, @y, shell.direction, largeExplosion)
       return @kill()
 
     @slideTicks = 8
