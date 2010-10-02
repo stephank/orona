@@ -9,7 +9,7 @@
 # FIXME: Better error handling all around.
 
 Simulation       = require '../simulation'
-WorldObject      = require '../world_object'
+Tank             = require '../objects/tank'
 net              = require '../net'
 {SimMap}         = require '../sim_map'
 {unpack}         = require '../struct'
@@ -97,7 +97,7 @@ class LocalGame extends BaseGame
   startup: ->
     map = SimMap.load decodeBase64(EverardIsland)
     @commonInitialization(map)
-    @sim.player = @sim.addTank()
+    @sim.player = @sim.spawn Tank
     @renderer.initHud()
     @start()
 
