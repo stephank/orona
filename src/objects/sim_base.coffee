@@ -1,6 +1,6 @@
 # The pillbox is a map object, and thus a slightly special case of world object.
 
-{min}       = Math
+{min, max}  = Math
 WorldObject = require '../world_object'
 
 
@@ -42,7 +42,7 @@ class SimBase extends WorldObject
     p 'B', 'mines'
 
   takeShellHit: (shell) ->
-    # FIXME: do something to armour and shells
+    @armour = max(0, @armour - 5)
 
   update: ->
     if @refueling and (@refueling.$.cell != @cell or @refueling.$.armour == 255)
