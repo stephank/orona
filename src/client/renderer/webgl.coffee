@@ -326,7 +326,7 @@ class WebglRenderer extends BaseRenderer
     gl.uniform1i(@uUseStyled, 0)
     @sim.map.each (cell) =>
       if obj = cell.pill || cell.base
-        style = obj.owner?.team
+        style = obj.owner?.$.team
         style = 255 unless TEAM_COLORS[style]
         (styledCells[style] ||= []).push(cell)
       else

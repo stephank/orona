@@ -155,8 +155,6 @@ class Tank extends WorldObject
     @accelerate()
     @fixPosition()
     @move()
-    # FIXME: check for mine impact
-    # FIXME: Reveal hidden mines nearby
 
   death: ->
     return no unless @armour == 255
@@ -274,20 +272,31 @@ class Tank extends WorldObject
         slowDown = no
         @y = newy unless @onBoat and !ahead.isType(' ', '^') and @speed < 16
 
-    # If we're completely obstructed, reduce our speed.
-    if slowDown
-      @speed = max(0.00, @speed - 1)
+    unless dx == 0 and dy == 0
+      # If we're completely obstructed, reduce our speed.
+      if slowDown
+        @speed = max(0.00, @speed - 1)
 
-    # Update the cell reference.
-    oldcell = @cell
-    @updateCell()
+      # Update the cell reference.
+      oldcell = @cell
+      @updateCell()
+
+      # Check our new terrain if we changed cells.
+      @checkNewCell(oldcell) if oldcell != @cell
+
+  checkNewCell: (oldcell) ->
+    # FIXME: check for mine impact
+    # FIXME: Reveal hidden mines nearby
 
     # Check if we just entered or left the water.
     if @onBoat
       @leaveBoat(oldcell) unless @cell.isType(' ', '^')
     else
-      @sink() if @cell.isType('^')
-      @enterBoat() if @cell.isType('b')
+      return @sink() if @cell.isType('^')
+      return @enterBoat() if @cell.isType('b')
+
+    # Check if we're moving on a base.
+    @cell.base?.enter(this)
 
   leaveBoat: (oldcell) ->
     # Check if we're running over another boat; destroy it if so.

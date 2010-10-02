@@ -66,7 +66,7 @@ class CachedSegment
   onRetile: (cell, tx, ty) ->
     return unless @canvas
     if obj = cell.pill || cell.base
-      @renderer.drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.team,
+      @renderer.drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.$.team,
           cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS, @ctx
     else
       @renderer.drawTile       cell.tile[0], cell.tile[1],

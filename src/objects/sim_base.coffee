@@ -24,8 +24,7 @@ class SimBase extends WorldObject
     # Keep our non-synchronized attributes up-to-date on the client.
     @on 'netUpdate', (changes) =>
       if changes.hasOwnProperty('owner')
-        @owner_idx = if @owner then @owner.$.tank_idx else 255
-        @cell.retile()
+        @updateOwner()
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
@@ -40,6 +39,20 @@ class SimBase extends WorldObject
 
   takeShellHit: (shell) ->
     # FIXME: do something to armour and shells
+
+  # Called by a tank as it treads over the base.
+  enter: (tank) ->
+    # FIXME: start refueling.
+
+    # Claim the base for ourselves.
+    return if @owner and @owner.$.isAlly(tank)
+    @ref('owner', tank); @updateOwner()
+    @owner.on 'destroy', => @ref('owner', null); @updateOwner()
+
+  # Helper for common stuff to do when the owner changes.
+  updateOwner: ->
+    @owner_idx = if @owner then @owner.$.tank_idx else 255
+    @cell.retile()
 
 SimBase.register()
 

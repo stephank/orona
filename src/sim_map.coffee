@@ -50,8 +50,8 @@ class SimMapCell extends Map::CellClass
     # Check for a pillbox.
     return 0 if @pill?.armour > 0
     # Check for an enemy base.
-    if @base?.owner?
-      return 0 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
+    if @base?.owner
+      return 0 unless @base.owner.$.isAlly(tank) or @base.armour <= 9
     # Check if we're on a boat.
     return 16 if tank.onBoat and @isType('^', ' ')
     # Take the land speed.
@@ -61,8 +61,8 @@ class SimMapCell extends Map::CellClass
     # Check for a pillbox.
     return 0.00 if @pill?.armour > 0
     # Check for an enemy base.
-    if @base?.owner?
-      return 0.00 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
+    if @base?.owner
+      return 0.00 unless @base.owner.$.isAlly(tank) or @base.armour <= 9
     # Check if we're on a boat.
     return 1.00 if tank.onBoat and @isType('^', ' ')
     # Take the land turn speed.
