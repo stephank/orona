@@ -138,8 +138,7 @@ class Tank extends WorldObject
     if @armour < 0
       largeExplosion = @shell + @mines > 20
       @fireball = @sim.spawn Fireball, @x, @y, shell.direction, largeExplosion
-      @fireball.on 'authDestroy',       => @fireball = null
-      @fireball.on 'netTransientPurge', => @fireball = null
+      @fireball.on 'finalize', => @fireball = null
       return @kill()
 
     @slideTicks = 8
