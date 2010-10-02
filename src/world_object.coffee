@@ -150,12 +150,6 @@ class WorldObject extends EventEmitter
 
   ]
 
-  # This helper method removes all listeners for the above events.
-  removeAllSimulationListeners: ->
-    for ev in WorldObject.events
-      @removeAllListeners ev
-    return
-
   #### Static methods
 
   # Find a type by character or character code.

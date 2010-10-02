@@ -42,9 +42,7 @@ class Simulation
   # Destroy the given object, as the authority or simulated.
   destroy: (obj) ->
     obj.emit 'destroy'
-    if net.isAuthority() or obj.transient
-      obj.emit 'finalize'
-      obj.removeAllSimulationListeners()
+    obj.emit 'finalize' if net.isAuthority() or obj.transient
     @remove obj
     net.destroyed obj
     obj
@@ -80,7 +78,6 @@ class Simulation
     [[obj_idx], bytes] = unpack('H', data, offset)
     obj = @objects[obj_idx]
     obj.emit 'finalize'
-    obj.removeAllSimulationListeners()
     @remove obj
     bytes
 

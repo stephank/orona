@@ -32,9 +32,7 @@ class ClientContext
     for [type, idx, obj] in @transientChanges
       switch type
         when 'C'
-          if obj.transient and not obj._net_revived
-            obj.emit 'finalize'
-            obj.removeAllSimulationListeners()
+          obj.emit 'finalize' if obj.transient and not obj._net_revived
           @sim.objects.splice idx, 1
         when 'D'
           obj._net_revived = yes
