@@ -131,7 +131,7 @@ class Tank extends WorldObject
   takeShellHit: (shell) ->
     @armour -= 5
     if @armour < 0
-      largeExplosion = @shell + @mines > 20
+      largeExplosion = @shells + @mines > 20
       @ref 'fireball', @sim.spawn(Fireball, @x, @y, shell.direction, largeExplosion)
       return @kill()
 
