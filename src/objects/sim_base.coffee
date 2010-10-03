@@ -8,14 +8,12 @@ class SimBase extends WorldObject
   charId: 'b'
 
   # This is a MapObject; it is constructed differently on the authority.
-  constructor: (map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
+  constructor: (sim_or_map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
     if arguments.length == 1
-      super
+      @sim = sim_or_map
     else
-      super(null)
-
       # Override the cell's type.
-      map.cellAtTile(@x, @y).setType '=', no, -1
+      sim_or_map.cellAtTile(@x, @y).setType '=', no, -1
 
     # After initialization on client and server set-up the cell reference.
     @on 'anySpawn', =>

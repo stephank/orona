@@ -12,9 +12,7 @@ class Fireball extends WorldObject
   charId: 'F'
   styled: null
 
-  constructor: ->
-    super
-
+  constructor: (@sim) ->
     @on 'spawn', (@x, @y, @direction, @largeExplosion) =>
       @lifespan = 80
 

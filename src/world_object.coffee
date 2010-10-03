@@ -42,9 +42,8 @@ class WorldObject extends EventEmitter
   # Instantiating a WorldObject is done using `sim.spawn MyObject, params...`. This wraps the call
   # to the actual constructor, and the simulation can thus keep track of the object.
   #
-  # Any `spawn` parameters are passed to the `postSimCreate` event. Subclasses of WorldObject
-  # normally don't implement any logic in the constructor, directly call `super`, and only install
-  # event handlers.
+  # Any `spawn` parameters are passed to the `spawn` event. The constructor itself is usually
+  # bare-bones, only receiving and setting the `sim` attribute, and installing listeners.
   constructor: (@sim) ->
 
   # This method is called to dump the object's state in an array of bytes. The default

@@ -23,9 +23,7 @@ class Shell extends WorldObject
   updatePriority: 20
   styled: false
 
-  constructor: ->
-    super
-
+  constructor: (@sim) ->
     @on 'spawn', (owner, options) =>
       options ||= {}
 

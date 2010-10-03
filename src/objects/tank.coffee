@@ -16,11 +16,8 @@ class Tank extends WorldObject
   charId: 'T'
   styled: true
 
-  # The Tank constructor and destructor are never simulated.
-  # They are only ever called on the server.
-  constructor: ->
-    super
-
+  # Tanks are only ever spawned and destroyed on the server.
+  constructor: (@sim) ->
     @on 'spawn', =>
       # FIXME: Proper way to select teams.
       @team = @sim.tanks.length % 2

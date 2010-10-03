@@ -7,12 +7,10 @@ WorldObject = require '../world_object'
 class SimPillbox extends WorldObject
   charId: 'p'
 
-  # This is a MapObject; it is constructed differently.
-  constructor: (map, @x, @y, @owner_idx, @armour, @speed) ->
+  # This is a MapObject; it is constructed differently on the authority.
+  constructor: (sim_or_map, @x, @y, @owner_idx, @armour, @speed) ->
     if arguments.length == 1
-      super
-    else
-      super(null)
+      @sim = sim_or_map
 
     # After initialization on client and server set-up the cell reference.
     @on 'anySpawn', =>
