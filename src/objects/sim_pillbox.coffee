@@ -88,8 +88,9 @@ class SimPillbox extends WorldObject
 
   takeShellHit: (shell) ->
     @armour = max(0, @armour - 1)
+    @coolDown = 32
+    @speed = max(6, round(@speed / 2))
     @cell.retile()
-    # FIXME: do something with speed
 
   takeExplosionHit: ->
     @armour = max(0, @armour - 5)
