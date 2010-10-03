@@ -1,8 +1,11 @@
 # The pillbox is a map object, and thus a slightly special case of world object.
 
-{min, max, sqrt}  = Math
+{min, max, sqrt,
+ round, ceil, PI
+ cos, sin, atan2} = Math
 {TILE_SIZE_WORLD} = require '../constants'
 WorldObject       = require '../world_object'
+Shell             = require './shell'
 
 
 class SimPillbox extends WorldObject
@@ -49,33 +52,39 @@ class SimPillbox extends WorldObject
     p 'H', 'y'
 
     p 'T', 'owner'
-    p 'T', 'target'
+    p 'f', 'haveTarget'
     p 'B', 'armour'
     p 'B', 'speed'
     p 'B', 'coolDown'
     p 'B', 'reload'
 
   update: ->
-    return if @armour == 0
+    return @haveTarget = no if @armour == 0
+
     @reload = min(@speed, @reload + 1)
     if --@coolDown == 0
       @coolDown = 32
       @speed = min(100, @speed + 1)
-    @updateTarget()
-    @fire() if @target and @reload >= @speed
+    return unless @reload >= @speed
 
-  # Find the closest tank we can give hell.
-  updateTarget: ->
-    closestTank = null; closestDistance = Infinity
+    target = null; distance = Infinity
     for tank in @sim.tanks when tank.armour != 255 and not @owner?.$.isAlly(tank)
       dx = tank.x - @x; dy = tank.y - @y
-      distance = sqrt(dx*dx + dy*dy)
-      if distance <= 2048 and distance < closestDistance
-        closestDistance = distance
-        closestTank = tank
-    # On the flank from `null` to a valid target, restart the reload timer.
-    @reload = 0 unless @target
-    @ref 'target', closestTank
+      d = sqrt(dx*dx + dy*dy)
+      if d <= 2048 and d < distance
+        target = tank; distance = d
+    return @haveTarget = no unless target
+
+    # On the flank from idle to targetting, don't fire immediatly.
+    if @haveTarget
+      # FIXME: This code needs some helpers, taken from Tank.
+      rad = (256 - target.getDirection16th() * 16) * 2 * PI / 256
+      dx = target.x + distance / 32 * round(cos(rad) * ceil(target.speed)) - @x
+      dy = target.y + distance / 32 * round(sin(rad) * ceil(target.speed)) - @y
+      direction = 256 - atan2(dy, dx) * 256 / (2*PI)
+      @sim.spawn Shell, this, {direction}
+    @haveTarget = yes
+    @reload = 0
 
   # Take a shot at `@target`. We need to find the right angle to shoot at in order to hit a
   # possibly moving tank. We need to match up the X and Y coordinates of our shell and the tank
