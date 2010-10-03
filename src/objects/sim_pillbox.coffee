@@ -86,18 +86,6 @@ class SimPillbox extends WorldObject
     @haveTarget = yes
     @reload = 0
 
-  # Take a shot at `@target`. We need to find the right angle to shoot at in order to hit a
-  # possibly moving tank. We need to match up the X and Y coordinates of our shell and the tank
-  # as a function of time:
-  #     Xt + cos(At) * Vt * T = Xp + cos(Ap) * 32 * (T+1)
-  #     Yt + sin(At) * Vt * T = Yp + sin(Ap) * 32 * (T+1)
-  # `Xt`, `Yt`, `At`, and `Vt` are the tank's current position, angle and velocity.
-  # `Xp`, `Yp`, are our current position. The shell speed is a constant 32. `T=0` is this moment.
-  # We're trying to find `Ap`.
-  fire: ->
-    # FIXME
-    @reload = 0
-
   takeShellHit: (shell) ->
     @armour = max(0, @armour - 1)
     @cell.retile()
