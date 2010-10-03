@@ -28,8 +28,10 @@ class Shell extends WorldObject
       options ||= {}
 
       @ref 'owner', owner
-      # When our owner goes away, we go away.
-      @owner.on 'destroy', => @sim.destroy this
+      if @owner.$.charId == 'p'
+        @ref 'attribution', @owner.$.owner
+      else
+        @ref 'attribution', @owner.$
 
       # Default direction is the owner's.
       @direction = options.direction || @owner.$.direction
@@ -49,6 +51,7 @@ class Shell extends WorldObject
     if isCreate
       p 'B', 'direction'
       p 'O', 'owner'
+      p 'T', 'attribution'
       p 'f', 'onWater'
 
     p 'H', 'x'
@@ -95,19 +98,20 @@ class Shell extends WorldObject
     @updateCell()
 
   collide: ->
-    # Check for a collision with a pillbox.
+    # Check for a collision with a pillbox, but not our owner.
     if pill = @cell.pill
-      return ['cell', pill] if pill.armour > 0
+      return ['cell', pill] if pill.armour > 0 and pill != @owner?.$
 
-    # Check for collision with tanks.
-    for tank in @sim.tanks when tank != @owner.$ and tank.armour != 255
+    # Check for collision with tanks. Carefully avoid hitting our owner when fired from a tank.
+    # At the same time, remember that a pillbox *can* hit its owner.
+    for tank in @sim.tanks when tank != @owner?.$ and tank.armour != 255
       dx = tank.x - @x; dy = tank.y - @y
       distance = sqrt(dx*dx + dy*dy)
       return ['tank', tank] if distance <= 127
 
     # Check for collision with enemy base.
     if base = @cell.base
-      if @onWater or (base.armour > 4 and base?.owner? and not base.owner.$.isAlly(@owner.$))
+      if @onWater or (base.armour > 4 and base?.owner? and not base.owner.$.isAlly(@attribution.$))
         return ['cell', base]
 
     # Check for terrain collision
