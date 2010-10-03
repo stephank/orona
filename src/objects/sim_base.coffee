@@ -1,23 +1,25 @@
 # The pillbox is a map object, and thus a slightly special case of world object.
 
-{min, max}  = Math
-WorldObject = require '../world_object'
+{min, max}        = Math
+{TILE_SIZE_WORLD} = require '../constants'
+WorldObject       = require '../world_object'
 
 
 class SimBase extends WorldObject
   charId: 'b'
 
   # This is a MapObject; it is constructed differently on the authority.
-  constructor: (sim_or_map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
+  constructor: (sim_or_map, x, y, @owner_idx, @armour, @shells, @mines) ->
     if arguments.length == 1
       @sim = sim_or_map
     else
+      @x = (x + 0.5) * TILE_SIZE_WORLD; @y = (y + 0.5) * TILE_SIZE_WORLD
       # Override the cell's type.
-      sim_or_map.cellAtTile(@x, @y).setType '=', no, -1
+      sim_or_map.cellAtTile(x, y).setType '=', no, -1
 
     # After initialization on client and server set-up the cell reference.
     @on 'anySpawn', =>
-      @cell = @sim.map.cellAtTile(@x, @y)
+      @cell = @sim.map.cellAtWorld(@x, @y)
       @cell.base = this
 
     # Keep our non-synchronized attributes up-to-date on the client.
@@ -28,8 +30,8 @@ class SimBase extends WorldObject
   # The state information to synchronize.
   serialization: (isCreate, p) ->
     if isCreate
-      p 'B', 'x'
-      p 'B', 'y'
+      p 'H', 'x'
+      p 'H', 'y'
 
     p 'T', 'owner'
     p 'T', 'refueling'

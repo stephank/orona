@@ -9,9 +9,11 @@ class SimPillbox extends WorldObject
   charId: 'p'
 
   # This is a MapObject; it is constructed differently on the authority.
-  constructor: (sim_or_map, @x, @y, @owner_idx, @armour, @speed) ->
+  constructor: (sim_or_map, x, y, @owner_idx, @armour, @speed) ->
     if arguments.length == 1
       @sim = sim_or_map
+    else
+      @x = (x + 0.5) * TILE_SIZE_WORLD; @y = (y + 0.5) * TILE_SIZE_WORLD
 
     @on 'spawn', =>
       @coolDown = 32
@@ -35,7 +37,7 @@ class SimPillbox extends WorldObject
       delete @cell.pill
       @cell.retile()
     if @x? and @y?
-      @cell = @sim.map.cellAtTile(@x, @y)
+      @cell = @sim.map.cellAtWorld(@x, @y)
       @cell.pill = this
       @cell.retile()
     else
@@ -43,8 +45,8 @@ class SimPillbox extends WorldObject
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
-    p 'B', 'x'
-    p 'B', 'y'
+    p 'H', 'x'
+    p 'H', 'y'
 
     p 'T', 'owner'
     p 'T', 'target'
@@ -66,7 +68,7 @@ class SimPillbox extends WorldObject
   updateTarget: ->
     closestTank = null; closestDistance = Infinity
     for tank in @sim.tanks when tank.armour != 255 and not @owner?.$.isAlly(tank)
-      dx = tank.x - @x * TILE_SIZE_WORLD; dy = tank.y - @y * TILE_SIZE_WORLD
+      dx = tank.x - @x; dy = tank.y - @y
       distance = sqrt(dx*dx + dy*dy)
       if distance <= 2048 and distance < closestDistance
         closestDistance = distance
