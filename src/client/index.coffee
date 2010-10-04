@@ -37,46 +37,47 @@ class BaseGame
     @gameTimer = @lastTick = null
 
     # Load resources.
-    loader = new Loader()
-    loader.on 'complete', (@resources) => @startup()
-    @soundkit = sk = new SoundKit(loader)
+    l = new Loader()
+    l.on 'complete', (@resources) => @startup()
 
-    loader.image 'base'
-    loader.image 'styled'
-    loader.image 'overlay'
+    l.image 'base'
+    l.image 'styled'
+    l.image 'overlay'
 
-    sk.load 'big_explosion_far'
-    sk.load 'big_explosion_near'
-    sk.load 'bubbles'
-    sk.load 'farming_tree_far'
-    sk.load 'farming_tree_near'
-    sk.load 'hit_tank_far'
-    sk.load 'hit_tank_near'
-    sk.load 'hit_tank_self'
-    sk.load 'man_building_far'
-    sk.load 'man_building_near'
-    sk.load 'man_dying_far'
-    sk.load 'man_dying_near'
-    sk.load 'man_lay_mine_near'
-    sk.load 'mine_explosion_far'
-    sk.load 'mine_explosion_near'
-    sk.load 'shooting_far'
-    sk.load 'shooting_near'
-    sk.load 'shooting_self'
-    sk.load 'shot_building_far'
-    sk.load 'shot_building_near'
-    sk.load 'shot_tree_far'
-    sk.load 'shot_tree_near'
-    sk.load 'tank_sinking_far'
-    sk.load 'tank_sinking_near'
+    l.sound 'big_explosion_far'
+    l.sound 'big_explosion_near'
+    l.sound 'bubbles'
+    l.sound 'farming_tree_far'
+    l.sound 'farming_tree_near'
+    l.sound 'hit_tank_far'
+    l.sound 'hit_tank_near'
+    l.sound 'hit_tank_self'
+    l.sound 'man_building_far'
+    l.sound 'man_building_near'
+    l.sound 'man_dying_far'
+    l.sound 'man_dying_near'
+    l.sound 'man_lay_mine_near'
+    l.sound 'mine_explosion_far'
+    l.sound 'mine_explosion_near'
+    l.sound 'shooting_far'
+    l.sound 'shooting_near'
+    l.sound 'shooting_self'
+    l.sound 'shot_building_far'
+    l.sound 'shot_building_near'
+    l.sound 'shot_tree_far'
+    l.sound 'shot_tree_near'
+    l.sound 'tank_sinking_far'
+    l.sound 'tank_sinking_near'
 
-    loader.finish()
+    l.finish()
 
   # Common initialization once the map is available
   commonInitialization: (map) ->
     @sim = new Simulation(map)
+    @soundkit = new SoundKit(@resources.sounds)
     @renderer = new DefaultRenderer(@resources.images, @sim)
     @sim.map.setView(@renderer)
+    delete @resources
 
   ##### Game loop.
 

@@ -16,6 +16,7 @@ class Loader extends EventEmitter
 
   # Load a resource. This is a helper used internally.
   resource: (filename, constructor, completeEvent) ->
+    @numResources++
     res = new constructor()
     $(res).bind completeEvent, =>
       @numCompleted++
@@ -28,21 +29,13 @@ class Loader extends EventEmitter
 
   # Load an image.
   image: (name) ->
-    @numResources++
     @resources.images[name] = @resource("img/#{name}.png", Image, 'load')
 
   # Load a sound file, creating one or more Audio objects.
-  sound: (name, filetype, times) ->
-    loadOne = =>
-      @numResources++
-      snd = @resource("snd/#{name}.#{filetype}", Audio, 'canplaythrough')
-      snd.load()
-      snd
-    @resources.sounds[name] =
-      if times?
-        loadOne() while times-- > 0
-      else
-        loadOne()
+  sound: (name) ->
+    @resources.sounds[name] = snd = @resource("snd/#{name}.ogg", Audio, 'canplaythrough')
+    snd.load()
+    snd
 
   # Finish requesting resources. Only after a call to finish() will 'complete' be emitted.
   finish: ->

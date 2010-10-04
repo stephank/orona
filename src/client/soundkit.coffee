@@ -1,41 +1,23 @@
-# SoundKit is the basic audio layer.
-# An instance of the SoundKit holds a set of sound effects and channels.
+# SoundKit is the basic audio layer. An instance of the SoundKit holds a set of sound effects as
+# given by the `sounds` parameter in the constructor. This is usually passed on from `Loader`, but
+# in general is an object of which all `Audio` attributes are collected. A helper method is created
+# for each of these attributes, with the same name, which plays the effect when called.
 class SoundKit
-  constructor: (@loader, @filetype) ->
-    @filetype ||= @constructor.detect()
+  constructor: (sounds) ->
     @sounds = {}
+    for name, sound of sounds
+      @buildHelper name, sound if sound instanceof Audio
 
-  # Return the preferred filetype for this browser.
-  @detect: ->
-    return 'none' unless Audio?
-    dummy = new Audio();
-    return 'none' unless dummy.canPlayType?
-    if      dummy.canPlayType('audio/ogg; codecs="vorbis"') != 'no' then 'ogg' 
-    else if dummy.canPlayType('audio/mpeg; codecs="mp3"')   != 'no' then 'mp3'
-    else 'wav'
-
-  # Load a sound effect. This wraps `Loader#sound`, and should just the same be called while
-  # loading resources. For each sample, a helper method is created named after `name`, which can
-  # simply be called with no parameters to play the effect. A number of channels is created,
-  # which is the maximum number of overlapping playbacks this particular sample can have.
-  load: (name, channels) ->
-    this[name] =
-      if @filetype == 'none'
-        -> # No-op
-      else
-        channels ||= 1
-        @sounds[name] = pool = @loader.sound(name, @filetype, channels)
-        => @play(name)
+  buildHelper: (name, snd) ->
+    @sounds[name] = snd.currentSrc
+    this[name] = => @play(name)
 
   # Play the effect called `name`.
   play: (name) ->
-    return if @filetype == 'none'
-    for channel in @sounds[name]
-      if channel.paused or channel.ended
-        channel.currentTime = 0
-        channel.play()
-        break
-    return
+    effect = new Audio()
+    effect.src = @sounds[name]
+    effect.play()
+    effect
 
 
 #### Exports

@@ -176,38 +176,6 @@ task 'build:server', 'Compile the Bolo server-side modules', ->
   puts "Done."
   puts ""
 
-task 'build:sounds', 'Build encoded Bolo sound files', ->
-  puts "Building encoded Bolo sound files..."
-
-  totalProcesses = 0; completedProcesses = 0
-  allStarted = no
-  checkComplete = ->
-    return unless allStarted and completedProcesses == totalProcesses
-    puts "Done."
-    puts ""
-  addSubprocess = (sub) ->
-    totalProcesses++
-    sub.stdout.on 'data', (buffer) -> process.stdout.write buffer
-    sub.stderr.on 'data', (buffer) -> process.stdout.write buffer
-    sub.on 'exit', -> completedProcesses++; checkComplete()
-  finish = ->
-    puts "Waiting for encoders to finish..."
-    allStarted = yes
-    checkComplete()
-
-  for snd in fs.readdirSync('public/snd') when snd.substr(-4) == '.wav'
-    fullname = "public/snd/#{snd}"
-    basename = snd.substr(0, snd.length - 4)
-    puts "Encoding '#{fullname}'."
-
-    oggname = "public/snd/#{basename}.ogg"
-    addSubprocess spawn('oggenc', ['-Q', '-o', oggname, fullname])
-
-    mp3name = "public/snd/#{basename}.mp3"
-    addSubprocess spawn('lame', ['--quiet', fullname, mp3name])
-  finish()
-
 task 'build', 'Compile the Bolo client and server.', ->
   invoke 'build:server'
   invoke 'build:client'
-  invoke 'build:sounds'
