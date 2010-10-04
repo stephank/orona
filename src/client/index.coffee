@@ -254,11 +254,10 @@ class NetworkGame extends BaseGame
 game = null
 
 init = ->
-  $(applicationCache).bind 'cached', ->
-    if location.hostname.split('.')[1] == 'github'
-      game = new LocalGame()
-    else
-      game = new NetworkGame()
+  if location.hostname.split('.')[1] == 'github'
+    game = new LocalGame()
+  else
+    game = new NetworkGame()
 
 
 #### Exports

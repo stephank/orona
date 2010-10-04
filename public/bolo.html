@@ -3,9 +3,20 @@
 <head>
 <title>Bolo</title>
 <link rel="stylesheet" media="screen" href="bolo.css">
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
 <script src="bolo-bundle.js"></script>
-<script>$(function() { window.Bolo = require('bolo/client').init(); });</script>
+<script>
+(function() {
+  var loaded = function() {
+    $(function() { Bolo = require('bolo/client').init(); });
+  };
+  applicationCache.addEventListener('cached',   loaded, false);
+  applicationCache.addEventListener('noupdate', loaded, false);
+  applicationCache.addEventListener('updateready', function() {
+    location.reload();
+  }, false);
+})();
+</script>
 </head>
 <body>
 </body>

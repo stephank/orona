@@ -183,7 +183,7 @@ task 'build:client:manifest', 'Create the manifest file', ->
         CACHE MANIFEST
         # Revision #{rev}
         bolo.html
-        http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js
+        http://code.jquery.com/jquery-1.4.2.min.js
         bolo-bundle.js
         bolo.css
         #{images}
