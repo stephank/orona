@@ -32,7 +32,7 @@ Orona depends on several other projects, which you will have to install to run i
 is easiest on a Linux or Mac OS X machine, though you need a bit of commandline-fu to get it all
 set up. Here's the recipe:
 
- * [CoffeeScript], the language Orona is written it. Tested with 0.9.2.
+ * [CoffeeScript], the language Orona is written in. Tested with 0.9.4.
  * [node.js], a server-side JavaScript framework. Tested with 0.2.0.
  * [Connect], a node.js middleware framework. Tested with 0.2.4.
 
