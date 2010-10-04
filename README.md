@@ -48,7 +48,7 @@ To run Orona, clone it, build it, then run it:
     cake build
     bin/bolo-server
 
-Now visit `http://localhost:8124/`.
+Now visit `http://localhost:8124/bolo.html`.
 
 ## License
 
