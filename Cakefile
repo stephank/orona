@@ -156,11 +156,15 @@ task 'build:client', 'Compile the Bolo client-side module bundle', ->
     output.write wrappedJs
     puts "Compiled '#{module.file}'."
 
-  output.end()
-  puts "Waiting for compressor to finish..." if compressor
-  realOutput.on 'close', ->
+  if compressor
+    puts "Waiting for compressor to finish..."
+    realOutput.on 'close', ->
+      puts "Done."
+      puts ""
+  else
     puts "Done."
     puts ""
+  output.end()
 
 task 'build:server', 'Compile the Bolo server-side modules', ->
   puts "Building Bolo server modules..."
@@ -177,15 +181,15 @@ task 'build:sounds', 'Build encoded Bolo sound files', ->
 
   totalProcesses = 0; completedProcesses = 0
   allStarted = no
-  addSubprocess = (sub) ->
-    totalProcesses++
-    sub.stdout.on 'data', (buffer) -> process.stdout.write buffer
-    sub.stderr.on 'data', (buffer) -> process.stdout.write buffer
-    sub.on 'exit', -> completedProcesses++
   checkComplete = ->
     return unless allStarted and completedProcesses == totalProcesses
     puts "Done."
     puts ""
+  addSubprocess = (sub) ->
+    totalProcesses++
+    sub.stdout.on 'data', (buffer) -> process.stdout.write buffer
+    sub.stderr.on 'data', (buffer) -> process.stdout.write buffer
+    sub.on 'exit', -> completedProcesses++; checkComplete()
   finish = ->
     puts "Waiting for encoders to finish..."
     allStarted = yes
