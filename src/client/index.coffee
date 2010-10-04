@@ -39,7 +39,7 @@ class BaseGame
     # Load resources.
     loader = new Loader()
     loader.on 'complete', (@resources) => @startup()
-    @soundkit = sk = new SoundKit(loader, 'wav')
+    @soundkit = sk = new SoundKit(loader)
 
     loader.image 'base'
     loader.image 'styled'

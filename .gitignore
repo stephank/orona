@@ -1,3 +1,5 @@
 lib
 docs
 public/bolo-bundle.js
+public/snd/*.ogg
+public/snd/*.mp3
