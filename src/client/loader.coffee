@@ -4,31 +4,45 @@
 {EventEmitter} = require 'events'
 
 
-# FIXME: Implement progress notification.
-
 class Loader extends EventEmitter
   constructor: ->
+    @numResources = 0
+    @numCompleted = 0
     @resources =
       images: {}
       sounds: {}
 
     @finished = no
 
-  # Load any resource. This is a helper used internally.
-  resource: (filename, constructor) ->
+  # Load a resource. This is a helper used internally.
+  resource: (filename, constructor, completeEvent) ->
     res = new constructor()
-    $(res).load => @_checkComplete()
-    $(res).error => @_handleError(res)
+    $(res).bind completeEvent, =>
+      @numCompleted++
+      @emit 'progress', this
+      @_checkComplete()
+    $(res).error =>
+      @_handleError(res)
     res.src = filename
     res
 
   # Load an image.
   image: (name) ->
-    @resources.images[name] = @resource("img/#{name}.png", Image)
+    @numResources++
+    @resources.images[name] = @resource("img/#{name}.png", Image, 'load')
 
-  # Load a sound file.
-  sound: (name, filetype) ->
-    @resources.sounds[name] = @resource("snd/#{name}.#{filetype}", Audio)
+  # Load a sound file, creating one or more Audio objects.
+  sound: (name, filetype, times) ->
+    loadOne = =>
+      @numResources++
+      snd = @resource("snd/#{name}.#{filetype}", Audio, 'canplaythrough')
+      snd.load()
+      snd
+    @resources.sounds[name] =
+      if times?
+        loadOne() while times-- > 0
+      else
+        loadOne()
 
   # Finish requesting resources. Only after a call to finish() will 'complete' be emitted.
   finish: ->
@@ -37,20 +51,18 @@ class Loader extends EventEmitter
 
   # Check if all resources have been loaded, then emit 'complete'.
   _checkComplete: ->
-    return unless @finished
-    for category, container of @resources
-      for name, resource of container
-        return unless resource.complete
+    return unless @finished and @numCompleted == @numResources
     @emit 'complete', @resources
     @_stopEvents()
 
   # Emit 'error', and make sure no further events are fired.
   _handleError: (resource) ->
-    @emit 'error', "Failed to load resource: #{resource.src}"
+    @emit 'error', new Error("Failed to load resource: #{resource.src}")
     @_stopEvents()
 
   # Removes all event listeners.
   _stopEvents: ->
+    @removeAllListeners('progress')
     @removeAllListeners('complete')
     @removeAllListeners('error')
 
