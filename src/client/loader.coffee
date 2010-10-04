@@ -1,10 +1,12 @@
 # The loader takes care of loading a bunch of resources, providing progress information,
 # firing a single event when everything is complete, and exposing resources in a tidy structure.
 
+{EventEmitter} = require 'events'
+
 
 # FIXME: Implement progress notification.
 
-class Loader
+class Loader extends EventEmitter
   constructor: ->
     @resources =
       images: {}
@@ -28,36 +30,29 @@ class Loader
   sound: (name, filetype) ->
     @resources.sounds[name] = @resource("snd/#{name}.#{filetype}", Audio)
 
-  # Finish requesting resources.
-  # Only after a call to finish() will onComplete() be called.
+  # Finish requesting resources. Only after a call to finish() will 'complete' be emitted.
   finish: ->
     @finished = yes
     @_checkComplete()
 
-  # Check if all resources have been loaded, then call onComplete.
+  # Check if all resources have been loaded, then emit 'complete'.
   _checkComplete: ->
     return unless @finished
     for category, container of @resources
       for name, resource of container
         return unless resource.complete
+    @emit 'complete', @resources
     @_stopEvents()
-    @onComplete()
 
-  # Make sure no further events are fired, then call onError.
+  # Emit 'error', and make sure no further events are fired.
   _handleError: (resource) ->
+    @emit 'error', "Failed to load resource: #{resource.src}"
     @_stopEvents()
-    @onError(resource)
 
-  # Replace methods with empty functions, to prevent any further events.
+  # Removes all event listeners.
   _stopEvents: ->
-    @image = ->
-    @finish = ->
-    @_checkComplete = ->
-    @_handleError = ->
-
-  # The user should replace these methods; they are more or less events.
-  onComplete: ->
-  onError: ->
+    @removeAllListeners('complete')
+    @removeAllListeners('error')
 
 
 #### Exports

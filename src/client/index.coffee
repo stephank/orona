@@ -37,9 +37,7 @@ class BaseGame
 
     # Load resources.
     loader = new Loader()
-    loader.onComplete = =>
-      @resources = loader.resources
-      @startup()
+    loader.on 'complete', (@resources) => @startup()
 
     loader.image 'base'
     loader.image 'styled'
