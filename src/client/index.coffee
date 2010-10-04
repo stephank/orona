@@ -31,7 +31,9 @@ class BaseGame
     @sim = new Simulation(map)
 
     images = {}
-    loadImage = (name) -> images[name] = new Image("img/#{name}.png")
+    loadImage = (name) ->
+      images[name] = img = new Image()
+      img.src = "img/#{name}.png"
     loadImage 'base'
     loadImage 'styled'
     loadImage 'overlay'
