@@ -24,28 +24,46 @@ EverardIsland    = require './everard'
 #### Common logic
 
 class BaseGame
-  # Common initialization once the map is available
-  commonInitialization: (map) ->
-    @gameTimer = @lastTick = null
+  constructor: ->
+    @loadResources => @startup()
 
-    @sim = new Simulation(map)
+  # Loads all required resources.
+  loadResources: (callback) ->
+    numResources = 0; numCompleted = 0; finished = no
+    checkComplete = ->
+      callback() if finished and numCompleted == numResources
+    finish = ->
+      finished = yes
+      checkComplete()
 
-    images = {}
+    @images = images = {}
     loadImage = (name) ->
+      numResources++
       images[name] = img = new Image()
+      $(img).load ->
+        numCompleted++
+        checkComplete()
       img.src = "img/#{name}.png"
-    loadImage 'base'
-    loadImage 'styled'
-    loadImage 'overlay'
-    @renderer = new DefaultRenderer(images, @sim)
-    @sim.map.setView(@renderer)
 
-    @soundkit = sk = new SoundKit()
+    @soundkit = soundkit = new SoundKit()
     loadSound = (name) ->
       parts = name.split('_')
       for i in [1...parts.length]
         parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1)
-      sk.register(parts.join(''), "snd/#{name}.ogg")
+
+      numResources++
+      snd = new Audio()
+      $(snd).bind 'canplaythrough', ->
+        soundkit.register(parts.join(''), snd.currentSrc)
+        numCompleted++
+        checkComplete()
+      snd.src = "snd/#{name}.ogg"
+      snd.load()
+
+    loadImage 'base'
+    loadImage 'styled'
+    loadImage 'overlay'
+
     loadSound 'big_explosion_far'
     loadSound 'big_explosion_near'
     loadSound 'bubbles'
@@ -71,6 +89,14 @@ class BaseGame
     loadSound 'tank_sinking_far'
     loadSound 'tank_sinking_near'
 
+    finish()
+
+  # Common initialization once the map is available
+  commonInitialization: (map) ->
+    @gameTimer = @lastTick = null
+    @sim = new Simulation(map)
+    @renderer = new DefaultRenderer(@images, @sim)
+    @sim.map.setView(@renderer)
     $(document).keydown (e) => @handleKeydown(e) if @sim?
     $(document).keyup (e)   => @handleKeyup(e)   if @sim?
 
@@ -112,12 +138,13 @@ class BaseGame
 #### Local game simulation
 
 class LocalGame extends BaseGame
-  constructor: ->
-    map = SimMap.load decodeBase64(EverardIsland)
-    @commonInitialization(map)
-    @sim.player = @sim.spawn Tank
-    @renderer.initHud()
-    @start()
+  startup: ->
+    @loadResources ->
+      map = SimMap.load decodeBase64(EverardIsland)
+      @commonInitialization(map)
+      @sim.player = @sim.spawn Tank
+      @renderer.initHud()
+      @start()
 
   tick: ->
     @sim.tick()
@@ -147,7 +174,7 @@ class LocalGame extends BaseGame
 #### Networked game simulation
 
 class NetworkGame extends BaseGame
-  constructor: ->
+  startup: ->
     @heartbeatTimer = 0
     @ws = new WebSocket("ws://#{location.host}/demo")
     $(@ws).one 'message', (e) =>
