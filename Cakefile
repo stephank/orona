@@ -4,11 +4,11 @@
 
 # FIXME: watch functionality, as in 'coffee -w ...'
 
-{puts}       = require 'sys'
-fs           = require 'fs'
-path         = require 'path'
-{spawn}      = require 'child_process'
-CoffeeScript = require 'coffee-script'
+{puts}        = require 'sys'
+fs            = require 'fs'
+path          = require 'path'
+{spawn, exec} = require 'child_process'
+CoffeeScript  = require 'coffee-script'
 
 
 # Determine the module dependencies of a piece of JavaScript.
@@ -120,7 +120,7 @@ buildOutputPath = (module) ->
 
 # Task definitions.
 
-task 'build:client', 'Compile the Bolo client-side module bundle', ->
+task 'build:client:bundle', 'Compile the Bolo client-side module bundle', ->
   puts "Building Bolo client JavaScript bundle..."
   output = fs.createWriteStream 'public/bolo-bundle.js'
 
@@ -165,6 +165,36 @@ task 'build:client', 'Compile the Bolo client-side module bundle', ->
     puts "Done."
     puts ""
   output.end()
+
+task 'build:client:manifest', 'Create the manifest file', ->
+  puts "Writing application manifest..."
+  exec 'git rev-parse HEAD', (error, stdout) ->
+    throw error if error
+    rev = stdout.trim()
+
+    images = "img/#{file}" for file in fs.readdirSync 'public/img/'
+    images = images.join("\n")
+
+    sounds = "snd/#{file}" for file in fs.readdirSync 'public/snd/'
+    sounds = sounds.join("\n")
+
+    fs.writeFileSync 'public/bolo.manifest',
+      """
+        CACHE MANIFEST
+        # Revision #{rev}
+        bolo.html
+        http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js
+        bolo-bundle.js
+        bolo.css
+        #{images}
+        #{sounds}
+      """
+    puts "Done."
+    puts ""
+
+task 'build:client', 'Compile the Bolo client', ->
+  invoke 'build:client:bundle'
+  invoke 'build:client:manifest'
 
 task 'build:server', 'Compile the Bolo server-side modules', ->
   puts "Building Bolo server modules..."

@@ -15,69 +15,62 @@ net              = require '../net'
 {unpack}         = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 ClientContext    = require './net'
-Loader           = require './loader'
 SoundKit         = require './soundkit'
 {decodeBase64}   = require './util/base64'
 DefaultRenderer  = require './renderer/offscreen_2d'
 EverardIsland    = require './everard'
 
 
-
 #### Common logic
 
 class BaseGame
-  constructor: ->
-    # Setup the key handlers.
-    $(document).keydown (e) =>
-      @handleKeydown(e) if @sim?
-    $(document).keyup (e) =>
-      @handleKeyup(e) if @sim?
-
-    # Setup game state.
-    @gameTimer = @lastTick = null
-
-    # Load resources.
-    l = new Loader()
-    l.on 'complete', (@resources) => @startup()
-
-    l.image 'base'
-    l.image 'styled'
-    l.image 'overlay'
-
-    l.sound 'big_explosion_far'
-    l.sound 'big_explosion_near'
-    l.sound 'bubbles'
-    l.sound 'farming_tree_far'
-    l.sound 'farming_tree_near'
-    l.sound 'hit_tank_far'
-    l.sound 'hit_tank_near'
-    l.sound 'hit_tank_self'
-    l.sound 'man_building_far'
-    l.sound 'man_building_near'
-    l.sound 'man_dying_far'
-    l.sound 'man_dying_near'
-    l.sound 'man_lay_mine_near'
-    l.sound 'mine_explosion_far'
-    l.sound 'mine_explosion_near'
-    l.sound 'shooting_far'
-    l.sound 'shooting_near'
-    l.sound 'shooting_self'
-    l.sound 'shot_building_far'
-    l.sound 'shot_building_near'
-    l.sound 'shot_tree_far'
-    l.sound 'shot_tree_near'
-    l.sound 'tank_sinking_far'
-    l.sound 'tank_sinking_near'
-
-    l.finish()
-
   # Common initialization once the map is available
   commonInitialization: (map) ->
+    @gameTimer = @lastTick = null
+
     @sim = new Simulation(map)
-    @soundkit = new SoundKit(@resources.sounds)
-    @renderer = new DefaultRenderer(@resources.images, @sim)
+
+    images = {}
+    loadImage = (name) -> images[name] = new Image("img/#{name}.png")
+    loadImage 'base'
+    loadImage 'styled'
+    loadImage 'overlay'
+    @renderer = new DefaultRenderer(images, @sim)
     @sim.map.setView(@renderer)
-    delete @resources
+
+    @soundkit = sk = new SoundKit()
+    loadSound = (name) ->
+      parts = name.split('_')
+      for i in [1...parts.length]
+        parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1)
+      sk.register(parts.join(''), "snd/#{name}.ogg")
+    loadSound 'big_explosion_far'
+    loadSound 'big_explosion_near'
+    loadSound 'bubbles'
+    loadSound 'farming_tree_far'
+    loadSound 'farming_tree_near'
+    loadSound 'hit_tank_far'
+    loadSound 'hit_tank_near'
+    loadSound 'hit_tank_self'
+    loadSound 'man_building_far'
+    loadSound 'man_building_near'
+    loadSound 'man_dying_far'
+    loadSound 'man_dying_near'
+    loadSound 'man_lay_mine_near'
+    loadSound 'mine_explosion_far'
+    loadSound 'mine_explosion_near'
+    loadSound 'shooting_far'
+    loadSound 'shooting_near'
+    loadSound 'shooting_self'
+    loadSound 'shot_building_far'
+    loadSound 'shot_building_near'
+    loadSound 'shot_tree_far'
+    loadSound 'shot_tree_near'
+    loadSound 'tank_sinking_far'
+    loadSound 'tank_sinking_near'
+
+    $(document).keydown (e) => @handleKeydown(e) if @sim?
+    $(document).keyup (e)   => @handleKeyup(e)   if @sim?
 
   ##### Game loop.
 
@@ -105,9 +98,6 @@ class BaseGame
 
   ##### Abstract methods.
 
-  # Called after resources are loaded.
-  startup: ->
-
   # Simulate a tick.
   tick: ->
 
@@ -120,7 +110,7 @@ class BaseGame
 #### Local game simulation
 
 class LocalGame extends BaseGame
-  startup: ->
+  constructor: ->
     map = SimMap.load decodeBase64(EverardIsland)
     @commonInitialization(map)
     @sim.player = @sim.spawn Tank
@@ -157,9 +147,6 @@ class LocalGame extends BaseGame
 class NetworkGame extends BaseGame
   constructor: ->
     @heartbeatTimer = 0
-    super
-
-  startup: ->
     @ws = new WebSocket("ws://#{location.host}/demo")
     $(@ws).one 'message', (e) =>
       @receiveMap(e.originalEvent)
@@ -267,10 +254,11 @@ class NetworkGame extends BaseGame
 game = null
 
 init = ->
-  if location.hostname.split('.')[1] == 'github'
-    game = new LocalGame()
-  else
-    game = new NetworkGame()
+  $(applicationCache).bind 'cached', ->
+    if location.hostname.split('.')[1] == 'github'
+      game = new LocalGame()
+    else
+      game = new NetworkGame()
 
 
 #### Exports

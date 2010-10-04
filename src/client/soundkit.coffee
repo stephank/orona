@@ -1,15 +1,12 @@
-# SoundKit is the basic audio layer. An instance of the SoundKit holds a set of sound effects as
-# given by the `sounds` parameter in the constructor. This is usually passed on from `Loader`, but
-# in general is an object of which all `Audio` attributes are collected. A helper method is created
-# for each of these attributes, with the same name, which plays the effect when called.
+# SoundKit is a thin audio layer.
 class SoundKit
-  constructor: (sounds) ->
+  constructor: ->
     @sounds = {}
-    for name, sound of sounds
-      @buildHelper name, sound if sound instanceof Audio
 
-  buildHelper: (name, snd) ->
-    @sounds[name] = snd.currentSrc
+  # Register the effect at the given url with the given name, and build a helper method
+  # on this instance to play the sound effect.
+  register: (name, url) ->
+    @sounds[name] = url
     this[name] = => @play(name)
 
   # Play the effect called `name`.
