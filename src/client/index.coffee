@@ -16,6 +16,7 @@ net              = require '../net'
 {TICK_LENGTH_MS} = require '../constants'
 ClientContext    = require './net'
 Loader           = require './loader'
+SoundKit         = require './soundkit'
 {decodeBase64}   = require './util/base64'
 DefaultRenderer  = require './renderer/offscreen_2d'
 EverardIsland    = require './everard'
@@ -38,10 +39,36 @@ class BaseGame
     # Load resources.
     loader = new Loader()
     loader.on 'complete', (@resources) => @startup()
+    @soundkit = sk = new SoundKit(loader, 'wav')
 
     loader.image 'base'
     loader.image 'styled'
     loader.image 'overlay'
+
+    sk.load 'big_explosion_far'
+    sk.load 'big_explosion_near'
+    sk.load 'bubbles'
+    sk.load 'farming_tree_far'
+    sk.load 'farming_tree_near'
+    sk.load 'hit_tank_far'
+    sk.load 'hit_tank_near'
+    sk.load 'hit_tank_self'
+    sk.load 'man_building_far'
+    sk.load 'man_building_near'
+    sk.load 'man_dying_far'
+    sk.load 'man_dying_near'
+    sk.load 'man_lay_mine_near'
+    sk.load 'mine_explosion_far'
+    sk.load 'mine_explosion_near'
+    sk.load 'shooting_far'
+    sk.load 'shooting_near'
+    sk.load 'shooting_self'
+    sk.load 'shot_building_far'
+    sk.load 'shot_building_near'
+    sk.load 'shot_tree_far'
+    sk.load 'shot_tree_near'
+    sk.load 'tank_sinking_far'
+    sk.load 'tank_sinking_near'
 
     loader.finish()
 
