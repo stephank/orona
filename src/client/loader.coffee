@@ -2,24 +2,31 @@
 # firing a single event when everything is complete, and exposing resources in a tidy structure.
 
 
-# FIXME:
-#  * Add audio file support. Needs to be smart about supported formats.
-#  * Implement progress notification.
+# FIXME: Implement progress notification.
 
 class Loader
   constructor: ->
     @resources =
       images: {}
+      sounds: {}
 
     @finished = no
 
+  # Load any resource. This is a helper used internally.
+  resource: (filename, constructor) ->
+    res = new constructor()
+    $(res).load => @_checkComplete()
+    $(res).error => @_handleError(res)
+    res.src = filename
+    res
+
   # Load an image.
   image: (name) ->
-    @resources.images[name] = img = new Image()
-    $(img).load => @_checkComplete()
-    $(img).error => @_handleError(img)
-    img.src = "img/#{name}.png"
-    img
+    @resources.images[name] = @resource("img/#{name}.png", Image)
+
+  # Load a sound file.
+  sound: (name, filetype) ->
+    @resources.sounds[name] = @resource("snd/#{name}.#{filetype}", Audio)
 
   # Finish requesting resources.
   # Only after a call to finish() will onComplete() be called.
