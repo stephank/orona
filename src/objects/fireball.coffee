@@ -4,6 +4,7 @@
 {round, cos,
  sin, PI}         = Math
 {TILE_SIZE_WORLD} = require '../constants'
+sounds            = require '../sounds'
 WorldObject       = require '../world_object'
 Explosion         = require './explosion'
 
@@ -39,14 +40,16 @@ class Fireball extends WorldObject
   wreck: ->
     @sim.spawn Explosion, @x, @y
     cell = @sim.map.cellAtWorld(@x, @y)
-    # FIXME: Play sound for each of these.
     if cell.isType '^'
       @sim.destroy(this)
+      @soundEffect sounds.TANK_SINKING
       return true
     else if cell.isType 'b'
       cell.setType ' '
+      @soundEffect sounds.SHOT_BUILDING
     else if cell.isType '#'
       cell.setType '.'
+      @soundEffect sounds.SHOT_TREE
     false
 
   move: ->
@@ -79,8 +82,9 @@ class Fireball extends WorldObject
         [x, y] = c.getWorldCoordinates()
         @sim.spawn Explosion, x, y
         c.takeExplosionHit()
-
-    # FIXME: Play sound.
+      @soundEffect sounds.BIG_EXPLOSION
+    else
+      @soundEffect sounds.MINE_EXPLOSION
 
     [x, y] = cell.getWorldCoordinates()
     @sim.spawn Explosion, x, y

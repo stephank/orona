@@ -82,8 +82,10 @@ class Shell extends WorldObject
       if mode == 'cell'
         x = (@cell.x + 0.5) * TILE_SIZE_WORLD
         y = (@cell.y + 0.5) * TILE_SIZE_WORLD
+        @sim.soundEffect sfx, x, y
       else # mode == 'tank'
         {x, y} = this
+        victim.soundEffect sfx
       @sim.spawn Explosion, x, y
       @sim.destroy this
 

@@ -93,6 +93,7 @@ class SimPillbox extends WorldObject
     @coolDown = 32
     @speed = max(6, round(@speed / 2))
     @cell.retile()
+    sounds.SHOT_BUILDING
 
   takeExplosionHit: ->
     @armour = max(0, @armour - 5)

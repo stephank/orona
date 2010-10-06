@@ -8,6 +8,7 @@
  TILE_SIZE_PIXELS}   = require './constants'
 {Map, TERRAIN_TYPES} = require './map'
 net                  = require './net'
+sounds               = require './sounds'
 WorldObject          = require './world_object'
 SimPillbox           = require './objects/sim_pillbox'
 SimBase              = require './objects/sim_base'
@@ -96,7 +97,7 @@ class SimMapCell extends Map::CellClass
 
   takeShellHit: (shell) ->
     # FIXME: check for a mine
-    sfx = 'shot_building'
+    sfx = sounds.SHOT_BUILDING
     if @isType '.', '}', ':', '~'
       if --@life == 0
         nextType = switch @type.ascii
@@ -109,7 +110,7 @@ class SimMapCell extends Map::CellClass
         net.mapChanged this, @type, @mine
     else if @isType '#'
       @setType '.'
-      sfx = 'shot_tree'
+      sfx = sounds.SHOT_TREE
     else if @isType '='
       neigh =
         if      shell.direction >= 224  or shell.direction <  32 then @neigh( 1,  0)

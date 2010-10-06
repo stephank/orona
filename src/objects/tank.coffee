@@ -134,14 +134,14 @@ class Tank extends WorldObject
     if @armour < 0
       largeExplosion = @shells + @mines > 20
       @ref 'fireball', @sim.spawn(Fireball, @x, @y, shell.direction, largeExplosion)
-      return @kill()
-
-    @slideTicks = 8
-    @slideDirection = shell.direction
-
-    if @onBoat
-      @onBoat = no
-      @speed = 0
+      @kill()
+    else
+      @slideTicks = 8
+      @slideDirection = shell.direction
+      if @onBoat
+        @onBoat = no
+        @speed = 0
+    sounds.HIT_TANK
 
 
   #### Simulation update
@@ -299,8 +299,9 @@ class Tank extends WorldObject
       # Don't need to retile surrounding cells for this.
       @cell.setType(' ', no, 0)
       # Create a small explosion at the center of the tile.
-      @sim.spawn Explosion, (@cell.x + 0.5) * TILE_SIZE_WORLD, (@cell.y + 0.5) * TILE_SIZE_WORLD
-      # FIXME: Play sound.
+      x = (@cell.x + 0.5) * TILE_SIZE_WORLD; y = (@cell.y + 0.5) * TILE_SIZE_WORLD
+      @sim.spawn Explosion, x, y
+      @sim.soundEffect sounds.SHOT_BUILDING, x, y
     else
       # Leave a boat if we were on a river.
       if oldcell.isType(' ')
@@ -314,7 +315,7 @@ class Tank extends WorldObject
     @onBoat = yes
 
   sink: ->
-    # FIXME: Play sinking sound.
+    @sim.soundEffect sounds.TANK_SINKING, @x, @y
     # FIXME: Somehow blame a killer, if instigated by a shot?
     @kill()
 

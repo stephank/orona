@@ -43,6 +43,7 @@ class SimBase extends WorldObject
 
   takeShellHit: (shell) ->
     @armour = max(0, @armour - 5)
+    sounds.SHOT_BUILDING
 
   update: ->
     if @refueling and (@refueling.$.cell != @cell or @refueling.$.armour == 255)
