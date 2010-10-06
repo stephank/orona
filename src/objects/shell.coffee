@@ -78,7 +78,6 @@ class Shell extends WorldObject
     if collision
       [mode, victim] = collision
       sfx = victim.takeShellHit(this)
-      # FIXME: play sound effect.
       if mode == 'cell'
         x = (@cell.x + 0.5) * TILE_SIZE_WORLD
         y = (@cell.y + 0.5) * TILE_SIZE_WORLD
