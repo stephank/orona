@@ -186,6 +186,7 @@ task 'build:client:manifest', 'Create the manifest file', ->
         http://code.jquery.com/jquery-1.4.2.min.js
         bolo-bundle.js
         bolo.css
+        http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png
         #{images}
         #{sounds}
       """
