@@ -184,11 +184,26 @@ class Application
 
 #### Entry point
 
+# Helper middleware to direct from the root.
+redirectMiddleware = (req, res, next) ->
+  requrl = url.parse(req.url)
+  return next() unless requrl.pathname == '/'
+  host = requrl.host || req.headers['host']
+  res.writeHead 301, 'Location': "http://#{host}/bolo.html"
+  res.end()
+
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
 createBoloServer = ->
   # FIXME: Correct way to find the path to the 'public' directory?
-  server = connect.createServer(connect.logger(), connect.staticProvider('public'))
+  logger = connect.logger()
+  gzip = connect.staticGzip
+    root: 'public',
+    compress: [
+      'text/html', 'text/cache-manifest', 'text/css', 'application/javascript',
+      'image/png', 'application/ogg']
+  static = connect.staticProvider 'public'
+  server = connect.createServer(logger, redirectMiddleware, gzip, static)
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)
