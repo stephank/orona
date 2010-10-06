@@ -63,6 +63,10 @@ class WorldObject extends EventEmitter
     @serialization(isCreate, deserializer)
     [unpacker.finish(), deserializer.changes]
 
+  # Emit a sound effect from this object's location.
+  soundEffect: (sfx) ->
+    @sim.soundEffect(sfx, @x, @y, this)
+
   # This helper is used to track references to other objects. The idea is to keep track of events
   # installed on the other object, which directly or indirectly (through a closure) hold a
   # back-reference. If we go away, or the reference is cleared, these listeners will be cleaned

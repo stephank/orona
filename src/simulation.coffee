@@ -147,6 +147,10 @@ class Simulation
     gen.changes = {}
     gen
 
+  # Emit a sound effect from the given location. `owner` is optional.
+  soundEffect: (sfx, x, y, owner) ->
+    net.soundEffect(sfx, x, y, owner)
+
   #### Player management
 
   # The `Tank` class calls these, so that the we may keep a player list.

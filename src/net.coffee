@@ -40,6 +40,9 @@ class Context
   # Notification sent by the simulation that the given map cell has changed.
   mapChanged: (cell, oldType, hadMine, oldLife) ->
 
+  # Simulation is trying to play a sound effect. The `owner` parameter is optional.
+  soundEffect: (sfx, x, y, owner) ->
+
 
 # All updates are processed by the active context.
 activeContext = null
@@ -63,14 +66,16 @@ exports.isAuthority = -> if activeContext? then activeContext.authority else yes
 exports.created     = (obj) -> activeContext?.created(obj)
 exports.destroyed   = (obj) -> activeContext?.destroyed(obj)
 exports.mapChanged  = (cell, oldType, hadMine) -> activeContext?.mapChanged(cell, oldType, hadMine)
+exports.soundEffect = (sfx, x, y, owner) -> activeContext?.soundEffect(sfx, x, y, owner)
 
 # These are the server message identifiers both sides need to know about.
 # The server sends binary data (encoded as base64). So we need to compare character codes.
-exports.WELCOME_MESSAGE   = 'W'.charCodeAt(0)
-exports.CREATE_MESSAGE    = 'C'.charCodeAt(0)
-exports.DESTROY_MESSAGE   = 'D'.charCodeAt(0)
-exports.MAPCHANGE_MESSAGE = 'M'.charCodeAt(0)
-exports.UPDATE_MESSAGE    = 'U'.charCodeAt(0)
+exports.WELCOME_MESSAGE     = 'W'.charCodeAt(0)
+exports.CREATE_MESSAGE      = 'C'.charCodeAt(0)
+exports.DESTROY_MESSAGE     = 'D'.charCodeAt(0)
+exports.MAPCHANGE_MESSAGE   = 'M'.charCodeAt(0)
+exports.UPDATE_MESSAGE      = 'U'.charCodeAt(0)
+exports.SOUNDEFFECT_MESSAGE = 'S'.charCodeAt(0)
 
 # And these are the client's messages. The client just sends one-character ASCII messages.
 exports.START_TURNING_CCW  = 'L'; exports.STOP_TURNING_CCW  = 'l'

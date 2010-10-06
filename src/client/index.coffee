@@ -95,7 +95,7 @@ class BaseGame
   commonInitialization: (map) ->
     @gameTimer = @lastTick = null
     @sim = new Simulation(map)
-    @renderer = new DefaultRenderer(@images, @sim)
+    @renderer = new DefaultRenderer(@images, @soundkit, @sim)
     @sim.map.setView(@renderer)
     $(document).keydown (e) => @handleKeydown(e) if @sim?
     $(document).keyup (e)   => @handleKeyup(e)   if @sim?
@@ -263,6 +263,11 @@ class NetworkGame extends BaseGame
         cell = @sim.map.cells[y][x]
         cell.setType(ascii, mine)
         cell.life = life
+        bytes
+
+      when net.SOUNDEFFECT_MESSAGE
+        [params, bytes] = unpack('BHHH', data, offset)
+        @renderer.playSound.apply @renderer, params
         bytes
 
       when net.UPDATE_MESSAGE

@@ -77,7 +77,7 @@ class CachedSegment
 
 # The off-screen renderer keeps a 2D array of instances of MapSegment.
 class Offscreen2dRenderer extends Common2dRenderer
-  constructor: (images, sim) ->
+  constructor: (images, soundkit, sim) ->
     super
 
     @cache = new Array(MAP_SIZE_SEGMENTS)

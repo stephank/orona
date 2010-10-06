@@ -4,16 +4,19 @@
 # are stubbed out here. All renderers also implement the `MapView` interface.
 
 
-{round, cos, sin, PI} = Math
+{round, cos, sin,
+ PI, sqrt}         = Math
 {TILE_SIZE_PIXELS,
- PIXEL_SIZE_WORLD}    = require '../../constants'
+ TILE_SIZE_WORLD,
+ PIXEL_SIZE_WORLD} = require '../../constants'
+sounds             = require '../../sounds'
 
 
 class BaseRenderer
   # The constructor takes a reference to the Image resources and the Simulation it needs to draw.
   # Once the constructor finishes, `Map#setView` is called to hook up this renderer instance, which
   # causes onRetile to be invoked once for each tile to initialize.
-  constructor: (@images, @sim) ->
+  constructor: (@images, @soundkit, @sim) ->
     @lastCenter = [0, 0]
 
   # This methods takes x and y coordinates to center the screen on. The callback provided should be
@@ -67,6 +70,33 @@ class BaseRenderer
 
     # Update all DOM HUD elements.
     @updateHud()
+
+  # Play a sound effect.
+  playSound: (sfx, x, y, owner) ->
+    owner = @sim.objects[owner]
+    mode =
+      if owner == @sim.player then 'Self'
+      else
+        dx = x - @lastCenter[0]; dy = y - @lastCenter[1]
+        dist = sqrt(dx*dx + dy*dy)
+        if dist > 40 * TILE_SIZE_WORLD then 'None'
+        else if dist > 15 * TILE_SIZE_WORLD then 'Far'
+        else 'Near'
+    return if mode == 'None'
+    name = switch sfx
+      when sounds.BIG_EXPLOSION  then "bigExplosion#{mode}"
+      when sounds.BUBBLES        then "bubbles" if mode == 'Self'
+      when sounds.FARMING_TREE   then "farmingTree#{mode}"
+      when sounds.HIT_TANK       then "hitTank#{mode}"
+      when sounds.MAN_BUILDING   then "manBuilding#{mode}"
+      when sounds.MAN_DYING      then "manDying#{mode}"
+      when sounds.MAN_LAY_MINE   then "manLayMineNear" if mode == 'Near'
+      when sounds.MINE_EXPLOSION then "mineExplosion#{mode}"
+      when sounds.SHOOTING       then "shooting#{mode}"
+      when sounds.SHOT_BUILDING  then "shotBuilding#{mode}"
+      when sounds.SHOT_TREE      then "shotTree#{mode}"
+      when sounds.TANK_SINKING   then "tankSinking#{mode}"
+    @soundkit[name]() if name
 
   #### HUD elements
 

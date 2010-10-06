@@ -7,6 +7,7 @@
 {TILE_SIZE_WORLD}       = require '../constants'
 WorldObject             = require '../world_object'
 net                     = require '../net'
+sounds                  = require '../sounds'
 Explosion               = require './explosion'
 Shell                   = require './shell'
 Fireball                = require './fireball'
@@ -173,7 +174,7 @@ class Tank extends WorldObject
     @shells--
     # FIXME: variable firing distance
     @sim.spawn Shell, this, onWater: @onBoat
-    # FIXME: Play sound.
+    @soundEffect sounds.SHOOTING
 
   turn: ->
     # Determine turn rate.

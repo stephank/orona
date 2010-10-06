@@ -70,6 +70,9 @@ class ClientContext
       @transientMapCells[cell.idx] = cell
     return
 
+  # We don't do anything when the client simulates a sound effect.
+  soundEffect: (sfx, x, y, owner) ->
+
 
 # Exports
 module.exports = ClientContext

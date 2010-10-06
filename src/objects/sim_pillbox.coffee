@@ -5,6 +5,7 @@
  cos, sin, atan2} = Math
 {TILE_SIZE_WORLD} = require '../constants'
 WorldObject       = require '../world_object'
+sounds            = require '../sounds'
 Shell             = require './shell'
 
 
@@ -83,6 +84,7 @@ class SimPillbox extends WorldObject
       dy = target.y + distance / 32 * round(sin(rad) * ceil(target.speed)) - @y
       direction = 256 - atan2(dy, dx) * 256 / (2*PI)
       @sim.spawn Shell, this, {direction}
+      @soundEffect sounds.SHOOTING
     @haveTarget = yes
     @reload = 0
 

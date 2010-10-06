@@ -87,7 +87,7 @@ compileShader = (ctx, type, source) ->
 #### Renderer
 
 class WebglRenderer extends BaseRenderer
-  constructor: (images, sim) ->
+  constructor: (images, soundkit, sim) ->
     super
 
     # Initialize the canvas.

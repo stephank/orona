@@ -32,6 +32,13 @@ class ServerContext
       cell.x, cell.y, cell.type.ascii.charCodeAt(0), cell.life, cell.mine
     ))
 
+  # Record the sound effect.
+  soundEffect: (sfx, x, y, owner) ->
+    owner = if owner? then owner.idx else 65535
+    @changes = @changes.concat(pack('BBHHH', net.SOUNDEFFECT_MESSAGE,
+      sfx, x, y, owner
+    ))
+
   # This method is specific to the server. It serializes all objects and concatenates the
   # updates into one large data block to be sent to the clients.
   dump: ->
