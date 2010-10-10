@@ -86,11 +86,11 @@ class Shell extends BoloObject
         {x, y} = this
         victim.soundEffect sfx
       @world.spawn Explosion, x, y
-      @world.destroy this
+      return @world.destroy this
 
-    return unless @lifespan-- == 0
-    @world.destroy this
-    @world.spawn Explosion, @x, @y
+    if @lifespan-- == 0
+      @world.destroy this
+      @world.spawn Explosion, @x, @y
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
