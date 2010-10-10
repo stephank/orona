@@ -20,7 +20,7 @@ class WorldPillbox extends BoloObject
 
     # Keep track of owner and position changes.
     @on 'netUpdate', (changes) =>
-      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+      if changes.hasOwnProperty('inTank') or changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
       if changes.hasOwnProperty('owner')
         @owner_idx = if @owner then @owner.$.tank_idx else 255
@@ -28,15 +28,15 @@ class WorldPillbox extends BoloObject
 
   # Helper that updates the cell reference, and ensures a back-reference as well.
   updateCell: ->
-    if @cell
+    if @cell?
       delete @cell.pill
       @cell.retile()
-    if @x? and @y?
+    if @inTank
+      @cell = null
+    else
       @cell = @world.map.cellAtWorld(@x, @y)
       @cell.pill = this
       @cell.retile()
-    else
-      @cell = null
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
@@ -56,9 +56,19 @@ class WorldPillbox extends BoloObject
     p 'B', 'coolDown'
     p 'B', 'reload'
 
+  # Called when dropped by a tank, or placed by a builder.
+  placeAt: (cell) ->
+    @inTank = no
+    [@x, @y] = cell.getWorldCoordinates()
+    @updateCell()
+    @reset()
+
   #### World updates
 
   spawn: ->
+    @reset()
+
+  reset: ->
     @coolDown = 32
     @reload = 0
 

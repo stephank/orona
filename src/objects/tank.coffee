@@ -1,14 +1,13 @@
 # The Tank class contains all the logic you need to tread well. (And all the other logic needed
 # to punish you if you don't.)
 
-{round, ceil, min, sqrt
- max, sin, cos, PI}     = Math
-{TILE_SIZE_WORLD}       = require '../constants'
-BoloObject              = require '../object'
-sounds                  = require '../sounds'
-Explosion               = require './explosion'
-Shell                   = require './shell'
-Fireball                = require './fireball'
+{round, floor, ceil, min, sqrt, max, sin, cos, PI} = Math
+{TILE_SIZE_WORLD} = require '../constants'
+BoloObject        = require '../object'
+sounds            = require '../sounds'
+Explosion         = require './explosion'
+Shell             = require './shell'
+Fireball          = require './fireball'
 
 
 class Tank extends BoloObject
@@ -19,7 +18,7 @@ class Tank extends BoloObject
   constructor: (@world) ->
     # Track position updates.
     @on 'netUpdate', (changes) =>
-      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y') or changes.armour == 255
         @updateCell()
 
   # Keep the player list updated.
@@ -42,6 +41,7 @@ class Tank extends BoloObject
     @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
+    @updateCell()
 
     @speed          = 0.00
     @slideTicks     = 0
@@ -328,8 +328,26 @@ class Tank extends BoloObject
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
 
+  # Drop all pillboxes we own in a neat square area.
   dropPillboxes: ->
-    # FIXME
+    pills = pill for pill in @world.map.pills when pill.inTank and pill.owner?.$ == this
+    return if pills.length == 0
+
+    x = @cell.x; sy = @cell.y
+    width = sqrt(pills.length)
+    delta = floor(width / 2)
+    width = round(width)
+    x -= delta; sy -= delta
+    ey = sy + width
+
+    while pills.length != 0
+      for y in [sy...ey]
+        cell = @world.map.cellAtTile(x, y)
+        continue if cell.base? or cell.pill? or cell.isType('|', '}', 'b')
+        return unless pill = pills.pop()
+        pill.placeAt cell
+      x += 1
+    return
 
 
 #### Exports
