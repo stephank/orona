@@ -40,11 +40,17 @@ class WorldPillbox extends BoloObject
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
-    p 'H', 'x'
-    p 'H', 'y'
-
     p 'O', 'owner'
+
+    p 'f', 'inTank'
     p 'f', 'haveTarget'
+
+    unless @inTank
+      p 'H', 'x'
+      p 'H', 'y'
+    else
+      @x = @y = null
+
     p 'B', 'armour'
     p 'B', 'speed'
     p 'B', 'coolDown'
@@ -60,7 +66,18 @@ class WorldPillbox extends BoloObject
     @updateCell()
 
   update: ->
-    return @haveTarget = no if @armour == 0
+    return if @inTank
+    if @armour == 0
+      @haveTarget = no
+
+      for tank in @world.tanks when tank.armour != 255
+        if tank.cell == @cell
+          @ref 'owner', tank
+          @inTank = yes
+          @x = @y = null
+          @updateCell()
+          break
+      return
 
     @reload = min(@speed, @reload + 1)
     if --@coolDown == 0

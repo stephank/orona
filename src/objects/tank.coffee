@@ -151,6 +151,9 @@ class Tank extends BoloObject
     @fixPosition()
     @move()
 
+  destroy: ->
+    @dropPillboxes()
+
   death: ->
     return no unless @armour == 255
 
@@ -318,11 +321,15 @@ class Tank extends BoloObject
 
   kill: ->
     # FIXME: Message the other players. Probably want a scoreboard too.
+    @dropPillboxes()
     @x = @y = null
     @armour = 255
     # The respawnTimer attribute exists only on the server.
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
+
+  dropPillboxes: ->
+    # FIXME
 
 
 #### Exports
