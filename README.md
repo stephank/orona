@@ -35,11 +35,13 @@ set up. Here's the recipe:
  * [CoffeeScript], the language Orona is written in. Tested with 0.9.4.
  * [node.js], a server-side JavaScript framework. Tested with 0.2.0.
  * [Connect], a node.js middleware framework. Tested with 0.2.4.
+ * [Villain], a framework for real-time browser games. Tested with version 0.1.1
 
 A fast way to get going is to install node.js, then install [npm], and use npm to install the rest:
 
     npm install coffee-script
     npm install connect
+    npm install villain
 
 To run Orona, clone it, build it, then run it:
 
