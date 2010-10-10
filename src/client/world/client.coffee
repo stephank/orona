@@ -161,7 +161,7 @@ class BoloClientWorld extends ClientWorld
       if      obj instanceof WorldPillbox then @map.pills.push(obj)
       else if obj instanceof WorldBase    then @map.bases.push(obj)
       else continue
-      obj.cell.retile()
+      obj.cell?.retile()
     return
 
   # Override that reverts map changes as well.
