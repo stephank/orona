@@ -11,7 +11,8 @@ TEAM_COLORS        = require '../../team_colors'
 
 
 class Common2dRenderer extends BaseRenderer
-  constructor: (images, soundkit, sim) ->
+
+  constructor: (world) ->
     super
 
     # Initialize the canvas.

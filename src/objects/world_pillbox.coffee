@@ -4,30 +4,21 @@
  round, ceil, PI
  cos, sin, atan2} = Math
 {TILE_SIZE_WORLD} = require '../constants'
-WorldObject       = require '../world_object'
+BoloObject        = require '../object'
 sounds            = require '../sounds'
 Shell             = require './shell'
 
 
-class SimPillbox extends WorldObject
-  charId: 'p'
+class WorldPillbox extends BoloObject
 
-  # This is a MapObject; it is constructed differently on the authority.
-  constructor: (sim_or_map, x, y, @owner_idx, @armour, @speed) ->
+  # This is a MapObject; it is constructed differently on the server.
+  constructor: (world_or_map, x, y, @owner_idx, @armour, @speed) ->
     if arguments.length == 1
-      @sim = sim_or_map
+      @world = world_or_map
     else
       @x = (x + 0.5) * TILE_SIZE_WORLD; @y = (y + 0.5) * TILE_SIZE_WORLD
 
-    @on 'spawn', =>
-      @coolDown = 32
-      @reload = 0
-
-    # After initialization on client and server set-up the cell reference.
-    @on 'anySpawn', =>
-      @updateCell()
-
-    # Keep our non-synchronized attributes up-to-date on the client.
+    # Keep track of owner and position changes.
     @on 'netUpdate', (changes) =>
       if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
@@ -41,7 +32,7 @@ class SimPillbox extends WorldObject
       delete @cell.pill
       @cell.retile()
     if @x? and @y?
-      @cell = @sim.map.cellAtWorld(@x, @y)
+      @cell = @world.map.cellAtWorld(@x, @y)
       @cell.pill = this
       @cell.retile()
     else
@@ -52,12 +43,21 @@ class SimPillbox extends WorldObject
     p 'H', 'x'
     p 'H', 'y'
 
-    p 'T', 'owner'
+    p 'O', 'owner'
     p 'f', 'haveTarget'
     p 'B', 'armour'
     p 'B', 'speed'
     p 'B', 'coolDown'
     p 'B', 'reload'
+
+  #### World updates
+
+  spawn: ->
+    @coolDown = 32
+    @reload = 0
+
+  anySpawn: ->
+    @updateCell()
 
   update: ->
     return @haveTarget = no if @armour == 0
@@ -69,7 +69,7 @@ class SimPillbox extends WorldObject
     return unless @reload >= @speed
 
     target = null; distance = Infinity
-    for tank in @sim.tanks when tank.armour != 255 and not @owner?.$.isAlly(tank)
+    for tank in @world.tanks when tank.armour != 255 and not @owner?.$.isAlly(tank)
       dx = tank.x - @x; dy = tank.y - @y
       d = sqrt(dx*dx + dy*dy)
       if d <= 2048 and d < distance
@@ -83,7 +83,7 @@ class SimPillbox extends WorldObject
       dx = target.x + distance / 32 * round(cos(rad) * ceil(target.speed)) - @x
       dy = target.y + distance / 32 * round(sin(rad) * ceil(target.speed)) - @y
       direction = 256 - atan2(dy, dx) * 256 / (2*PI)
-      @sim.spawn Shell, this, {direction}
+      @world.spawn Shell, this, {direction}
       @soundEffect sounds.SHOOTING
     @haveTarget = yes
     @reload = 0
@@ -99,8 +99,6 @@ class SimPillbox extends WorldObject
     @armour = max(0, @armour - 5)
     @cell.retile()
 
-SimPillbox.register()
-
 
 #### Exports
-module.exports = SimPillbox
+module.exports = WorldPillbox

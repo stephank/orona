@@ -2,27 +2,21 @@
 
 {min, max}        = Math
 {TILE_SIZE_WORLD} = require '../constants'
-WorldObject       = require '../world_object'
+BoloObject        = require '../object'
 
 
-class SimBase extends WorldObject
-  charId: 'b'
+class WorldBase extends BoloObject
 
-  # This is a MapObject; it is constructed differently on the authority.
-  constructor: (sim_or_map, x, y, @owner_idx, @armour, @shells, @mines) ->
+  # This is a MapObject; it is constructed differently on the server.
+  constructor: (world_or_map, x, y, @owner_idx, @armour, @shells, @mines) ->
     if arguments.length == 1
-      @sim = sim_or_map
+      @world = world_or_map
     else
       @x = (x + 0.5) * TILE_SIZE_WORLD; @y = (y + 0.5) * TILE_SIZE_WORLD
       # Override the cell's type.
-      sim_or_map.cellAtTile(x, y).setType '=', no, -1
+      world_or_map.cellAtTile(x, y).setType '=', no, -1
 
-    # After initialization on client and server set-up the cell reference.
-    @on 'anySpawn', =>
-      @cell = @sim.map.cellAtWorld(@x, @y)
-      @cell.base = this
-
-    # Keep our non-synchronized attributes up-to-date on the client.
+    # Keep track of owner changes.
     @on 'netUpdate', (changes) =>
       if changes.hasOwnProperty('owner')
         @updateOwner()
@@ -33,17 +27,24 @@ class SimBase extends WorldObject
       p 'H', 'x'
       p 'H', 'y'
 
-    p 'T', 'owner'
-    p 'T', 'refueling'
+    p 'O', 'owner'
+    p 'O', 'refueling'
     if @refueling
       p 'B', 'refuelCounter'
     p 'B', 'armour'
     p 'B', 'shells'
     p 'B', 'mines'
 
-  takeShellHit: (shell) ->
-    @armour = max(0, @armour - 5)
-    sounds.SHOT_BUILDING
+  # Helper for common stuff to do when the owner changes.
+  updateOwner: ->
+    @owner_idx = if @owner then @owner.$.tank_idx else 255
+    @cell.retile()
+
+  #### World updates
+
+  anySpawn: ->
+    @cell = @world.map.cellAtWorld(@x, @y)
+    @cell.base = this
 
   update: ->
     if @refueling and (@refueling.$.cell != @cell or @refueling.$.armour == 255)
@@ -72,7 +73,7 @@ class SimBase extends WorldObject
   # Look for someone to refuel, and check if he's claiming us too. Be careful to prevent rapid
   # reclaiming if two tanks are on the same tile.
   findSubject: ->
-    tanks = tank for tank in @sim.tanks when tank.armour != 255 and tank.cell == @cell
+    tanks = tank for tank in @world.tanks when tank.armour != 255 and tank.cell == @cell
     for tank in tanks
       if @owner?.$.isAlly(tank)
         @ref 'refueling', tank
@@ -90,13 +91,10 @@ class SimBase extends WorldObject
           break
     return
 
-  # Helper for common stuff to do when the owner changes.
-  updateOwner: ->
-    @owner_idx = if @owner then @owner.$.tank_idx else 255
-    @cell.retile()
-
-SimBase.register()
+  takeShellHit: (shell) ->
+    @armour = max(0, @armour - 5)
+    sounds.SHOT_BUILDING
 
 
 #### Exports
-module.exports = SimBase
+module.exports = WorldBase

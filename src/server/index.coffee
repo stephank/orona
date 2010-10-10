@@ -1,39 +1,69 @@
 # This module contains all the juicy code related to the server. It exposes a factory function
 # that returns a Connect-based HTTP server. A single server is capable of hosting multiple games,
-# sharing the interval timer and the lobby across these games. Each game is represented by an
-# instance of the `Game` class, which keeps track of a single simulation and its clients.
+# sharing the interval timer and the lobby across these games.
 
 
 fs               = require 'fs'
 url              = require 'url'
 connect          = require 'connect'
+Loop             = require 'villain/loop'
+ServerWorld      = require 'villain/world/net/server'
+{pack}           = require 'villain/struct'
 WebSocket        = require './websocket'
-ServerContext    = require './net'
-Simulation       = require '../simulation'
+helpers          = require '../helpers'
+BoloWorldMixin   = require '../world_mixin'
+allObjects       = require '../objects/all'
 Tank             = require '../objects/tank'
-{SimMap}         = require '../sim_map'
+WorldMap         = require '../world_map'
 net              = require '../net'
-{pack}           = require '../struct'
 {TICK_LENGTH_MS} = require '../constants'
 
 
-class Game
-  constructor: (map) ->
-    @sim = new Simulation(map)
-    @netctx = new ServerContext(@sim)
+## Server world
+
+class BoloServerWorld extends ServerWorld
+
+  authority: yes
+
+  constructor: (@map) ->
+    super
+    @boloInit()
+    @map.world = this
     @oddTick = no
+    @spawnMapObjects()
+
+  #### Callbacks
+
+  tick: ->
+    super
+
+    WebSocket.prototype.buffered()
+
+    @sendChanges()
+    @sendUpdate() if @oddTick = !@oddTick
+
+    for {client} in @tanks when client != null
+      client.heartbeatTimer++ if @oddTick
+      client.flush()
+
+  # Emit a sound effect from the given location. `owner` is optional.
+  soundEffect: (sfx, x, y, owner) ->
+    owner = if owner? then owner.idx else 65535
+    @changes.push ['soundEffect', sfx, x, y, owner]
+
+  # Record map changes.
+  mapChanged: (cell, oldType, hadMine, oldLife) ->
+    asciiCode = cell.type.ascii.charCodeAt(0)
+    @changes.push ['mapChange', cell.x, cell.y, asciiCode, cell.life, cell.mine]
 
   #### Connection handling.
 
   onConnect: (ws) ->
-    # In order to create the tank object, we need to be in the networking context.
-    tank = net.inContext @netctx, => @sim.spawn Tank
-    tank.client = null
-    data = new Buffer(@netctx.changes)
-    @broadcast data.toString('base64')
+    tank = @spawn Tank
+    @sendChanges()
+    tank.client = ws
 
     # Set-up the websocket parameters.
-    tank.client = ws
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
     ws.on 'message', (message) => @onMessage(tank, message)
@@ -44,14 +74,15 @@ class Game
     ws.buffered =>
       # Send the current map state. We don't send pillboxes and bases, because the client
       # receives create messages for those, and then fills the map structure based on those.
-      mapData = new Buffer(@sim.map.dump(noPills: yes, noBases: yes))
+      mapData = new Buffer(@map.dump noPills: yes, noBases: yes)
       ws.sendMessage mapData.toString('base64')
 
       # To synchronize the object list to the client, we simulate creation of all objects.
-      net.inContext @netctx, =>
-        for obj in @sim.objects
-          net.created obj
-      data = new Buffer(@netctx.changes)
+      data = []
+      for obj in @objects
+        data = data.concat [net.CREATE_MESSAGE, obj._net_type_idx]
+      data = data.concat [net.UPDATE_MESSAGE], @dump(yes)
+      data = new Buffer(data)
       ws.sendMessage data.toString('base64')
 
       # Send the welcome message, along with the index of this player's tank.
@@ -72,13 +103,10 @@ class Game
     @onDisconnect(tank)
 
   onDisconnect: (tank) ->
-    # In order to destroy the tank object, we need to be in the networking context.
-    net.inContext @netctx, => @sim.destroy tank
-    data = new Buffer(@netctx.changes)
-    @broadcast data.toString('base64')
+    @destroy tank
 
   onMessage: (tank, message) ->
-    return unless tank.client
+    return unless tank.client?
     switch message
       when '' then tank.client.heartbeatTimer = 0
       when net.START_TURNING_CCW  then tank.turningCounterClockwise = yes
@@ -93,69 +121,81 @@ class Game
       when net.STOP_SHOOTING      then tank.shooting = no
       else @onError(tank, 'Received an unknown command')
 
+  #### Helpers
+
   # Broadcast a message to all connected clients.
   broadcast: (message) ->
-    for {client} in @sim.tanks when client != null
+    for {client} in @tanks when client?
       client.sendMessage(message)
     return
 
   # An unreliable broadcast message is a message that may be dropped. Each client sends a periodic
   # hearbeat. If not received in a timely fashion, we drop some of the client's messages.
   broadcastUnreliable: (message) ->
-    for {client} in @sim.tanks when client != null
+    for {client} in @tanks when client?
       # Ticks are every 20ms. Network updates are every odd tick, i.e. every 40ms.
       # Allow a client to lag 20 updates behind, i.e. 800ms, before dropping messages.
       client.sendMessage(message) unless client.heartbeatTimer > 20
     return
 
-  #### Simulation updates.
+  # Send critical updates.
+  sendChanges: ->
+    return unless @changes.length > 0
+    data = []
+    for change in @changes
+      type = change.shift()
+      data = switch type
+        when 'create'
+          data.concat [net.CREATE_MESSAGE],      pack.apply(null,     ['B'].concat change)
+        when 'destroy'
+          data.concat [net.DESTROY_MESSAGE],     pack.apply(null,     ['H'].concat change)
+        when 'mapChange'
+          data.concat [net.MAPCHANGE_MESSAGE],   pack.apply(null, ['BBBBf'].concat change)
+        when 'soundEffect'
+          data.concat [net.SOUNDEFFECT_MESSAGE], pack.apply(null,  ['BHHH'].concat change)
+    data = new Buffer(data)
+    @broadcast data.toString('base64')
+    @changes = []
 
-  tick: ->
-    net.inContext @netctx, => @sim.tick()
+  # Send an update.
+  sendUpdate: ->
+    data = [net.UPDATE_MESSAGE].concat @dump()
+    data = new Buffer(data)
+    @broadcastUnreliable data.toString('base64')
 
-    # Buffer everything to minimize the number of packets.
-    WebSocket.prototype.buffered()
-
-    # Send critical updates.
-    if @netctx.changes.length > 0
-      data = new Buffer(@netctx.changes)
-      @broadcast data.toString('base64')
-
-    # Send attribute updates at half the tickrate.
-    if @oddTick = !@oddTick
-      data = new Buffer(@netctx.dump())
-      @broadcastUnreliable data.toString('base64')
-
-    for {client} in @sim.tanks when client != null
-      # Increment the heartbeat counters.
-      client.heartbeatTimer++ if @oddTick
-      # Flush all buffers.
-      client.flush()
-
-    return
+helpers.extend BoloServerWorld.prototype, BoloWorldMixin
+allObjects.registerWithWorld BoloServerWorld.prototype
 
 
-#### HTTP server application
+## HTTP server application
 
 class Application
+
   constructor: ->
     @games = []
-    @timer = setInterval =>
-      for game in @games
-        game.tick()
-      return
-    , TICK_LENGTH_MS
 
-    # FIXME: this is for the demo
-    data = fs.readFileSync 'maps/everard-island.map'
-    map = SimMap.load data
-    @games.push new Game(map)
-
-  destroy: ->
     # FIXME: The interval should be deactivated automatically when
     # there are no games. (And reactivated once a new one starts.)
     # Maybe we shouldn't update empty games either?
-    clearInterval @timer
+    @loop = new Loop(this)
+    @loop.tickRate = TICK_LENGTH_MS
+    @loop.start()
+
+    # FIXME: this is for the demo
+    data = fs.readFileSync 'maps/everard-island.map'
+    map = WorldMap.load data
+    @games.push new BoloServerWorld(map)
+
+  #### Loop callbacks
+
+  tick: ->
+    for game in @games
+      game.tick()
+    return
+
+  idle: ->
+
+  #### WebSocket handling
 
   # Determine what will handle a WebSocket's 'connect' event, based on the requested resource.
   getSocketPathHandler: (path) ->
@@ -182,7 +222,7 @@ class Application
     ws.on 'connect', -> handler(ws)
 
 
-#### Entry point
+## Entry point
 
 # Helper middleware to direct from the root.
 redirectMiddleware = (req, res, next) ->
@@ -214,5 +254,5 @@ createBoloServer = ->
   server
 
 
-#### Exports
+## Exports
 module.exports = createBoloServer

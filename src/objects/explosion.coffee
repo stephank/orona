@@ -1,19 +1,12 @@
 # An explosion is really just a static animation.
 
+{floor}    = Math
+BoloObject = require '../object'
 
-{floor}        = Math
-WorldObject    = require '../world_object'
 
+class Explosion extends BoloObject
 
-class Explosion extends WorldObject
-  charId: 'E'
   styled: false
-
-  constructor: ->
-    super
-
-    @on 'spawn', (@x, @y) =>
-      @lifespan = 23
 
   serialization: (isCreate, p) ->
     if isCreate
@@ -21,10 +14,6 @@ class Explosion extends WorldObject
       p 'H', 'y'
 
     p 'B', 'lifespan'
-
-  update: ->
-    if @lifespan-- == 0
-      @sim.destroy(this)
 
   getTile: ->
     switch floor(@lifespan / 3)
@@ -37,7 +26,14 @@ class Explosion extends WorldObject
       when 1 then [18, 4]
       else [19, 4]
 
-Explosion.register()
+  #### World updates
+
+  spawn: (@x, @y) ->
+    @lifespan = 23
+
+  update: ->
+    if @lifespan-- == 0
+      @world.destroy(this)
 
 
 #### Exports

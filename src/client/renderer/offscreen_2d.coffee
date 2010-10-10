@@ -24,6 +24,7 @@ SEGMENT_SIZE_PIXEL = SEGMENT_SIZE_TILES * TILE_SIZE_PIXELS
 
 # This class represents a single map segment.
 class CachedSegment
+
   constructor: (@renderer, x, y) ->
     # Tile bounds
     @sx = x * SEGMENT_SIZE_TILES
@@ -56,7 +57,7 @@ class CachedSegment
     @ctx.translate(-@psx, -@psy)
 
     # Iterate the map tiles in this segment, and draw them.
-    @renderer.sim.map.each (cell) =>
+    @renderer.world.map.each (cell) =>
       @onRetile(cell, cell.tile[0], cell.tile[1])
     , @sx, @sy, @ex, @ey
 
@@ -77,7 +78,8 @@ class CachedSegment
 
 # The off-screen renderer keeps a 2D array of instances of MapSegment.
 class Offscreen2dRenderer extends Common2dRenderer
-  constructor: (images, soundkit, sim) ->
+
+  constructor: (world) ->
     super
 
     @cache = new Array(MAP_SIZE_SEGMENTS)

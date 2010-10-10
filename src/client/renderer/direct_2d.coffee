@@ -9,6 +9,7 @@ Common2dRenderer   = require './common_2d'
 
 
 class Direct2dRenderer extends Common2dRenderer
+
   onRetile: (cell, tx, ty) ->
     # Simply cache the tile index.
     cell.tile = [tx, ty]
@@ -25,7 +26,7 @@ class Direct2dRenderer extends Common2dRenderer
     ety =  ceil(ey / TILE_SIZE_PIXELS)
 
     # Iterate each tile in view.
-    @sim.map.each (cell) =>
+    @world.map.each (cell) =>
       if obj = cell.pill || cell.base
         @drawStyledTile cell.tile[0], cell.tile[1], obj.owner?.$.team,
             cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS

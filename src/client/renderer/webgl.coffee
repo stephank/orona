@@ -14,7 +14,7 @@ TEAM_COLORS          = require '../../team_colors'
 
 
 
-#### Shaders
+## Shaders
 
 # The vertex shader simply applies the transformation matrix, and interpolates texture coordinates.
 VERTEX_SHADER =
@@ -84,10 +84,11 @@ compileShader = (ctx, type, source) ->
   shader
 
 
-#### Renderer
+## Renderer
 
 class WebglRenderer extends BaseRenderer
-  constructor: (images, soundkit, sim) ->
+
+  constructor: (world) ->
     super
 
     # Initialize the canvas.
@@ -330,7 +331,7 @@ class WebglRenderer extends BaseRenderer
 
     # Only draw unstyled tiles, but build an index of styled tiles by color.
     gl.uniform1i(@uUseStyled, 0)
-    @sim.map.each (cell) =>
+    @world.map.each (cell) =>
       if obj = cell.pill || cell.base
         style = obj.owner?.$.team
         style = 255 unless TEAM_COLORS[style]
@@ -360,5 +361,5 @@ class WebglRenderer extends BaseRenderer
       flushArray()
 
 
-#### Exports
+## Exports
 module.exports = WebglRenderer

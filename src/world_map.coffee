@@ -1,5 +1,5 @@
 # This module extends the classes defined in the `map` module, and provides the logic, data and
-# hooks that are needed for a game to be simulated on a map.
+# hooks that are needed for a full game.
 
 
 {round, random,
@@ -9,12 +9,13 @@
 {Map, TERRAIN_TYPES} = require './map'
 net                  = require './net'
 sounds               = require './sounds'
-WorldObject          = require './world_object'
-SimPillbox           = require './objects/sim_pillbox'
-SimBase              = require './objects/sim_base'
+WorldPillbox         = require './objects/world_pillbox'
+WorldBase            = require './objects/world_base'
 
 
-# Extend `TERRAIN_TYPES` with additional attributes that matter to the simulation.
+## Terrain data
+
+# Extend `TERRAIN_TYPES` with additional attributes that matter to the game.
 
 TERRAIN_TYPE_ATTRIBUTES =
   '|': { tankSpeed:  0, tankTurn: 0.00, manSpeed:  0 }
@@ -38,9 +39,10 @@ extendTerrainMap = ->
 extendTerrainMap()
 
 
-#### Cell class
+## Cell class
 
-class SimMapCell extends Map::CellClass
+class WorldMapCell extends Map::CellClass
+
   constructor: (map, x, y) ->
     super
     @life = 0
@@ -93,7 +95,7 @@ class SimMapCell extends Map::CellClass
       when ':' then 5
       when '~' then 4
       else 0
-    net.mapChanged this, oldType, hadMine, oldLife
+    @map.world?.mapChanged this, oldType, hadMine, oldLife
 
   takeShellHit: (shell) ->
     # FIXME: check for a mine
@@ -107,7 +109,7 @@ class SimMapCell extends Map::CellClass
           when '~' then ' '
         @setType nextType
       else
-        net.mapChanged this, @type, @mine
+        @map.world?.mapChanged this, @type, @mine
     else if @isType '#'
       @setType '.'
       sfx = sounds.SHOT_TREE
@@ -134,27 +136,13 @@ class SimMapCell extends Map::CellClass
       @setType '%'
 
 
-#### Map objects
+## Map class
 
-# The interface for map objects, which is a spceial case of a WorldObject. Map objects are tracked
-# as regular objects for network synchronization. The difference with regular objects is mostly in
-# the constructor and the extra `postMapObjectInitialize` method. They are also not drawn like
-# regular objects, but drawn as part of the map.
-#
-# The constructor is special because these objects are now actually `spawn`'d, but instead are
-# created during map load, at which point the simulation is not yet available. The solution is the
-# extra method `postMapObjectInitialize` which receives the simulation reference.
+class WorldMap extends Map
 
-class SimMapObject
-  postMapObjectInitialize: (sim) ->
-
-
-#### Map class
-
-class SimMap extends Map
-  CellClass: SimMapCell
-  PillboxClass: SimPillbox
-  BaseClass: SimBase
+  CellClass: WorldMapCell
+  PillboxClass: WorldPillbox
+  BaseClass: WorldBase
 
   # Get the cell at the given pixel coordinates, or return a dummy cell.
   cellAtPixel: (x, y) ->
@@ -168,6 +156,5 @@ class SimMap extends Map
     @starts[round(random() * (@starts.length - 1))]
 
 
-#### Exports
-exports.SimMapObject = SimMapObject
-exports.SimMap = SimMap
+## Exports
+module.exports = WorldMap

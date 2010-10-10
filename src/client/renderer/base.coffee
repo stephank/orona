@@ -13,10 +13,13 @@ sounds             = require '../../sounds'
 
 
 class BaseRenderer
-  # The constructor takes a reference to the Image resources and the Simulation it needs to draw.
-  # Once the constructor finishes, `Map#setView` is called to hook up this renderer instance, which
-  # causes onRetile to be invoked once for each tile to initialize.
-  constructor: (@images, @soundkit, @sim) ->
+
+  # The constructor takes a reference to the World it needs to draw. Once the constructor finishes,
+  # `Map#setView` is called to hook up this renderer instance, which causes onRetile to be invoked
+  # once for each tile to initialize.
+  constructor: (@world) ->
+    @images = @world.images
+    @soundkit = @world.soundkit
     @lastCenter = [0, 0]
 
   # This methods takes x and y coordinates to center the screen on. The callback provided should be
@@ -46,8 +49,8 @@ class BaseRenderer
 
   # Draw a single frame.
   draw: ->
-    {x, y} = @sim.player
-    {x, y} = @sim.player.fireball.$ if @sim.player.fireball?
+    {x, y} = @world.player
+    {x, y} = @world.player.fireball.$ if @world.player.fireball?
 
     # Remember or restore the last center position. We use this after tank
     # death, so as to keep drawing something useful while we fade.
@@ -59,7 +62,7 @@ class BaseRenderer
     @centerOn x, y, (left, top, width, height) =>
       # Draw all canvas elements.
       @drawMap(left, top, width, height)
-      for obj in @sim.objects when obj.styled? and obj.x? and obj.y?
+      for obj in @world.objects when obj.styled? and obj.x? and obj.y?
         [tx, ty] = obj.getTile()
         ox = round(obj.x / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
         oy = round(obj.y / PIXEL_SIZE_WORLD) - TILE_SIZE_PIXELS / 2
@@ -73,9 +76,8 @@ class BaseRenderer
 
   # Play a sound effect.
   playSound: (sfx, x, y, owner) ->
-    owner = @sim.objects[owner]
     mode =
-      if owner == @sim.player then 'Self'
+      if owner == @world.player then 'Self'
       else
         dx = x - @lastCenter[0]; dy = y - @lastCenter[1]
         dist = sqrt(dx*dx + dy*dy)
@@ -106,9 +108,9 @@ class BaseRenderer
     # FIXME: variable firing distance
     # FIXME: hide when dead
     distance = 7 * TILE_SIZE_PIXELS
-    rad = (256 - @sim.player.direction) * 2 * PI / 256
-    x = round(@sim.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
-    y = round(@sim.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
+    rad = (256 - @world.player.direction) * 2 * PI / 256
+    x = round(@world.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
+    y = round(@world.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
 
     @drawTile 17, 4, x, y
 
@@ -119,12 +121,12 @@ class BaseRenderer
     # Create the pillbox status indicator.
     container = $('<div/>', id: 'pillStatus').appendTo(@hud)
     $('<div/>', class: 'deco').appendTo(container)
-    $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in @sim.map.pills
+    $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in @world.map.pills
 
     # Create the base status indicator.
     container = $('<div/>', id: 'baseStatus').appendTo(@hud)
     $('<div/>', class: 'deco').appendTo(container)
-    $('<div/>', class: 'base').appendTo(container).data('base', base) for base in @sim.map.bases
+    $('<div/>', class: 'base').appendTo(container).data('base', base) for base in @world.map.bases
 
     # Show WIP notice. This is really a temporary hack, so FIXME someday.
     if location.hostname.split('.')[1] == 'github'

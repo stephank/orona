@@ -100,8 +100,8 @@ class WebSocket extends EventEmitter
     @connection.write md5
 
     # Flush queued messages, and clean up stuff we no longer need.
-    @flush()
     delete @request
+    @flush()
 
     # Signal the user.
     @emit 'connect'
@@ -156,7 +156,6 @@ class WebSocket extends EventEmitter
   buffered: (cb) ->
     if @queued?
       return cb() if cb?
-      return
 
     if @connection
       @queued = []

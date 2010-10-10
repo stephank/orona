@@ -1,53 +1,44 @@
 # The Tank class contains all the logic you need to tread well. (And all the other logic needed
 # to punish you if you don't.)
 
-
 {round, ceil, min, sqrt
  max, sin, cos, PI}     = Math
 {TILE_SIZE_WORLD}       = require '../constants'
-WorldObject             = require '../world_object'
-net                     = require '../net'
+BoloObject              = require '../object'
 sounds                  = require '../sounds'
 Explosion               = require './explosion'
 Shell                   = require './shell'
 Fireball                = require './fireball'
 
 
-class Tank extends WorldObject
-  charId: 'T'
+class Tank extends BoloObject
+
   styled: true
 
   # Tanks are only ever spawned and destroyed on the server.
-  constructor: (@sim) ->
-    @on 'spawn', =>
-      # FIXME: Proper way to select teams.
-      @team = @sim.tanks.length % 2
-      # Initialize.
-      @reset()
-
-    # Keep the player list updated.
-    @on 'anySpawn', =>
-      @updateCell()
-      @sim.addTank(this)
-    @on 'finalize', =>
-      @sim.removeTank(this)
-
+  constructor: (@world) ->
     # Track position updates.
     @on 'netUpdate', (changes) =>
       if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
 
+  # Keep the player list updated.
+  anySpawn: ->
+    @updateCell()
+    @world.addTank(this)
+    @on 'finalize', => @world.removeTank(this)
+
   # Helper, called in several places that change tank position.
   updateCell: ->
     @cell =
       if @x? and @y?
-        @sim.map.cellAtWorld @x, @y
+        @world.map.cellAtWorld @x, @y
       else
         null
 
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->
-    startingPos = @sim.map.getRandomStart()
+    startingPos = @world.map.getRandomStart()
     @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
     @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
     @direction = startingPos.direction * 16
@@ -133,7 +124,7 @@ class Tank extends WorldObject
     @armour -= 5
     if @armour < 0
       largeExplosion = @shells + @mines > 20
-      @ref 'fireball', @sim.spawn(Fireball, @x, @y, shell.direction, largeExplosion)
+      @ref 'fireball', @world.spawn(Fireball, @x, @y, shell.direction, largeExplosion)
       @kill()
     else
       @slideTicks = 8
@@ -144,7 +135,13 @@ class Tank extends WorldObject
     sounds.HIT_TANK
 
 
-  #### Simulation update
+  #### World updates
+
+  spawn: ->
+    # FIXME: Proper way to select teams.
+    @team = @world.tanks.length % 2
+    # Initialize.
+    @reset()
 
   update: ->
     return if @death()
@@ -158,7 +155,7 @@ class Tank extends WorldObject
     return no unless @armour == 255
 
     # Count down ticks from 255, before respawning.
-    if net.isAuthority() and --@respawnTimer == 0
+    if @world.authority and --@respawnTimer == 0
       delete @respawnTimer
       @reset()
       return no
@@ -173,7 +170,7 @@ class Tank extends WorldObject
     @reload = 13
     @shells--
     # FIXME: variable firing distance
-    @sim.spawn Shell, this, onWater: @onBoat
+    @world.spawn Shell, this, onWater: @onBoat
     @soundEffect sounds.SHOOTING
 
   turn: ->
@@ -229,7 +226,7 @@ class Tank extends WorldObject
       @speed = max(0.00, @speed - 1)
 
     # Also check if we're on top of another tank.
-    for other in @sim.tanks when other != this and other.armour != 255
+    for other in @world.tanks when other != this and other.armour != 255
       dx = other.x - @x; dy = other.y - @y
       distance = sqrt(dx*dx + dy*dy)
       continue if distance > 255
@@ -258,14 +255,14 @@ class Tank extends WorldObject
     # Check if we're running into an obstacle in either axis direction.
     unless dx == 0
       ahead = if dx > 0 then newx + 64 else newx - 64
-      ahead = @sim.map.cellAtWorld(ahead, newy)
+      ahead = @world.map.cellAtWorld(ahead, newy)
       unless ahead.getTankSpeed(this) == 0
         slowDown = no
         @x = newx unless @onBoat and !ahead.isType(' ', '^') and @speed < 16
 
     unless dy == 0
       ahead = if dy > 0 then newy + 64 else newy - 64
-      ahead = @sim.map.cellAtWorld(newx, ahead)
+      ahead = @world.map.cellAtWorld(newx, ahead)
       unless ahead.getTankSpeed(this) == 0
         slowDown = no
         @y = newy unless @onBoat and !ahead.isType(' ', '^') and @speed < 16
@@ -300,8 +297,8 @@ class Tank extends WorldObject
       @cell.setType(' ', no, 0)
       # Create a small explosion at the center of the tile.
       x = (@cell.x + 0.5) * TILE_SIZE_WORLD; y = (@cell.y + 0.5) * TILE_SIZE_WORLD
-      @sim.spawn Explosion, x, y
-      @sim.soundEffect sounds.SHOT_BUILDING, x, y
+      @world.spawn Explosion, x, y
+      @world.soundEffect sounds.SHOT_BUILDING, x, y
     else
       # Leave a boat if we were on a river.
       if oldcell.isType(' ')
@@ -315,7 +312,7 @@ class Tank extends WorldObject
     @onBoat = yes
 
   sink: ->
-    @sim.soundEffect sounds.TANK_SINKING, @x, @y
+    @world.soundEffect sounds.TANK_SINKING, @x, @y
     # FIXME: Somehow blame a killer, if instigated by a shot?
     @kill()
 
@@ -326,8 +323,6 @@ class Tank extends WorldObject
     # The respawnTimer attribute exists only on the server.
     # It is deleted once the timer is triggered, which happens in death().
     @respawnTimer = 255
-
-Tank.register()
 
 
 #### Exports

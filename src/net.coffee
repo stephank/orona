@@ -14,59 +14,6 @@
 # (currently) contains a complete set of updates for all world objects. There are no differential
 # updates, so it's okay for the underlying transport to drop some of these.
 
-# In order to do the right thing in different situations without complicating simulation code,
-# a global networking context object is used that handles all networking state. The simulation
-# only calls into a couple of methods, and is ignorant of what happens from there.
-
-
-# The interface provided by network contexts. Unused, but here for documentation.
-class Context
-  constructor: (sim) ->
-
-  # This class attribute tells whether the context type is for a simulation authority.
-  # The simulation will leave certain actions only to the authority, such as respawning.
-  # It should be simply yes or no.
-  authority: null
-
-  # Called when the context is activated. See 'inContext' for more information.
-  activated: ->
-
-  # Notification sent by the simulation that the given object was created.
-  created: (obj) ->
-
-  # Notification sent by the simulation that the given object was destroyed.
-  destroyed: (obj) ->
-
-  # Notification sent by the simulation that the given map cell has changed.
-  mapChanged: (cell, oldType, hadMine, oldLife) ->
-
-  # Simulation is trying to play a sound effect. The `owner` parameter is optional.
-  soundEffect: (sfx, x, y, owner) ->
-
-
-# All updates are processed by the active context.
-activeContext = null
-
-# Call +cb+ within the networking context +context+. This usually wraps calls to things that
-# alter the simulation.
-inContext = (ctx, cb) ->
-  activeContext = ctx
-  ctx.activated()
-  retval = cb()
-  activeContext = null
-  # Pass-through the return value of the callback.
-  retval
-
-
-#### Exports
-exports.inContext       = inContext
-
-# Delegate the functions used by the simulation to the active context.
-exports.isAuthority = -> if activeContext? then activeContext.authority else yes
-exports.created     = (obj) -> activeContext?.created(obj)
-exports.destroyed   = (obj) -> activeContext?.destroyed(obj)
-exports.mapChanged  = (cell, oldType, hadMine) -> activeContext?.mapChanged(cell, oldType, hadMine)
-exports.soundEffect = (sfx, x, y, owner) -> activeContext?.soundEffect(sfx, x, y, owner)
 
 # These are the server message identifiers both sides need to know about.
 # The server sends binary data (encoded as base64). So we need to compare character codes.

@@ -8,7 +8,11 @@
 <script>
 (function() {
   var loaded = function() {
-    $(function() { Bolo = require('bolo/client').init(); });
+    $(function() {
+      var World = require('bolo/client');
+      world = new World();
+      world.start();
+    });
   };
   applicationCache.addEventListener('cached',   loaded, false);
   applicationCache.addEventListener('noupdate', loaded, false);
