@@ -132,6 +132,7 @@ class Tank extends BoloObject
       if @onBoat
         @onBoat = no
         @speed = 0
+        @sink() if @cell.isType('^')
     sounds.HIT_TANK
 
 
