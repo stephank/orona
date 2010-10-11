@@ -1,0 +1,35 @@
+CACHE MANIFEST
+# Version v0.1.1-150-g0876ade
+bolo.html
+http://code.jquery.com/jquery-1.4.2.min.js
+bolo-bundle.js
+bolo.css
+http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png
+img/styled.png
+img/base.png
+img/small.png
+img/overlay.png
+snd/hit_tank_self.ogg
+snd/hit_tank_far.ogg
+snd/hit_tank_near.ogg
+snd/farming_tree_near.ogg
+snd/bubbles.ogg
+snd/man_lay_mine_near.ogg
+snd/big_explosion_far.ogg
+snd/man_building_near.ogg
+snd/shot_building_near.ogg
+snd/big_explosion_near.ogg
+snd/tank_sinking_near.ogg
+snd/man_dying_near.ogg
+snd/shooting_near.ogg
+snd/shooting_far.ogg
+snd/mine_explosion_far.ogg
+snd/man_building_far.ogg
+snd/man_dying_far.ogg
+snd/shooting_self.ogg
+snd/tank_sinking_far.ogg
+snd/shot_tree_near.ogg
+snd/shot_building_far.ogg
+snd/shot_tree_far.ogg
+snd/farming_tree_far.ogg
+snd/mine_explosion_near.ogg
