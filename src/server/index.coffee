@@ -48,19 +48,19 @@ class BoloServerWorld extends ServerWorld
 
   # Emit a sound effect from the given location. `owner` is optional.
   soundEffect: (sfx, x, y, owner) ->
-    owner = if owner? then owner.idx else 65535
-    @changes.push ['soundEffect', sfx, x, y, owner]
+    ownerIdx = if owner? then owner.idx else 65535
+    @changes.push ['soundEffect', sfx, x, y, ownerIdx]
 
   # Record map changes.
   mapChanged: (cell, oldType, hadMine, oldLife) ->
-    asciiCode = cell.type.ascii.charCodeAt(0)
-    @changes.push ['mapChange', cell.x, cell.y, asciiCode, cell.life, cell.mine]
+    ascii = cell.type.ascii
+    @changes.push ['mapChange', cell.x, cell.y, ascii, cell.life, cell.mine]
 
   #### Connection handling.
 
   onConnect: (ws) ->
     tank = @spawn Tank
-    @sendChanges()
+    @sendChanges(yes)
     tank.client = ws
 
     # Set-up the websocket parameters.
@@ -138,21 +138,28 @@ class BoloServerWorld extends ServerWorld
       client.sendMessage(message) unless client.heartbeatTimer > 20
     return
 
-  # Send critical updates.
-  sendChanges: ->
+  # Send critical updates. The optional `fullCreate` flag is used to transmit create messages that
+  # include state, which is handy when this method is used outside of the tick-loop.
+  sendChanges: (fullCreate) ->
     return unless @changes.length > 0
     data = []
     for change in @changes
       type = change.shift()
-      data = switch type
+      switch type
         when 'create'
-          data.concat [net.CREATE_MESSAGE],      pack.apply(null,     ['B'].concat change)
+          [obj, idx] = change
+          data = data.concat [net.CREATE_MESSAGE], pack('B', obj._net_type_idx)
+          data = data.concat [net.TINY_UPDATE_MESSAGE], pack('H', idx), @dump(obj) if fullCreate
         when 'destroy'
-          data.concat [net.DESTROY_MESSAGE],     pack.apply(null,     ['H'].concat change)
+          [obj, idx] = change
+          data = data.concat [net.DESTROY_MESSAGE], pack('H', idx)
         when 'mapChange'
-          data.concat [net.MAPCHANGE_MESSAGE],   pack.apply(null, ['BBBBf'].concat change)
+          [x, y, ascii, life, mine] = change
+          asciiCode = ascii.charCodeAt(0)
+          data = data.concat [net.MAPCHANGE_MESSAGE], pack('BBBBf', x, y, asciiCode, life, mine)
         when 'soundEffect'
-          data.concat [net.SOUNDEFFECT_MESSAGE], pack.apply(null,  ['BHHH'].concat change)
+          [sfx, x, y, ownerIdx] = change
+          data = data.concat [net.SOUNDEFFECT_MESSAGE], pack('BHHH', sfx, x, y, ownerIdx)
     data = new Buffer(data)
     @broadcast data.toString('base64')
     @changes = []

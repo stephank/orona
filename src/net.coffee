@@ -22,6 +22,7 @@ exports.CREATE_MESSAGE      = 'C'.charCodeAt(0)
 exports.DESTROY_MESSAGE     = 'D'.charCodeAt(0)
 exports.MAPCHANGE_MESSAGE   = 'M'.charCodeAt(0)
 exports.UPDATE_MESSAGE      = 'U'.charCodeAt(0)
+exports.TINY_UPDATE_MESSAGE = 'u'.charCodeAt(0)
 exports.SOUNDEFFECT_MESSAGE = 'S'.charCodeAt(0)
 
 # And these are the client's messages. The client just sends one-character ASCII messages.

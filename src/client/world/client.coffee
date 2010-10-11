@@ -143,6 +143,11 @@ class BoloClientWorld extends ClientWorld
         @renderer.playSound(sfx, x, y, @objects[owner])
         bytes
 
+      when net.TINY_UPDATE_MESSAGE
+        [[idx], bytes] = unpack('H', data, offset)
+        bytes += @netUpdate @objects[idx], data, offset + bytes
+        bytes
+
       when net.UPDATE_MESSAGE
         @netTick data, offset
 
