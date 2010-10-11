@@ -23,8 +23,12 @@ But there is something to see, and you can see it in action on-line, right now, 
 to download it. (Though you'll be alone in the game.) Just visit the [GitHub Pages] site for a
 demonstration!
 
-If you want to play around with multi-player, or otherwise tinker with Orona, read on for how to
-get Orona running on your own machine.
+There's also a [multiplayer instance] kindly hosted by [Joyent].
+
+Finally, you can run Orona locally, on your own computer. For that, read on.
+
+If you're seeing odd things in your browser, take a look at the [browser compatibility] wiki page,
+and feel free to extend it with your experiences. [Issue] reports are also welcome.
 
 ## Running Orona
 
@@ -83,6 +87,10 @@ All the graphic and sound files are from:
  [WinBolo]: http://www.winbolo.com/
  [WinBolo project]: http://code.google.com/p/winbolo/
  [GitHub Pages]: http://stephank.github.com/orona/
+ [multiplayer instance]: http://wadna-ramet.no.de/
+ [Joyent]: http://www.joyent.com/
+ [browser compatibility]: http://github.com/stephank/orona/wiki/Browser-compatibility
+ [Issue]: http://github.com/stephank/orona/issues
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [node.js]: http://nodejs.org/
  [Connect]: http://github.com/senchalabs/connect
