@@ -81,7 +81,7 @@ class BoloServerWorld extends ServerWorld
       data = []
       for obj in @objects
         data = data.concat [net.CREATE_MESSAGE, obj._net_type_idx]
-      data = data.concat [net.UPDATE_MESSAGE], @dump(yes)
+      data = data.concat [net.UPDATE_MESSAGE], @dumpTick(yes)
       data = new Buffer(data)
       ws.sendMessage data.toString('base64')
 
@@ -159,7 +159,7 @@ class BoloServerWorld extends ServerWorld
 
   # Send an update.
   sendUpdate: ->
-    data = [net.UPDATE_MESSAGE].concat @dump()
+    data = [net.UPDATE_MESSAGE].concat @dumpTick()
     data = new Buffer(data)
     @broadcastUnreliable data.toString('base64')
 
