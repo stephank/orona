@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "connect": ">=0.2.4",
-    "villain": "=0.1.1"
+    "villain": "=0.1.2"
   },
 
   "main": "./lib/simulation",
