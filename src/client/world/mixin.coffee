@@ -35,17 +35,23 @@ BoloClientWorldMixin =
 
     @soundkit = soundkit = new SoundKit()
     loadSound = (name) ->
+      src = "snd/#{name}.ogg"
       parts = name.split('_')
       for i in [1...parts.length]
         parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1)
+      methodName = parts.join('')
+
+      unless Audio?
+        soundkit.register(methodName, src)
+        return
 
       numResources++
       snd = new Audio()
       $(snd).bind 'canplaythrough', ->
-        soundkit.register(parts.join(''), snd.currentSrc)
+        soundkit.register(methodName, snd.currentSrc)
         numCompleted++
         checkComplete()
-      snd.src = "snd/#{name}.ogg"
+      snd.src = src
       snd.load()
 
     loadImage 'base'

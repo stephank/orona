@@ -16,6 +16,9 @@ class SoundKit
     effect.play()
     effect
 
+# Disable audio support if the browser doesn't have it.
+unless Audio?
+  SoundKit::play = ->
 
-#### Exports
+## Exports
 module.exports = SoundKit
