@@ -5,3 +5,4 @@ exports.registerWithWorld = (w) ->
   w.registerType require './explosion'
   w.registerType require './shell'
   w.registerType require './fireball'
+  w.registerType require './builder'
