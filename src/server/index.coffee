@@ -142,24 +142,39 @@ class BoloServerWorld extends ServerWorld
   # include state, which is handy when this method is used outside of the tick-loop.
   sendChanges: (fullCreate) ->
     return unless @changes.length > 0
+
     data = []
+    needUpdate = []
+
     for change in @changes
       type = change.shift()
+
       switch type
         when 'create'
           [obj, idx] = change
+          needUpdate.push obj if fullCreate
           data = data.concat [net.CREATE_MESSAGE], pack('B', obj._net_type_idx)
-          data = data.concat [net.TINY_UPDATE_MESSAGE], pack('H', idx), @dump(obj) if fullCreate
+
         when 'destroy'
           [obj, idx] = change
+          for other, i in needUpdate
+            if other == obj
+              needUpdate.splice i, 1
+              break
           data = data.concat [net.DESTROY_MESSAGE], pack('H', idx)
+
         when 'mapChange'
           [x, y, ascii, life, mine] = change
           asciiCode = ascii.charCodeAt(0)
           data = data.concat [net.MAPCHANGE_MESSAGE], pack('BBBBf', x, y, asciiCode, life, mine)
+
         when 'soundEffect'
           [sfx, x, y, ownerIdx] = change
           data = data.concat [net.SOUNDEFFECT_MESSAGE], pack('BHHH', sfx, x, y, ownerIdx)
+
+    for obj in needUpdate
+      data = data.concat [net.TINY_UPDATE_MESSAGE], pack('H', obj.idx), @dump(obj)
+
     data = new Buffer(data)
     @broadcast data.toString('base64')
     @changes = []
