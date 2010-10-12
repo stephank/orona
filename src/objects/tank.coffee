@@ -8,6 +8,7 @@ sounds            = require '../sounds'
 Explosion         = require './explosion'
 Shell             = require './shell'
 Fireball          = require './fireball'
+Builder           = require './builder'
 
 
 class Tank extends BoloObject
@@ -65,8 +66,9 @@ class Tank extends BoloObject
     @onBoat = yes
 
   serialization: (isCreate, p) ->
-    # Team is only set once.
-    p 'B', 'team' if isCreate
+    if isCreate
+      p 'B', 'team'
+      p 'O', 'builder'
 
     p 'B', 'armour'
 
@@ -141,8 +143,8 @@ class Tank extends BoloObject
   spawn: ->
     # FIXME: Proper way to select teams.
     @team = @world.tanks.length % 2
-    # Initialize.
     @reset()
+    @ref 'builder', @world.spawn(Builder, this)
 
   update: ->
     return if @death()
@@ -154,6 +156,7 @@ class Tank extends BoloObject
 
   destroy: ->
     @dropPillboxes()
+    @world.destroy @builder.$
 
   death: ->
     return no unless @armour == 255
