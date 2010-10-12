@@ -23,8 +23,7 @@ class WorldPillbox extends BoloObject
       if changes.hasOwnProperty('inTank') or changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
         @updateCell()
       if changes.hasOwnProperty('owner')
-        @owner_idx = if @owner then @owner.$.tank_idx else 255
-        @cell?.retile()
+        @updateOwner()
 
   # Helper that updates the cell reference, and ensures a back-reference as well.
   updateCell: ->
@@ -37,6 +36,15 @@ class WorldPillbox extends BoloObject
       @cell = @world.map.cellAtWorld(@x, @y)
       @cell.pill = this
       @cell.retile()
+
+  # Helper for common stuff to do when the owner changes.
+  updateOwner: ->
+    if @owner
+      @owner_idx = @owner.$.tank_idx
+      @team = @owner.$.team
+    else
+      @owner_idx = @team = 255
+    @cell?.retile()
 
   # The state information to synchronize.
   serialization: (isCreate, p) ->
@@ -82,10 +90,8 @@ class WorldPillbox extends BoloObject
 
       for tank in @world.tanks when tank.armour != 255
         if tank.cell == @cell
-          @ref 'owner', tank
-          @inTank = yes
-          @x = @y = null
-          @updateCell()
+          @inTank = yes; @x = @y = null; @updateCell()
+          @ref('owner', tank); @updateOwner()
           break
       return
 

@@ -37,7 +37,11 @@ class WorldBase extends BoloObject
 
   # Helper for common stuff to do when the owner changes.
   updateOwner: ->
-    @owner_idx = if @owner then @owner.$.tank_idx else 255
+    if @owner
+      @owner_idx = @owner.$.tank_idx
+      @team = @owner.$.team
+    else
+      @owner_idx = @team = 255
     @cell.retile()
 
   #### World updates

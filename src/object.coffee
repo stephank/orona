@@ -8,6 +8,10 @@ class BoloObject extends NetWorldObject
   # tilemap. May also be `null`, in which case the object is not drawn at all.
   styled: null
 
+  # Styled objects should set their `team` attribute to the appropriate team number in order to
+  # get the team color styling.
+  team: null
+
   # These are properties containing the world coordinates of this object. The value `null` for
   # either means that the object is not physical or 'not in the world' at this moment
   # (ie. dead tanks).
