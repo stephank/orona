@@ -14,11 +14,16 @@
       world.start();
     });
   };
-  applicationCache.addEventListener('cached',   loaded, false);
-  applicationCache.addEventListener('noupdate', loaded, false);
-  applicationCache.addEventListener('updateready', function() {
-    location.reload();
-  }, false);
+  if (typeof applicationCache !== 'undefined') {
+    applicationCache.addEventListener('cached',   loaded, false);
+    applicationCache.addEventListener('noupdate', loaded, false);
+    applicationCache.addEventListener('updateready', function() {
+      location.reload();
+    }, false);
+  }
+  else {
+    loaded();
+  }
 })();
 </script>
 </head>
