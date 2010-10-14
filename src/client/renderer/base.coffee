@@ -24,6 +24,9 @@ class BaseRenderer
     @canvas = $('<canvas/>').appendTo('body')
     @lastCenter = [0, 0]
 
+    @mouse = [0, 0]
+    @canvas.mousemove (e) => @mouse = [e.pageX, e.pageY]
+
     @setup()
 
     @handleResize()
@@ -124,19 +127,42 @@ class BaseRenderer
       height: window.innerHeight + 'px'
     )
 
+  # Get the view area in pixel coordinates when looking at the given world coordinates.
+  getViewAreaAtWorld: (x, y) ->
+    {width, height} = @canvas[0]
+    left = round(x / PIXEL_SIZE_WORLD - width  / 2)
+    top =  round(y / PIXEL_SIZE_WORLD - height / 2)
+    [left, top, width, height]
+
+  # Get the map cell at the given screen coordinates.
+  getCellAtScreen: (x, y) ->
+    [cameraX, cameraY] = @lastCenter
+    [left, top, width, height] = @getViewAreaAtWorld cameraX, cameraY
+    @world.map.cellAtPixel left + x, top + y
+
   #### HUD elements
 
   # Draw HUD elements that overlay the map. These are elements that need to be drawn in regular
   # game coordinates, rather than screen coordinates.
   drawOverlay: ->
+    @drawReticle()
+    @drawCursor()
+
+  drawReticle: ->
+    return if @world.player.armour == 255
+
     # FIXME: variable firing distance
-    # FIXME: hide when dead
     distance = 7 * TILE_SIZE_PIXELS
     rad = (256 - @world.player.direction) * 2 * PI / 256
     x = round(@world.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
     y = round(@world.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
 
     @drawTile 17, 4, x, y
+
+  drawCursor: ->
+    [mx, my] = @mouse
+    cell = @getCellAtScreen(mx, my)
+    @drawTile 18, 6, cell.x * TILE_SIZE_PIXELS, cell.y * TILE_SIZE_PIXELS
 
   # Create the HUD container.
   initHud: ->

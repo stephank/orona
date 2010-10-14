@@ -225,13 +225,9 @@ class WebglRenderer extends BaseRenderer
 
   # Apply a translation that centers everything around the given coordinates.
   centerOn: (x, y, cb) ->
-    {width, height} = @canvas[0]
-    left = round(x / PIXEL_SIZE_WORLD - width  / 2)
-    top =  round(y / PIXEL_SIZE_WORLD - height / 2)
+    [left, top, width, height] = @getViewAreaAtWorld x, y
     @setTranslation(-left, -top)
-
     cb(left, top, width, height)
-
     @setTranslation(0, 0)
 
   # Helper function that adds a tile to an array that is used to prepare the VBO. It takes care

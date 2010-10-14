@@ -91,15 +91,9 @@ class Common2dRenderer extends BaseRenderer
 
   centerOn: (x, y, cb) ->
     @ctx.save()
-
-    # Apply a translation that centers everything around the player.
-    {width, height} = @canvas[0]
-    left = round(x / PIXEL_SIZE_WORLD - width  / 2)
-    top =  round(y / PIXEL_SIZE_WORLD - height / 2)
+    [left, top, width, height] = @getViewAreaAtWorld x, y
     @ctx.translate(-left, -top)
-
     cb left, top, width, height
-
     @ctx.restore()
 
 
