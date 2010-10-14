@@ -20,7 +20,17 @@ class BaseRenderer
   constructor: (@world) ->
     @images = @world.images
     @soundkit = @world.soundkit
+
+    @canvas = $('<canvas/>').appendTo('body')
     @lastCenter = [0, 0]
+
+    @setup()
+
+    @handleResize()
+    $(window).resize => @handleResize()
+
+  # Subclasses use this as their constructor.
+  setup: ->
 
   # This methods takes x and y coordinates to center the screen on. The callback provided should be
   # invoked exactly once. Any drawing operations used from within the callback will have a
@@ -99,6 +109,20 @@ class BaseRenderer
       when sounds.SHOT_TREE      then "shotTree#{mode}"
       when sounds.TANK_SINKING   then "tankSinking#{mode}"
     @soundkit[name]() if name
+
+  handleResize: ->
+    @canvas[0].width  = window.innerWidth
+    @canvas[0].height = window.innerHeight
+    @canvas.css(
+      width:  window.innerWidth + 'px'
+      height: window.innerHeight + 'px'
+    )
+
+    # Adjust the body as well, to prevent accidental scrolling on some browsers.
+    $('body').css(
+      width:  window.innerWidth + 'px'
+      height: window.innerHeight + 'px'
+    )
 
   #### HUD elements
 

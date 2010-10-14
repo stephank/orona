@@ -12,17 +12,13 @@ TEAM_COLORS        = require '../../team_colors'
 
 class Common2dRenderer extends BaseRenderer
 
-  constructor: (world) ->
-    super
-
+  setup: ->
     # Initialize the canvas.
-    @canvas = $('<canvas/>')
     try
       @ctx = @canvas[0].getContext('2d')
       @ctx.drawImage  # Just access it, see if it throws.
     catch e
       throw "Could not initialize 2D canvas: #{e.message}"
-    @canvas.appendTo('body')
 
     # We need to get the raw pixel data from the overlay.
     img = @images.overlay
@@ -40,24 +36,6 @@ class Common2dRenderer extends BaseRenderer
 
     # This contains prestyled tilemaps, index by style/team.
     @prestyled = {}
-
-    # Handle resizes.
-    @handleResize()
-    $(window).resize => @handleResize()
-
-  handleResize: ->
-    @canvas[0].width  = window.innerWidth
-    @canvas[0].height = window.innerHeight
-    @canvas.css(
-      width:  window.innerWidth + 'px'
-      height: window.innerHeight + 'px'
-    )
-
-    # Adjust the body as well, to prevent accidental scrolling on some browsers.
-    $('body').css(
-      width:  window.innerWidth + 'px'
-      height: window.innerHeight + 'px'
-    )
 
   # We use an extra parameter `ctx` here, so that the offscreen renderer can
   # use the context specific to segments.

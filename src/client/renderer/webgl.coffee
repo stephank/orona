@@ -88,17 +88,13 @@ compileShader = (ctx, type, source) ->
 
 class WebglRenderer extends BaseRenderer
 
-  constructor: (world) ->
-    super
-
+  setup: ->
     # Initialize the canvas.
-    @canvas = $('<canvas/>')
     try
       @ctx = @canvas[0].getContext('experimental-webgl')
       @ctx.bindBuffer # Just access it, see if it throws.
     catch e
       throw "Could not initialize WebGL canvas: #{e.message}"
-    @canvas.appendTo('body')
 
     # This makes WebGL calls feel slightly more natural.
     gl = @ctx
@@ -179,25 +175,10 @@ class WebglRenderer extends BaseRenderer
     gl.vertexAttribPointer(@aVertexCoord,  2, gl.FLOAT, no, 16, 0)
     gl.vertexAttribPointer(@aTextureCoord, 2, gl.FLOAT, no, 16, 8)
 
-    # Handle resizes.
-    @handleResize()
-    $(window).resize => @handleResize()
-
   # On resize, we update the canvas size, and recalculate the translation matrix. Because this is
   # called at convenient times, we also check the GL error state at this point.
   handleResize: ->
-    @canvas[0].width  = window.innerWidth
-    @canvas[0].height = window.innerHeight
-    @canvas.css(
-      width:  window.innerWidth + 'px'
-      height: window.innerHeight + 'px'
-    )
-
-    # Adjust the body as well, to prevent accidental scrolling on some browsers.
-    $('body').css(
-      width:  window.innerWidth + 'px'
-      height: window.innerHeight + 'px'
-    )
+    super
 
     @ctx.viewport(0, 0, window.innerWidth, window.innerHeight)
     @setTranslation(0, 0)
