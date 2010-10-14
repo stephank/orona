@@ -103,6 +103,9 @@ BoloClientWorldMixin =
   idle: ->
     @renderer.draw()
 
+  handleClick: (cell) ->
+    # FIXME
+
 helpers.extend BoloClientWorldMixin, BoloWorldMixin
 
 

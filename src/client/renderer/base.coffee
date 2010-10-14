@@ -25,6 +25,7 @@ class BaseRenderer
     @lastCenter = [0, 0]
 
     @mouse = [0, 0]
+    @canvas.mousedown (e) => @handleMousedown(e)
     @canvas.mousemove (e) => @mouse = [e.pageX, e.pageY]
 
     @setup()
@@ -126,6 +127,12 @@ class BaseRenderer
       width:  window.innerWidth + 'px'
       height: window.innerHeight + 'px'
     )
+
+  handleMousedown: ->
+    [mx, my] = @mouse
+    cell = @getCellAtScreen(mx, my)
+    @world.handleClick cell
+    false
 
   # Get the view area in pixel coordinates when looking at the given world coordinates.
   getViewAreaAtWorld: (x, y) ->
