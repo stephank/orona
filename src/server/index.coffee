@@ -43,26 +43,6 @@ class BoloServerWorld extends ServerWorld
     super
     @sendPackets()
 
-  # We send critical updates every frame, and non-critical updates every other frame. On top of
-  # that, non-critical updates may be dropped, if the client's hearbeats are interrupted.
-  sendPackets: ->
-    if @oddTick = !@oddTick
-      smallPacket = @changesPacket(yes)
-      smallPacket = new Buffer(smallPacket).toString('base64')
-      largePacket = smallPacket
-    else
-      smallPacket = @changesPacket(no)
-      largePacket = smallPacket.concat @updatePacket()
-      smallPacket = new Buffer(smallPacket).toString('base64')
-      largePacket = new Buffer(largePacket).toString('base64')
-
-    for {client} in @tanks when client?
-      if client.heartbeatTimer > 40
-        client.sendMessage(smallPacket)
-      else
-        client.sendMessage(largePacket)
-        client.heartbeatTimer++
-
   # Emit a sound effect from the given location. `owner` is optional.
   soundEffect: (sfx, x, y, owner) ->
     ownerIdx = if owner? then owner.idx else 65535
@@ -141,6 +121,26 @@ class BoloServerWorld extends ServerWorld
       else @onError(tank, 'Received an unknown command')
 
   #### Helpers
+
+  # We send critical updates every frame, and non-critical updates every other frame. On top of
+  # that, non-critical updates may be dropped, if the client's hearbeats are interrupted.
+  sendPackets: ->
+    if @oddTick = !@oddTick
+      smallPacket = @changesPacket(yes)
+      smallPacket = new Buffer(smallPacket).toString('base64')
+      largePacket = smallPacket
+    else
+      smallPacket = @changesPacket(no)
+      largePacket = smallPacket.concat @updatePacket()
+      smallPacket = new Buffer(smallPacket).toString('base64')
+      largePacket = new Buffer(largePacket).toString('base64')
+
+    for {client} in @tanks when client?
+      if client.heartbeatTimer > 40
+        client.sendMessage(smallPacket)
+      else
+        client.sendMessage(largePacket)
+        client.heartbeatTimer++
 
   # Get a data stream for critical updates. The optional `fullCreate` flag is used to transmit
   # create messages that include state, which is needed when not followed by an update packet.
@@ -247,7 +247,7 @@ class Application
 
 ## Entry point
 
-# Helper middleware to direct from the root.
+# Helper middleware to redirect from the root.
 redirectMiddleware = (req, res, next) ->
   requrl = url.parse(req.url)
   return next() unless requrl.pathname == '/'
