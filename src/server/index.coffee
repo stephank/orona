@@ -34,17 +34,30 @@ class BoloServerWorld extends ServerWorld
 
   #### Callbacks
 
+  # Update, and then send packets to the client.
   tick: ->
     super
+    @sendPackets()
 
-    WebSocket.prototype.buffered()
+  # We send critical updates every frame, and non-critical updates every other frame. On top of
+  # that, non-critical updates may be dropped, if the client's hearbeats are interrupted.
+  sendPackets: ->
+    if @oddTick = !@oddTick
+      smallPacket = @changesPacket(yes)
+      smallPacket = new Buffer(smallPacket).toString('base64')
+      largePacket = smallPacket
+    else
+      smallPacket = @changesPacket(no)
+      largePacket = smallPacket.concat @updatePacket()
+      smallPacket = new Buffer(smallPacket).toString('base64')
+      largePacket = new Buffer(largePacket).toString('base64')
 
-    @sendChanges()
-    @sendUpdate() if @oddTick = !@oddTick
-
-    for {client} in @tanks when client != null
-      client.heartbeatTimer++ if @oddTick
-      client.flush()
+    for {client} in @tanks when client?
+      if client.heartbeatTimer > 40
+        client.sendMessage(smallPacket)
+      else
+        client.sendMessage(largePacket)
+        client.heartbeatTimer++
 
   # Emit a sound effect from the given location. `owner` is optional.
   soundEffect: (sfx, x, y, owner) ->
@@ -60,10 +73,13 @@ class BoloServerWorld extends ServerWorld
 
   onConnect: (ws) ->
     tank = @spawn Tank
-    @sendChanges(yes)
-    tank.client = ws
+    packet = @changesPacket(yes)
+    packet = new Buffer(packet).toString('base64')
+    for {client} in @tanks when client?
+      client.sendMessage(packet)
 
     # Set-up the websocket parameters.
+    tank.client = ws
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
     ws.on 'message', (message) => @onMessage(tank, message)
@@ -71,23 +87,22 @@ class BoloServerWorld extends ServerWorld
     ws.on 'error', (exception) => @onError(tank, exception)
     ws.on 'timeout', => @onError(tank, 'Timed out')
 
-    ws.buffered =>
-      # Send the current map state. We don't send pillboxes and bases, because the client
-      # receives create messages for those, and then fills the map structure based on those.
-      mapData = new Buffer(@map.dump noPills: yes, noBases: yes)
-      ws.sendMessage mapData.toString('base64')
+    # Send the current map state. We don't send pillboxes and bases, because the client
+    # receives create messages for those, and then fills the map structure based on those.
+    # The client expects this as a separate message.
+    packet = @map.dump(noPills: yes, noBases: yes)
+    packet = new Buffer(packet).toString('base64')
+    ws.sendMessage(packet)
 
-      # To synchronize the object list to the client, we simulate creation of all objects.
-      data = []
-      for obj in @objects
-        data = data.concat [net.CREATE_MESSAGE, obj._net_type_idx]
-      data = data.concat [net.UPDATE_MESSAGE], @dumpTick(yes)
-      data = new Buffer(data)
-      ws.sendMessage data.toString('base64')
-
-      # Send the welcome message, along with the index of this player's tank.
-      data = new Buffer(pack('BH', net.WELCOME_MESSAGE, tank.idx))
-      ws.sendMessage data.toString('base64')
+    # To synchronize the object list to the client, we simulate creation of all objects.
+    # Then, we tell the client which tank is his, using the welcome message.
+    packet = []
+    for obj in @objects
+      packet = packet.concat [net.CREATE_MESSAGE, obj._net_type_idx]
+    packet = packet.concat [net.UPDATE_MESSAGE], @dumpTick(yes)
+    packet = packet.concat pack('BH', net.WELCOME_MESSAGE, tank.idx)
+    packet = new Buffer(packet).toString('base64')
+    ws.sendMessage(packet)
 
   onEnd: (tank) ->
     return unless ws = tank.client
@@ -123,25 +138,10 @@ class BoloServerWorld extends ServerWorld
 
   #### Helpers
 
-  # Broadcast a message to all connected clients.
-  broadcast: (message) ->
-    for {client} in @tanks when client?
-      client.sendMessage(message)
-    return
-
-  # An unreliable broadcast message is a message that may be dropped. Each client sends a periodic
-  # hearbeat. If not received in a timely fashion, we drop some of the client's messages.
-  broadcastUnreliable: (message) ->
-    for {client} in @tanks when client?
-      # Ticks are every 20ms. Network updates are every odd tick, i.e. every 40ms.
-      # Allow a client to lag 20 updates behind, i.e. 800ms, before dropping messages.
-      client.sendMessage(message) unless client.heartbeatTimer > 20
-    return
-
-  # Send critical updates. The optional `fullCreate` flag is used to transmit create messages that
-  # include state, which is handy when this method is used outside of the tick-loop.
-  sendChanges: (fullCreate) ->
-    return unless @changes.length > 0
+  # Get a data stream for critical updates. The optional `fullCreate` flag is used to transmit
+  # create messages that include state, which is needed when not followed by an update packet.
+  changesPacket: (fullCreate) ->
+    return [] unless @changes.length > 0
 
     data = []
     needUpdate = []
@@ -175,15 +175,10 @@ class BoloServerWorld extends ServerWorld
     for obj in needUpdate
       data = data.concat [net.TINY_UPDATE_MESSAGE], pack('H', obj.idx), @dump(obj)
 
-    data = new Buffer(data)
-    @broadcast data.toString('base64')
-    @changes = []
+    data
 
-  # Send an update.
-  sendUpdate: ->
-    data = [net.UPDATE_MESSAGE].concat @dumpTick()
-    data = new Buffer(data)
-    @broadcastUnreliable data.toString('base64')
+  # Get a data stream for non-critical updates.
+  updatePacket: -> [net.UPDATE_MESSAGE].concat @dumpTick()
 
 helpers.extend BoloServerWorld.prototype, BoloWorldMixin
 allObjects.registerWithWorld BoloServerWorld.prototype

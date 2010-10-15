@@ -29,7 +29,7 @@
 
 class WebSocket extends EventEmitter
   constructor: (@request, @connection, initialData) ->
-    super()
+    super
 
     @connection.setTimeout 0
     @connection.setEncoding 'utf8'
@@ -38,9 +38,9 @@ class WebSocket extends EventEmitter
     # FIXME: should be buffer
     @data = initialData.toString('binary')
 
-    # The @request attribute is temporary, while the handshake is in progress.
-    # We also queue packets while the handshake is in progress.
-    @buffered()
+    # A temporary queue of messages while the handshake is in progress.
+    # The `@request` attribute is also temporary. Both will be deleted eventually.
+    @queued = []
 
     # Start processing the handshake. We will emit events, so postpone it
     # until the next event loop tick, allowing the user to install handlers.
@@ -101,12 +101,14 @@ class WebSocket extends EventEmitter
 
     # Flush queued messages, and clean up stuff we no longer need.
     delete @request
-    @flush()
+    for message in @queued
+      @sendMessage(message)
+    delete @queued
 
     # Signal the user.
     @emit 'connect'
 
-    # Flush any remaining messages in the buffer.
+    # Flush any remaining data.
     @_onData() if @data.length > 0
 
   _onData: (data) ->
@@ -128,74 +130,21 @@ class WebSocket extends EventEmitter
 
   # Send a single message.
   sendMessage: (message) ->
-    # Check the bufferAll marker on the prototype.
-    @buffered() if WebSocket.bufferAll
+    if @request?
+      # Queue the message if needed. This happens during the handshake.
+      @queued.push message
+      return
 
     messageLength = Buffer.byteLength message, 'utf-8'
-    if @queued?
-      # Queue the message if needed.
-      # This happens during the handshake or when the user has called buffered().
-      @queued.push [message, messageLength]
-      @queuedTotalLength += messageLength
-    else
-      # Immediately flush the message.
-      @queued = [[message, messageLength]]
-      @queuedTotalLength = messageLength
-      @flush()
-    return
+    buffer = new Buffer(messageLength + 2)
+    buffer[0] = 0x00
+    buffer.write message, 1, 'utf-8'
+    buffer[messageLength + 1] = 0xFF
 
-  # Request that the following messages be buffered. Multiple messages are thus tightly packed,
-  # reducing the number of network packets.
-  #
-  # This method may be called with a callback, to buffer for the duration of the callback,
-  # or the user may call flush() when done.
-  #
-  # This method may also be called on the prototype so as to buffer *all* WebSockets. But
-  # unfortunately, an invocation with callback is not possible in that case. The prototype has
-  # no way of knowing which WebSockets exist, so the user must iterate and flush them afterwards.
-  buffered: (cb) ->
-    if @queued?
-      return cb() if cb?
-
-    if @connection
-      @queued = []
-      @queuedTotalLength = 0
-    else
-      # Hey, we're the prototype!
-      throw "Cannot call buffered() on prototype with callback." if cb?
-      @bufferAll = yes
-
-    if cb?
-      retval = cb()
-      @flush()
-      return retval
-
-  # Flush the messages collected so far with buffered(), and stop buffering.
-  flush: ->
-    # Let's not do anything if there was no buffered() call, or we're still in the handshake.
-    return if not @queued? or @request
-
-    unless @queued.length == 0
-      # Build a large buffer containing all messages in WebSockets format.
-      buffer = new Buffer(@queuedTotalLength + 2 * @queued.length)
-      pos = 0
-      for [message, messageLength] in @queued
-        buffer[pos] = 0x00
-        buffer.write message, pos + 1, 'utf-8'
-        pos += messageLength + 2
-        buffer[pos - 1] = 0xFF
-
-    # Clean up.
-    delete WebSocket.bufferAll
-    delete @queued
-    delete @queuedTotalLength
-
-    if buffer?
-      # Send it off.
-      try
-        @connection.write buffer
-      catch e
-        @emit 'error', e
+    try
+      @connection.write buffer
+    catch e
+      @emit 'error', e
 
   # Delegate socket methods and events.
 
@@ -213,5 +162,5 @@ class WebSocket extends EventEmitter
   _onClose: (had_error) -> @emit 'close', had_error
 
 
-#### Exports
+## Exports
 module.exports = WebSocket
