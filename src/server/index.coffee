@@ -3,12 +3,16 @@
 # sharing the interval timer and the lobby across these games.
 
 
-fs               = require 'fs'
-url              = require 'url'
-connect          = require 'connect'
-Loop             = require 'villain/loop'
-ServerWorld      = require 'villain/world/net/server'
-{pack}           = require 'villain/struct'
+fs   = require 'fs'
+url  = require 'url'
+path = require 'path'
+
+connect = require 'connect'
+
+Loop        = require 'villain/loop'
+ServerWorld = require 'villain/world/net/server'
+{pack}      = require 'villain/struct'
+
 WebSocket        = require './websocket'
 helpers          = require '../helpers'
 BoloWorldMixin   = require '../world_mixin'
@@ -191,6 +195,8 @@ class Application
   constructor: ->
     @games = []
 
+    @mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
+
     # FIXME: The interval should be deactivated automatically when
     # there are no games. (And reactivated once a new one starts.)
     # Maybe we shouldn't update empty games either?
@@ -199,7 +205,7 @@ class Application
     @loop.start()
 
     # FIXME: this is for the demo
-    data = fs.readFileSync 'maps/everard-island.map'
+    data = fs.readFileSync "#{@mapPath}/everard-island.map"
     map = WorldMap.load data
     @games.push new BoloServerWorld(map)
 
@@ -252,14 +258,15 @@ redirectMiddleware = (req, res, next) ->
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
 createBoloServer = ->
-  # FIXME: Correct way to find the path to the 'public' directory?
+  webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../public'
+
   logger = connect.logger()
   gzip = connect.staticGzip
-    root: 'public',
+    root: webroot,
     compress: [
       'text/html', 'text/cache-manifest', 'text/css', 'application/javascript',
       'image/png', 'application/ogg']
-  static = connect.staticProvider 'public'
+  static = connect.staticProvider webroot
   server = connect.createServer(logger, redirectMiddleware, gzip, static)
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)

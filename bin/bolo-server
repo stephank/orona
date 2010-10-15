@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
-// FIXME: Correct way to find the lib dir and add it to require.paths?
-bolo = require('../lib/server');
+var path = require('path');
+var fs   = require('fs');
+var lib  = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
+
+bolo = require(lib + '/server');
 puts = require('sys').puts;
 
 bolo().listen(8124);
