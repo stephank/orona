@@ -3,6 +3,7 @@
 {min, max}        = Math
 {TILE_SIZE_WORLD} = require '../constants'
 BoloObject        = require '../object'
+sounds            = require '../sounds'
 
 
 class WorldBase extends BoloObject
