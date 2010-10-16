@@ -21,7 +21,9 @@ class SoundKit
 
   # Wait for the given effect to be loaded, then register it.
   load: (name, url, cb) ->
-    return @register(name, url) unless @isSupported
+    unless @isSupported
+      @register(name, url)
+      return cb?()
     loader = new Audio()
     $(loader).bind 'canplaythrough', =>
       @register(name, loader.currentSrc)
