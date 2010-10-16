@@ -3,13 +3,14 @@
 
 fs      = require 'fs'
 url     = require 'url'
+path    = require 'path'
 {exec}  = require 'child_process'
 villain = require 'villain/build/cake'
 
 
 ## Helpers
 
-# Synchronous wget fetch helper.
+# Synchronous wget fetch helper. Also checks if target already exists.
 fetch = (src) ->
   dest = 'vendor/' + src.split('/').pop()
 
@@ -31,12 +32,29 @@ fetch = (src) ->
   process.loop()
   dest
 
+# Synchronous unzip helper. Also checks if target already exists.
+unzip = (zipfile) ->
+  dir = path.dirname zipfile
+  dest = zipfile.replace /\.zip$/, ''
+  try
+    fs.statSync dest
+    return dest
+  catch e
+    throw e unless e.errno == process.ENOENT
+
+  puts "    unzip : #{zipfile}"
+  exec "unzip -d \"#{dir}\" -a \"#{zipfile}\"", (error) ->
+    throw error if error?
+  # FIXME: Undocumented node.js function.
+  process.loop()
+  dest
+
 
 ## Tasks
 
 task 'vendor:jqueryui', 'Fetch jQuery and jQuery UI', ->
-  fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-1.8.5.zip'
-  fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-themes-1.8.5.zip'
+  unzip fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-1.8.5.zip'
+  unzip fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-themes-1.8.5.zip'
 
 # A task that recreates the `src/` directory structure under `lib/`, and
 # compiles any CoffeeScript in the process.
