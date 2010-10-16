@@ -1,11 +1,17 @@
 # A basic Cakefile which compiles CoffeeScript sources for the server,
 # and packages them for the client in a single JavaScript bundle.
 
-fs      = require 'fs'
-url     = require 'url'
-path    = require 'path'
-{exec}  = require 'child_process'
-villain = require 'villain/build/cake'
+fs     = require 'fs'
+url    = require 'url'
+path   = require 'path'
+{exec} = require 'child_process'
+
+villain     = require 'villain/build/cake'
+villainMain = require 'villain'
+
+
+JQUERY_VERSION   = '1.4.2'
+JQUERYUI_VERSION = '1.8.5'
 
 
 ## Helpers
@@ -53,8 +59,8 @@ unzip = (zipfile) ->
 ## Tasks
 
 task 'vendor:jqueryui', 'Fetch jQuery and jQuery UI', ->
-  unzip fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-1.8.5.zip'
-  unzip fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-themes-1.8.5.zip'
+  unzip fetch "http://jquery-ui.googlecode.com/files/jquery-ui-#{JQUERYUI_VERSION}.zip"
+  unzip fetch "http://jquery-ui.googlecode.com/files/jquery-ui-themes-#{JQUERYUI_VERSION}.zip"
 
 # A task that recreates the `src/` directory structure under `lib/`, and
 # compiles any CoffeeScript in the process.
@@ -64,10 +70,23 @@ task 'build:modules', 'Compile all Bolo modules', ->
 # A task that takes the modules from `build:modules`, and packages them
 # as a JavaScript bundle for shipping to the browser client.
 task 'build:client:bundle', 'Compile the Bolo client bundle', ->
+  invoke 'vendor:jqueryui'
   invoke 'build:modules'
 
-  villain.simpleBundle 'public/bolo-bundle.js',
-    'bolo/client': './lib/client/index.js'
+  output = villain.createCompressorStream fs.createWriteStream 'public/bolo-bundle.js'
+  villainLib = villainMain.getLibraryPath()
+  jqueryUiLib = path.join 'vendor', "jquery-ui-#{JQUERYUI_VERSION}"
+  villain.bundleSources output,
+    env:
+      'villain': villainLib
+      'events': path.join(villainLib, 'util', 'events.js')
+    modules:
+      'bolo/client': './lib/client/index.js'
+    additional: [
+        path.join(villainLib, 'util', 'brequire.js')
+        path.join(jqueryUiLib, "jquery-#{JQUERY_VERSION}.js")
+      ]
+  output.end()
 
 task 'build:client:manifest', 'Create the manifest file', ->
   dirtytag = Math.round(Math.random() * 10000)
@@ -86,7 +105,6 @@ task 'build:client:manifest', 'Create the manifest file', ->
         CACHE MANIFEST
         # Version #{rev}
         bolo.html
-        http://code.jquery.com/jquery-1.4.2.min.js
         bolo-bundle.js
         bolo.css
         http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png
