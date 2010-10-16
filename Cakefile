@@ -10,11 +10,18 @@ villain     = require 'villain/build/cake'
 villainMain = require 'villain'
 
 
+## Helpers
+
+# Dependency versions we use.
 JQUERY_VERSION   = '1.4.2'
 JQUERYUI_VERSION = '1.8.5'
 
+# Base paths to dependencies.
+VILLAIN_LIB = villainMain.getLibraryPath()
+JQUERYUI_LIB = path.join 'vendor', "jquery-ui-#{JQUERYUI_VERSION}"
 
-## Helpers
+# Create the path to a jQuery UI module.
+uipath = (name) -> path.join JQUERYUI_LIB, 'ui', "jquery.ui.#{name}.js"
 
 # Synchronous wget fetch helper. Also checks if target already exists.
 fetch = (src) ->
@@ -74,17 +81,22 @@ task 'build:client:bundle', 'Compile the Bolo client bundle', ->
   invoke 'build:modules'
 
   output = villain.createCompressorStream fs.createWriteStream 'public/bolo-bundle.js'
-  villainLib = villainMain.getLibraryPath()
-  jqueryUiLib = path.join 'vendor', "jquery-ui-#{JQUERYUI_VERSION}"
   villain.bundleSources output,
     env:
-      'villain': villainLib
-      'events': path.join(villainLib, 'util', 'events.js')
+      'villain': VILLAIN_LIB
+      'events': path.join(VILLAIN_LIB, 'util', 'events.js')
     modules:
       'bolo/client': './lib/client/index.js'
     additional: [
-        path.join(villainLib, 'util', 'brequire.js')
-        path.join(jqueryUiLib, "jquery-#{JQUERY_VERSION}.js")
+        path.join(VILLAIN_LIB, 'util', 'brequire.js')
+        path.join(JQUERYUI_LIB, "jquery-#{JQUERY_VERSION}.js")
+        uipath('core')
+        uipath('widget')
+        uipath('position')
+        uipath('button')
+        uipath('dialog')
+        uipath('tabs')
+        uipath('progressbar')
       ]
   output.end()
 
