@@ -1,4 +1,5 @@
 Loop             = require 'villain/loop'
+Progress         = require '../progress'
 SoundKit         = require '../soundkit'
 DefaultRenderer  = require '../renderer/offscreen_2d'
 {TICK_LENGTH_MS} = require '../../constants'
@@ -17,20 +18,13 @@ BoloClientWorldMixin =
 
   # Loads all required resources.
   loadResources: (callback) ->
-    numResources = 0; numCompleted = 0; finished = no
-    checkComplete = ->
-      callback() if finished and numCompleted == numResources
-    finish = ->
-      finished = yes
-      checkComplete()
+    progress = new Progress()
+    progress.on 'complete', callback
 
     @images = images = {}
     loadImage = (name) ->
-      numResources++
       images[name] = img = new Image()
-      $(img).load ->
-        numCompleted++
-        checkComplete()
+      $(img).load progress.add()
       img.src = "img/#{name}.png"
 
     @soundkit = soundkit = new SoundKit()
@@ -45,12 +39,9 @@ BoloClientWorldMixin =
         soundkit.register(methodName, src)
         return
 
-      numResources++
       snd = new Audio()
-      $(snd).bind 'canplaythrough', ->
+      $(snd).bind 'canplaythrough', progress.add ->
         soundkit.register(methodName, snd.currentSrc)
-        numCompleted++
-        checkComplete()
       snd.src = src
       snd.load()
 
@@ -83,7 +74,7 @@ BoloClientWorldMixin =
     loadSound 'tank_sinking_far'
     loadSound 'tank_sinking_near'
 
-    finish()
+    progress.wrapUp()
 
   # Common initialization once the map is available.
   commonInitialization: ->
