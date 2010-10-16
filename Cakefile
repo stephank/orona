@@ -2,8 +2,41 @@
 # and packages them for the client in a single JavaScript bundle.
 
 fs      = require 'fs'
+url     = require 'url'
 {exec}  = require 'child_process'
 villain = require 'villain/build/cake'
+
+
+## Helpers
+
+# Synchronous wget fetch helper.
+fetch = (src) ->
+  dest = 'vendor/' + src.split('/').pop()
+
+  try
+    fs.mkdirSync 'vendor', 0777
+  catch e
+    throw e unless e.errno == process.EEXIST
+
+  try
+    fs.statSync dest
+    return dest
+  catch e
+    throw e unless e.errno == process.ENOENT
+
+  puts "    fetch : #{dest}"
+  exec "wget -q -O \"#{dest}\" \"#{src}\"", (error) ->
+    throw error if error?
+  # FIXME: Undocumented node.js function.
+  process.loop()
+  dest
+
+
+## Tasks
+
+task 'vendor:jqueryui', 'Fetch jQuery and jQuery UI', ->
+  fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-1.8.5.zip'
+  fetch 'http://jquery-ui.googlecode.com/files/jquery-ui-themes-1.8.5.zip'
 
 # A task that recreates the `src/` directory structure under `lib/`, and
 # compiles any CoffeeScript in the process.
