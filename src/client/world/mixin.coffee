@@ -34,16 +34,7 @@ BoloClientWorldMixin =
       for i in [1...parts.length]
         parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1)
       methodName = parts.join('')
-
-      unless Audio?
-        soundkit.register(methodName, src)
-        return
-
-      snd = new Audio()
-      $(snd).bind 'canplaythrough', progress.add ->
-        soundkit.register(methodName, snd.currentSrc)
-      snd.src = src
-      snd.load()
+      soundkit.load methodName, src, progress.add()
 
     loadImage 'base'
     loadImage 'styled'
