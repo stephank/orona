@@ -5,7 +5,13 @@
 class SoundKit
   constructor: ->
     @sounds = {}
-    @isSupported = Audio?
+
+    # FIXME: Probably want to switch to has.js at some point.
+    @isSupported = no
+    if Audio?
+      dummy = new Audio()
+      if dummy.canPlayType?
+        @isSupported = !!dummy.canPlayType "audio/ogg; codecs='vorbis'"
 
   # Register the effect at the given url with the given name, and build a helper method
   # on this instance to play the sound effect.
