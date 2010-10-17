@@ -156,8 +156,8 @@ task 'build:client:manifest', 'Create the manifest file', ->
       images += "images/#{file}\n" unless file.match /\.gz$/
 
     sounds = ''
-    for file in fs.readdirSync 'public/snd/'
-      sounds += "snd/#{file}\n" unless file.match /\.gz$/
+    for file in fs.readdirSync 'public/sounds/'
+      sounds += "sounds/#{file}\n" unless file.match /\.gz$/
 
     fs.writeFileSync 'public/bolo.manifest',
       """

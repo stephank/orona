@@ -29,7 +29,7 @@ BoloClientWorldMixin =
 
     @soundkit = soundkit = new SoundKit()
     loadSound = (name) ->
-      src = "snd/#{name}.ogg"
+      src = "sounds/#{name}.ogg"
       parts = name.split('_')
       for i in [1...parts.length]
         parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1)
