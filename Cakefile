@@ -111,10 +111,7 @@ task 'build:modules', 'Compile all Bolo modules', ->
 
 # A task that takes the modules from `build:modules`, and packages them
 # as a JavaScript bundle for shipping to the browser client.
-task 'build:client:bundle', 'Compile the Bolo client bundle', ->
-  invoke 'vendor:jqueryui'
-  invoke 'build:modules'
-
+task 'build:client:jsbundle', 'Compile the Bolo client JavaScript bundle', ->
   output = villain.createCompressorStream fs.createWriteStream 'public/bolo-bundle.js'
   villain.bundleSources output,
     env:
@@ -135,6 +132,8 @@ task 'build:client:bundle', 'Compile the Bolo client bundle', ->
       ]
   output.end()
 
+# A task that packages all stylesheets into a single compressed CSS file.
+task 'build:client:cssbundle', 'Compile the Bolo client stylesheet bundle', ->
   output = fs.createWriteStream 'public/bolo-bundle.css'
   bundleStyles output,
     path: [
@@ -178,5 +177,8 @@ task 'build:client:manifest', 'Create the manifest file', ->
 
 # The conventional default target.
 task 'build', 'Compile Bolo', ->
-  invoke 'build:client:bundle'
+  invoke 'vendor:jqueryui'
+  invoke 'build:modules'
+  invoke 'build:client:cssbundle'
+  invoke 'build:client:jsbundle'
   invoke 'build:client:manifest'
