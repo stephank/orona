@@ -176,6 +176,7 @@ class BaseRenderer
     @hud = $('<div/>').appendTo('body')
     @initHudPillboxes()
     @initHudBases()
+    @initHudToolSelect()
     @initHudNotices()
     @updateHud()
 
@@ -190,6 +191,27 @@ class BaseRenderer
     container = $('<div/>', id: 'baseStatus').appendTo(@hud)
     $('<div/>', class: 'deco').appendTo(container)
     $('<div/>', class: 'base').appendTo(container).data('base', base) for base in @world.map.bases
+
+  # Create the build tool selection
+  initHudToolSelect: ->
+    $('''
+        <div id="tool-select">
+          <input type="radio" name="tool" id="tool-forest" />
+          <label for="tool-forest"><div class="bolo-tool bolo-tool-forest" /></label>
+
+          <input type="radio" name="tool" id="tool-road" />
+          <label for="tool-road"><div class="bolo-tool bolo-tool-road" /></label>
+
+          <input type="radio" name="tool" id="tool-building" />
+          <label for="tool-building"><div class="bolo-tool bolo-tool-building" /></label>
+
+          <input type="radio" name="tool" id="tool-pillbox" />
+          <label for="tool-pillbox"><div class="bolo-tool bolo-tool-pillbox" /></label>
+
+          <input type="radio" name="tool" id="tool-mine" />
+          <label for="tool-mine"><div class="bolo-tool bolo-tool-mine" /></label>
+        </div>
+      ''').appendTo(@hud).buttonset()
 
   # Show WIP notice and Github ribbon. These are really a temporary hacks, so FIXME someday.
   initHudNotices: ->

@@ -75,3 +75,21 @@ canvas {
   border-color: #f0f0f0;
   background: #a0a0a0;
 }
+
+#tool-select {
+  position: absolute;
+  top: 0px; left: 0px;
+  width: 100%;
+  text-align: center;
+}
+
+.bolo-tool {
+  width: 46px; height: 42px;
+  background: url(images/tools.png);
+}
+
+.bolo-tool-forest   { background-position: -0px   0; }
+.bolo-tool-road     { background-position: -46px  0; }
+.bolo-tool-building { background-position: -92px  0; }
+.bolo-tool-pillbox  { background-position: -138px 0; }
+.bolo-tool-mine     { background-position: -184px 0; }
