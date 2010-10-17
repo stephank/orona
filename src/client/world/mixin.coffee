@@ -25,7 +25,7 @@ BoloClientWorldMixin =
     loadImage = (name) ->
       images[name] = img = new Image()
       $(img).load progress.add()
-      img.src = "img/#{name}.png"
+      img.src = "images/#{name}.png"
 
     @soundkit = soundkit = new SoundKit()
     loadSound = (name) ->

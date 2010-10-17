@@ -36,7 +36,7 @@ canvas {
   position: absolute;
   bottom: 3px; right: 4px;
   width: 16px; height: 16px;
-  background: url(img/small.png);
+  background: url(images/small.png);
 }
 
 #pillStatus .pill, #baseStatus .base {

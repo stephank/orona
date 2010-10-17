@@ -62,6 +62,41 @@ unzip = (zipfile) ->
   process.loop()
   dest
 
+# Bundle a bunch of stylesheets and their imports. The options hash can contain:
+#
+#  * `files`: The base files to bundle.
+#  * `path`: The directories to look in for `@import` dependencies.
+#
+# Note that because of the way this function looks for dependencies, this set-up doesn't deal well
+# with imports into subdirectories. It also doesn't deal with media-specific imports, or some
+# unconventional import syntax. But it's good enough for jQuery UI themes.
+bundleStyles = (output, options) ->
+  options.path ||= []
+  options.files ||= []
+
+  for inputFile in options.files
+    puts "      css : #{inputFile}"
+    css = fs.readFileSync inputFile, 'utf-8'
+    pos = 0
+    re = /@import\s+(?:url\()?("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*')\)?;/g
+    while match = re.exec(css)
+      output.write css.slice(pos, match.index)
+      pos = match.index + match[0].length
+
+      importPath = eval match[1]
+      importFile = null
+      for base in options.path
+        importFile = "#{base}/#{importPath}"
+        try
+          fs.statSync importFile
+          break
+        catch e
+          throw e unless e.errno == process.ENOENT
+      throw new Error("Could not locate import: #{importPath}") if importFile == null
+      bundleStyles output, files: [importFile], path: options.path
+
+    output.write css.slice(pos)
+
 
 ## Tasks
 
@@ -100,13 +135,25 @@ task 'build:client:bundle', 'Compile the Bolo client bundle', ->
       ]
   output.end()
 
+  output = fs.createWriteStream 'public/bolo-bundle.css'
+  bundleStyles output,
+    path: [
+        'css'
+        path.join(JQUERYUI_LIB, 'themes', 'base')
+      ]
+    files: [
+        'css/bolo.css'
+        path.join(JQUERYUI_LIB, 'themes', 'base', 'jquery.ui.all.css')
+      ]
+  output.end()
+
 task 'build:client:manifest', 'Create the manifest file', ->
   dirtytag = Math.round(Math.random() * 10000)
   exec "git describe --always --dirty=-#{dirtytag}", (error, stdout) ->
     throw error if error
     rev = stdout.trim()
 
-    images = "img/#{file}" for file in fs.readdirSync 'public/img/'
+    images = "images/#{file}" for file in fs.readdirSync 'public/images/'
     images = images.join("\n")
 
     sounds = "snd/#{file}" for file in fs.readdirSync 'public/snd/'
@@ -117,8 +164,8 @@ task 'build:client:manifest', 'Create the manifest file', ->
         CACHE MANIFEST
         # Version #{rev}
         bolo.html
+        bolo-bundle.css
         bolo-bundle.js
-        bolo.css
         http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png
         #{images}
         #{sounds}
