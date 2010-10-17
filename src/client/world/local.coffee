@@ -31,7 +31,7 @@ class BoloLocalWorld extends NetLocalWorld
 
   mapChanged: (cell, oldType, hadMine, oldLife) ->
 
-  #### Key press handlers.
+  #### Input handlers.
 
   handleKeydown: (e) ->
     e.preventDefault()
@@ -50,6 +50,9 @@ class BoloLocalWorld extends NetLocalWorld
       when 38 then @player.accelerating = no
       when 39 then @player.turningClockwise = no
       when 40 then @player.braking = no
+
+  buildOrder: (action, cell) ->
+    # FIXME
 
 helpers.extend BoloLocalWorld.prototype, require('./mixin')
 allObjects.registerWithWorld BoloLocalWorld.prototype

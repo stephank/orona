@@ -25,7 +25,7 @@ class BaseRenderer
     @lastCenter = [0, 0]
 
     @mouse = [0, 0]
-    @canvas.mousedown (e) => @handleMousedown(e)
+    @canvas.click (e) => @handleClick(e)
     @canvas.mousemove (e) => @mouse = [e.pageX, e.pageY]
 
     @setup()
@@ -128,11 +128,14 @@ class BaseRenderer
       height: window.innerHeight + 'px'
     )
 
-  handleMousedown: ->
+  handleClick: (e) ->
+    e.preventDefault()
+    return unless @currentTool
     [mx, my] = @mouse
     cell = @getCellAtScreen(mx, my)
-    @world.handleClick cell
-    false
+    if @world.checkBuildOrder @currentTool, cell
+      @world.buildOrder @currentTool, cell
+    @world.input.focus()
 
   # Get the view area in pixel coordinates when looking at the given world coordinates.
   getViewAreaAtWorld: (x, y) ->
@@ -194,24 +197,24 @@ class BaseRenderer
 
   # Create the build tool selection
   initHudToolSelect: ->
-    $('''
-        <div id="tool-select">
-          <input type="radio" name="tool" id="tool-forest" />
-          <label for="tool-forest"><div class="bolo-tool bolo-tool-forest" /></label>
-
-          <input type="radio" name="tool" id="tool-road" />
-          <label for="tool-road"><div class="bolo-tool bolo-tool-road" /></label>
-
-          <input type="radio" name="tool" id="tool-building" />
-          <label for="tool-building"><div class="bolo-tool bolo-tool-building" /></label>
-
-          <input type="radio" name="tool" id="tool-pillbox" />
-          <label for="tool-pillbox"><div class="bolo-tool bolo-tool-pillbox" /></label>
-
-          <input type="radio" name="tool" id="tool-mine" />
-          <label for="tool-mine"><div class="bolo-tool bolo-tool-mine" /></label>
-        </div>
-      ''').appendTo(@hud).buttonset()
+    @currentTool = null
+    tools = $('<div id="tool-select" />').appendTo(@hud)
+    for toolType in ['forest', 'road', 'building', 'pillbox', 'mine']
+      tool = $("<input type='radio' name='tool' id='tool-#{toolType}' />").appendTo(tools)
+      tools.append("""
+          <label for='tool-#{toolType}'>
+            <div class='bolo-tool bolo-tool-#{toolType}' />
+          </label>
+        """)
+      tool.click (e) =>
+        if @currentTool == toolType
+          @currentTool = null
+          tools.find('input').removeAttr('checked')
+          tools.data('buttonset').refresh()
+        else
+          @currentTool = toolType
+        @world.input.focus()
+    tools.buttonset()
 
   # Show WIP notice and Github ribbon. These are really a temporary hacks, so FIXME someday.
   initHudNotices: ->

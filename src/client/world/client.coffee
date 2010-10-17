@@ -67,7 +67,7 @@ class BoloClientWorld extends ClientWorld
       @mapChanges[cell.idx] = cell
     return
 
-  #### Key press handlers.
+  #### Input handlers.
 
   handleKeydown: (e) ->
     e.preventDefault()
@@ -88,6 +88,9 @@ class BoloClientWorld extends ClientWorld
       when 38 then @ws.send net.STOP_ACCELERATING
       when 39 then @ws.send net.STOP_TURNING_CW
       when 40 then @ws.send net.STOP_BRAKING
+
+  buildOrder: (action, cell) ->
+    # FIXME
 
   #### Network message handlers.
 

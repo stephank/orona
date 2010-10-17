@@ -87,9 +87,9 @@ BoloClientWorldMixin =
   idle: ->
     @renderer.draw()
 
-  handleClick: (cell) ->
-    @input.focus()
-    # FIXME
+  checkBuildOrder: (action, cell) ->
+    # FIXME: return false for actions that won't fly.
+    true
 
 helpers.extend BoloClientWorldMixin, BoloWorldMixin
 
