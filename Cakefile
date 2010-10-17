@@ -153,20 +153,24 @@ task 'build:client:manifest', 'Create the manifest file', ->
     throw error if error
     rev = stdout.trim()
 
-    images = "images/#{file}" for file in fs.readdirSync 'public/images/'
-    images = images.join("\n")
+    images = ''
+    for file in fs.readdirSync 'public/images/'
+      images += "images/#{file}\n" unless file.match /\.gz$/
 
-    sounds = "snd/#{file}" for file in fs.readdirSync 'public/snd/'
-    sounds = sounds.join("\n")
+    sounds = ''
+    for file in fs.readdirSync 'public/snd/'
+      sounds += "snd/#{file}\n" unless file.match /\.gz$/
 
     fs.writeFileSync 'public/bolo.manifest',
       """
         CACHE MANIFEST
         # Version #{rev}
+
         bolo.html
         bolo-bundle.css
         bolo-bundle.js
         http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png
+
         #{images}
         #{sounds}
       """
