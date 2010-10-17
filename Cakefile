@@ -102,7 +102,6 @@ bundleStyles = (output, options) ->
 
 task 'vendor:jqueryui', 'Fetch jQuery and jQuery UI', ->
   unzip fetch "http://jquery-ui.googlecode.com/files/jquery-ui-#{JQUERYUI_VERSION}.zip"
-  unzip fetch "http://jquery-ui.googlecode.com/files/jquery-ui-themes-#{JQUERYUI_VERSION}.zip"
 
 # A task that recreates the `src/` directory structure under `lib/`, and
 # compiles any CoffeeScript in the process.
