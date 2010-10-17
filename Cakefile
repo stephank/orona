@@ -9,6 +9,9 @@ path   = require 'path'
 villain     = require 'villain/build/cake'
 villainMain = require 'villain'
 
+if process.env.YUICSSMIN
+  eval fs.readFileSync(process.env.YUICSSMIN, 'utf-8')
+
 
 ## Helpers
 
@@ -97,6 +100,20 @@ bundleStyles = (output, options) ->
 
     output.write css.slice(pos)
 
+createStyleCompressorStream = (wrappee) ->
+  if process.env.YUICSSMIN
+    css = ''
+    return {
+      write: (data) ->
+        css += data
+      end: ->
+        puts "  compress : cssmin"
+        wrappee.write YAHOO.compressor.cssmin(css), 'utf-8'
+        wrappee.end()
+    }
+  else
+    wrappee
+
 
 ## Tasks
 
@@ -133,7 +150,7 @@ task 'build:client:jsbundle', 'Compile the Bolo client JavaScript bundle', ->
 
 # A task that packages all stylesheets into a single compressed CSS file.
 task 'build:client:cssbundle', 'Compile the Bolo client stylesheet bundle', ->
-  output = fs.createWriteStream 'public/bolo-bundle.css'
+  output = createStyleCompressorStream fs.createWriteStream 'public/bolo-bundle.css'
   bundleStyles output,
     path: [
         'css'
