@@ -34,23 +34,22 @@ class BoloLocalWorld extends NetLocalWorld
   #### Key press handlers.
 
   handleKeydown: (e) ->
+    e.preventDefault()
     switch e.which
       when 32 then @player.shooting = yes
       when 37 then @player.turningCounterClockwise = yes
       when 38 then @player.accelerating = yes
       when 39 then @player.turningClockwise = yes
       when 40 then @player.braking = yes
-    e.preventDefault()
 
   handleKeyup: (e) ->
+    e.preventDefault()
     switch e.which
       when 32 then @player.shooting = no
       when 37 then @player.turningCounterClockwise = no
       when 38 then @player.accelerating = no
       when 39 then @player.turningClockwise = no
       when 40 then @player.braking = no
-      else return
-    e.preventDefault()
 
 helpers.extend BoloLocalWorld.prototype, require('./mixin')
 allObjects.registerWithWorld BoloLocalWorld.prototype

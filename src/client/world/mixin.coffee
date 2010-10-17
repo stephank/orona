@@ -79,13 +79,16 @@ BoloClientWorldMixin =
     @loop = new Loop(this)
     @loop.tickRate = TICK_LENGTH_MS
 
-    $(document).keydown (e) => @handleKeydown(e)
-    $(document).keyup (e)   => @handleKeyup(e)
+    @input = d = $('<input id="input-dummy" type="text" autocomplete="off" />')
+    d.insertBefore(@renderer.canvas).focus()
+    d.keydown (e) => @handleKeydown(e)
+    d.keyup (e)   => @handleKeyup(e)
 
   idle: ->
     @renderer.draw()
 
   handleClick: (cell) ->
+    @input.focus()
     # FIXME
 
 helpers.extend BoloClientWorldMixin, BoloWorldMixin

@@ -20,6 +20,11 @@ canvas {
   cursor: crosshair;
 }
 
+#input-dummy {
+  position: absolute;
+  z-index: -1;
+}
+
 #hud {
   position: fixed;
   top: 0; right: 0; bottom: 0; left: 0;

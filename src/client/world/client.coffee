@@ -70,6 +70,7 @@ class BoloClientWorld extends ClientWorld
   #### Key press handlers.
 
   handleKeydown: (e) ->
+    e.preventDefault()
     return unless @ws?
     switch e.which
       when 32 then @ws.send net.START_SHOOTING
@@ -77,10 +78,9 @@ class BoloClientWorld extends ClientWorld
       when 38 then @ws.send net.START_ACCELERATING
       when 39 then @ws.send net.START_TURNING_CW
       when 40 then @ws.send net.START_BRAKING
-      else return
-    e.preventDefault()
 
   handleKeyup: (e) ->
+    e.preventDefault()
     return unless @ws?
     switch e.which
       when 32 then @ws.send net.STOP_SHOOTING
@@ -88,8 +88,6 @@ class BoloClientWorld extends ClientWorld
       when 38 then @ws.send net.STOP_ACCELERATING
       when 39 then @ws.send net.STOP_TURNING_CW
       when 40 then @ws.send net.STOP_BRAKING
-      else return
-    e.preventDefault()
 
   #### Network message handlers.
 
