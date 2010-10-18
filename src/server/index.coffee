@@ -106,7 +106,7 @@ class BoloServerWorld extends ServerWorld
 
   onMessage: (tank, message) ->
     return unless tank.client?
-    switch message
+    switch message.charAt(0)
       when '' then tank.client.heartbeatTimer = 0
       when net.START_TURNING_CCW  then tank.turningCounterClockwise = yes
       when net.STOP_TURNING_CCW   then tank.turningCounterClockwise = no
@@ -118,6 +118,10 @@ class BoloServerWorld extends ServerWorld
       when net.STOP_BRAKING       then tank.braking = no
       when net.START_SHOOTING     then tank.shooting = yes
       when net.STOP_SHOOTING      then tank.shooting = no
+      when net.BUILD_ORDER
+        [action, trees, x, y] = message.slice(2).split(',')
+        cell = @map.cellAtTile(parseInt(x), parseInt(y))
+        tank.builder.$.performOrder(action, parseInt(trees), cell)
       else @onError(tank, 'Received an unknown command')
 
   #### Helpers

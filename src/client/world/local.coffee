@@ -52,7 +52,7 @@ class BoloLocalWorld extends NetLocalWorld
       when 40 then @player.braking = no
 
   buildOrder: (action, trees, cell) ->
-    # FIXME
+    @player.builder.$.performOrder(action, trees, cell)
 
 helpers.extend BoloLocalWorld.prototype, require('./mixin')
 allObjects.registerWithWorld BoloLocalWorld.prototype

@@ -26,6 +26,10 @@ class Builder extends BoloObject
     if @order == ORDER_PARACHUTE then [16, 1]
     else [17, floor(@animation / 3)]
 
+  performOrder: (action, trees, cell) ->
+    # FIXME
+
+
   #### World updates
 
   spawn: (owner) ->

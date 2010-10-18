@@ -90,7 +90,9 @@ class BoloClientWorld extends ClientWorld
       when 40 then @ws.send net.STOP_BRAKING
 
   buildOrder: (action, trees, cell) ->
-    # FIXME
+    return unless @ws?
+    trees ||= 0
+    @ws.send [net.BUILD_ORDER, action, trees, cell.x, cell.y].join(',')
 
   #### Network message handlers.
 
