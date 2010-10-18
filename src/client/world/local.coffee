@@ -51,7 +51,7 @@ class BoloLocalWorld extends NetLocalWorld
       when 39 then @player.turningClockwise = no
       when 40 then @player.braking = no
 
-  buildOrder: (action, cell) ->
+  buildOrder: (action, trees, cell) ->
     # FIXME
 
 helpers.extend BoloLocalWorld.prototype, require('./mixin')

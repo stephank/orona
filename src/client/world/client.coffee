@@ -89,7 +89,7 @@ class BoloClientWorld extends ClientWorld
       when 39 then @ws.send net.STOP_TURNING_CW
       when 40 then @ws.send net.STOP_BRAKING
 
-  buildOrder: (action, cell) ->
+  buildOrder: (action, trees, cell) ->
     # FIXME
 
   #### Network message handlers.

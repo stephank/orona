@@ -130,12 +130,13 @@ class BaseRenderer
 
   handleClick: (e) ->
     e.preventDefault()
+    @world.input.focus()
     return unless @currentTool
+
     [mx, my] = @mouse
     cell = @getCellAtScreen(mx, my)
-    if @world.checkBuildOrder @currentTool, cell
-      @world.buildOrder @currentTool, cell
-    @world.input.focus()
+    [action, trees, flexible] = @world.checkBuildOrder(@currentTool, cell)
+    @world.buildOrder action, trees, cell if action
 
   # Get the view area in pixel coordinates when looking at the given world coordinates.
   getViewAreaAtWorld: (x, y) ->

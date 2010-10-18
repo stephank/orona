@@ -112,6 +112,10 @@ class Tank extends BoloObject
   getDirection16th: -> round((@direction - 1) / 16) % 16
   getSlideDirection16th: -> round((@slideDirection - 1) / 16) % 16
 
+  # Return an array of pillboxes this tank is carrying.
+  getCarryingPillboxes: ->
+    pill for pill in @world.map.pills when pill.inTank and pill.owner?.$ == this
+
   # Get the tilemap index to draw. This is the index in styled.png.
   getTile: ->
     tx = @getDirection16th()
@@ -334,7 +338,7 @@ class Tank extends BoloObject
 
   # Drop all pillboxes we own in a neat square area.
   dropPillboxes: ->
-    pills = pill for pill in @world.map.pills when pill.inTank and pill.owner?.$ == this
+    pills = @getCarryingPillboxes()
     return if pills.length == 0
 
     x = @cell.x; sy = @cell.y
