@@ -33,6 +33,7 @@ class Builder extends BoloObject
       p 'H', 'x'
       p 'H', 'y'
       p 'B', 'trees'
+      p 'O', 'pillbox'
       p 'f', 'hasMine'
     if @order == @states.waiting
       p 'B', 'waitTimer'
@@ -47,17 +48,26 @@ class Builder extends BoloObject
   performOrder: (action, trees, cell) ->
     return if @order != @states.inTank
     return unless @states.actions.hasOwnProperty(action)
-    return if @owner.$.trees < trees
-    return if action == 'mine' and @owner.$.mines == 0
+    pill = null
+    if action == 'mine'
+      return if @owner.$.mines == 0
+      trees = 0
+    else
+      return if trees < 0 or @owner.$.trees < trees
+      if action == 'pillbox'
+        return unless pill = @owner.$.getCarryingPillboxes().pop()
+        pill.inTank = no; pill.carried = yes
+
+    @trees = trees
+    @hasMine = (action == 'mine')
+    @ref 'pillbox', pill
+    @owner.$.mines-- if @hasMine
+    @owner.$.trees -= trees
 
     @order = @states.actions[action]
-    if action == 'mine'
-      @owner.$.mines -= 1;     @hasMine = yes; @trees = 0
-    else
-      @owner.$.trees -= trees; @hasMine = no;  @trees = trees
+    @x = @owner.$.x; @y = @owner.$.y
     [@targetX, @targetY] = cell.getWorldCoordinates()
 
-    @x = @owner.$.x; @y = @owner.$.y
 
   #### World updates
 

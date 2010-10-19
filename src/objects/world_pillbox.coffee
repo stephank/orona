@@ -20,7 +20,9 @@ class WorldPillbox extends BoloObject
 
     # Keep track of owner and position changes.
     @on 'netUpdate', (changes) =>
-      if changes.hasOwnProperty('inTank') or changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+        @updateCell()
+      if changes.hasOwnProperty('inTank') or changes.hasOwnProperty('carried')
         @updateCell()
       if changes.hasOwnProperty('owner')
         @updateOwner()
@@ -30,7 +32,7 @@ class WorldPillbox extends BoloObject
     if @cell?
       delete @cell.pill
       @cell.retile()
-    if @inTank
+    if @inTank or @carried
       @cell = null
     else
       @cell = @world.map.cellAtWorld(@x, @y)
@@ -51,9 +53,10 @@ class WorldPillbox extends BoloObject
     p 'O', 'owner'
 
     p 'f', 'inTank'
+    p 'f', 'carried'
     p 'f', 'haveTarget'
 
-    unless @inTank
+    unless @inTank or @carried
       p 'H', 'x'
       p 'H', 'y'
     else
@@ -66,7 +69,7 @@ class WorldPillbox extends BoloObject
 
   # Called when dropped by a tank, or placed by a builder.
   placeAt: (cell) ->
-    @inTank = no
+    @inTank = @carried = no
     [@x, @y] = cell.getWorldCoordinates()
     @updateCell()
     @reset()
@@ -84,7 +87,7 @@ class WorldPillbox extends BoloObject
     @updateCell()
 
   update: ->
-    return if @inTank
+    return if @inTank or @carried
     if @armour == 0
       @haveTarget = no
 
