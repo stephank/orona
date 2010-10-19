@@ -47,13 +47,12 @@ class Builder extends BoloObject
 
   performOrder: (action, trees, cell) ->
     return if @order != @states.inTank
-    return unless @states.actions.hasOwnProperty(action)
     pill = null
     if action == 'mine'
       return if @owner.$.mines == 0
       trees = 0
     else
-      return if trees < 0 or @owner.$.trees < trees
+      return if @owner.$.trees < trees
       if action == 'pillbox'
         return unless pill = @owner.$.getCarryingPillboxes().pop()
         pill.inTank = no; pill.carried = yes

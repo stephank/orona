@@ -120,8 +120,12 @@ class BoloServerWorld extends ServerWorld
       when net.STOP_SHOOTING      then tank.shooting = no
       when net.BUILD_ORDER
         [action, trees, x, y] = message.slice(2).split(',')
-        cell = @map.cellAtTile(parseInt(x), parseInt(y))
-        tank.builder.$.performOrder(action, parseInt(trees), cell)
+        trees = parseInt(trees); x = parseInt(x); y = parseInt(y)
+        builder = tank.builder.$
+        if trees < 0 or not builder.states.actions.hasOwnProperty(action)
+          @onError(tank, 'Received invalid build order')
+        else
+          builder.performOrder action, trees, @map.cellAtTile(x, y)
       else @onError(tank, 'Received an unknown command')
 
   #### Helpers
