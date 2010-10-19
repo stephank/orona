@@ -96,6 +96,10 @@ BoloClientWorldMixin =
 
   # Check and rewrite the build order that the user just tried to do.
   checkBuildOrder: (action, cell) ->
+    # FIXME: queue actions
+    builder = @player.builder.$
+    return [false] if builder.order != builder.states.inTank
+
     # FIXME: These should notify the user why they failed.
     [action, trees, flexible] = switch action
       when 'forest'
