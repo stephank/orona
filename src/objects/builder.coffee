@@ -34,7 +34,9 @@ class Builder extends BoloObject
       p 'H', 'y'
       p 'B', 'trees'
       p 'f', 'hasMine'
-    if @order == @states.parachuting or @order > @states.actions._min
+    if @order == @states.waiting
+      p 'B', 'waitTimer'
+    else if @order == @states.parachuting or @order > @states.actions._min
       p 'H', 'targetX'
       p 'H', 'targetY'
 
@@ -68,8 +70,19 @@ class Builder extends BoloObject
     @animation = 0
 
   update: ->
+    return if @order == @states.inTank
     @animation = (@animation + 1) % 9
 
+    switch @order
+      when @states.waiting
+        if @waitTimer-- == 0 then @order = @states.returning
+      when @states.returning
+        @move(@owner.$.x, @owner.$.y) unless @owner.$.armour == 255
+      else
+        @move(@targetX,   @targetY)
+
+  move: (x, y) ->
+    # FIXME
 
 ## Exports
 module.exports = Builder
