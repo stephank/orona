@@ -192,7 +192,12 @@ class Builder extends BoloObject
         break if @cell.base or @cell.pill or @cell.isType('b', '^', '#', '}', '|', ' ')
         @cell.setType '|'; @trees = 0
         @soundEffect sounds.MAN_BUILDING
-      # FIXME: pillbox, mine
+      when @states.actions.pillbox
+        break if @cell.pill or @cell.base or @cell.isType('b', '^', '#', '|', '}', ' ')
+        @pillbox.$.armour = 15; @trees = 0
+        @pillbox.$.placeAt(@cell); @ref 'pillbox', null
+        @soundEffect sounds.MAN_BUILDING
+      # FIXME: mine
 
     # Short pause while/after we build.
     @order = @states.waiting
