@@ -188,7 +188,11 @@ class Builder extends BoloObject
         break unless @cell.isType(' ') and not @cell.hasTankOnBoat()
         @cell.setType 'b'; @trees = 0
         @soundEffect sounds.MAN_BUILDING
-      # FIXME: building, pillbox, mine
+      when @states.actions.building
+        break if @cell.base or @cell.pill or @cell.isType('b', '^', '#', '}', '|', ' ')
+        @cell.setType '|'; @trees = 0
+        @soundEffect sounds.MAN_BUILDING
+      # FIXME: pillbox, mine
 
     # Short pause while/after we build.
     @order = @states.waiting
