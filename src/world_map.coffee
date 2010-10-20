@@ -49,6 +49,12 @@ class WorldMapCell extends Map::CellClass
 
   isObstacle: -> @pill?.armour > 0 or @type.tankSpeed == 0
 
+  # Does this cell contain a tank with a boat?
+  hasTankOnBoat: ->
+    for tank in @map.world.tanks when tank.armour != 255 and tank.cell == this
+      return true if tank.onBoat
+    false
+
   getTankSpeed: (tank) ->
     # Check for a pillbox.
     return 0 if @pill?.armour > 0

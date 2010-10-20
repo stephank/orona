@@ -88,12 +88,6 @@ BoloClientWorldMixin =
   idle: ->
     @renderer.draw()
 
-  # Helper for `checkBuildOrder`. Return whether the cell has a tank on a boat in it.
-  hasTankOnBoat: (cell) ->
-    for tank in @tanks when tank.armour != 255 and tank.cell == cell
-      return true if tank.onBoat
-    false
-
   # Check and rewrite the build order that the user just tried to do.
   checkBuildOrder: (action, cell) ->
     # FIXME: queue actions
@@ -109,7 +103,7 @@ BoloClientWorldMixin =
         if cell.base or cell.pill or cell.isType('|', '}', 'b', '^') then [false]
         else if cell.isType('#') then ['forest', 0]
         else if cell.isType('=') then [false]
-        else if cell.isType(' ') and @hasTankOnBoat(cell) then [false]
+        else if cell.isType(' ') and cell.hasTankOnBoat() then [false]
         else ['road', 2]
       when 'building'
         if cell.base or cell.pill or cell.isType('b', '^') then [false]
@@ -117,7 +111,7 @@ BoloClientWorldMixin =
         else if cell.isType('}') then ['repair', 1]
         else if cell.isType('|') then [false]
         else if cell.isType(' ')
-          if @hasTankOnBoat(cell) then [false]
+          if cell.hasTankOnBoat() then [false]
           else ['boat', 20]
         else if cell == @player.cell then [false]
         else ['building', 2]
