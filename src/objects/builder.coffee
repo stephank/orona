@@ -183,7 +183,11 @@ class Builder extends BoloObject
         else
           break
         @soundEffect sounds.MAN_BUILDING
-      # FIXME: boat, building, pillbox, mine
+      when @states.actions.boat
+        break unless @cell.isType(' ') and not @cell.hasTankOnBoat()
+        @cell.setType 'b'; @trees = 0
+        @soundEffect sounds.MAN_BUILDING
+      # FIXME: building, pillbox, mine
 
     # Short pause while/after we build.
     @order = @states.waiting
