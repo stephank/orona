@@ -62,6 +62,7 @@ class Builder extends BoloObject
 
   performOrder: (action, trees, cell) ->
     return if @order != @states.inTank
+    return unless @owner.$.onBoat or @owner.$.cell == cell or @owner.$.cell.getManSpeed(this) > 0
     pill = null
     if action == 'mine'
       return if @owner.$.mines == 0
