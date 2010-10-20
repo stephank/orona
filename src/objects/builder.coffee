@@ -1,5 +1,6 @@
 {round, floor, ceil, min, cos, sin, sqrt, atan2} = Math
 BoloObject = require '../object'
+sounds     = require '../sounds'
 
 
 class Builder extends BoloObject
@@ -152,7 +153,14 @@ class Builder extends BoloObject
       @x = @y = null
       return
 
-    # FIXME
+    switch @order
+      when @states.actions.forest
+        break if @cell.base or @cell.pill or not @cell.isType('#')
+        @cell.setType '.'
+        @trees = 4
+        @soundEffect sounds.FARMING_TREE
+      # FIXME
+
     @order = @states.waiting
     @waitTimer = 20
 
