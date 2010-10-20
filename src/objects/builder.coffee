@@ -48,14 +48,13 @@ class Builder extends BoloObject
     else
       p 'H', 'x'
       p 'H', 'y'
+      p 'H', 'targetX'
+      p 'H', 'targetY'
       p 'B', 'trees'
       p 'O', 'pillbox'
       p 'f', 'hasMine'
     if @order == @states.waiting
       p 'B', 'waitTimer'
-    else if @order == @states.parachuting or @order > @states.actions._min
-      p 'H', 'targetX'
-      p 'H', 'targetY'
 
   getTile: ->
     if @order == @states.parachuting then [16, 1]
@@ -108,9 +107,12 @@ class Builder extends BoloObject
         @move(@targetX,   @targetY,    16, 144)
 
   move: (targetX, targetY, targetRadius, boatRadius) ->
-    # Get our speed, and see if we're on our owner's boat.
+    # Get our speed, and keep in mind special places a builder can move to.
     speed = @cell.getManSpeed(this)
     onBoat = no
+    targetCell = @world.map.cellAtWorld(@targetX, @targetY)
+    if @cell == targetCell
+      speed = 16
     if @owner.$.armour != 255 and @owner.$.onBoat
       ownerDx = @owner.$.x - @x; ownerDy = @owner.$.y - @y
       ownerDistance = sqrt(ownerDx*ownerDx + ownerDy*ownerDy)
@@ -128,7 +130,6 @@ class Builder extends BoloObject
 
     # Check if we're running into an obstacle in either axis direction.
     movementAxes = 0
-    targetCell = @world.map.cellAtWorld(targetX, targetY)
     unless dx == 0
       ahead = @world.map.cellAtWorld(newx, @y)
       if onBoat or ahead == targetCell or ahead.getManSpeed(this) > 0
