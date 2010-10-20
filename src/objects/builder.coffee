@@ -148,11 +148,21 @@ class Builder extends BoloObject
       @reached() if targetDistance <= targetRadius
 
   reached: ->
+    # Builder has returned to tank. Jump into the tank, and return resources.
     if @order == @states.returning
       @order = @states.inTank
       @x = @y = null
+
+      if @pillbox
+        @pillbox.$.inTank = yes; @pillbox.$.carried = no
+        @ref 'pillbox', null
+      @owner.$.trees = min(40, @owner.$.trees + @trees)
+      @trees = 0
+      @owner.$.mines = min(40, @owner.$.mines + 1) if @hasMine
+      @hasMine = no
       return
 
+    # Otherwise, build.
     switch @order
       when @states.actions.forest
         break if @cell.base or @cell.pill or not @cell.isType('#')
@@ -161,6 +171,7 @@ class Builder extends BoloObject
         @soundEffect sounds.FARMING_TREE
       # FIXME
 
+    # Short pause while/after we build.
     @order = @states.waiting
     @waitTimer = 20
 
