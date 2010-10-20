@@ -26,6 +26,8 @@ class WorldPillbox extends BoloObject
         @updateCell()
       if changes.hasOwnProperty('owner')
         @updateOwner()
+      if changes.hasOwnProperty('armour')
+        @cell?.retile()
 
   # Helper that updates the cell reference, and ensures a back-reference as well.
   updateCell: ->
@@ -134,6 +136,12 @@ class WorldPillbox extends BoloObject
   takeExplosionHit: ->
     @armour = max(0, @armour - 5)
     @cell.retile()
+
+  repair: (trees) ->
+    used = min(trees, ceil((15 - @armour) / 4))
+    @armour = min(15, @armour + used*4)
+    @cell.retile()
+    used
 
 
 #### Exports

@@ -164,6 +164,7 @@ class Builder extends BoloObject
       return
 
     # Otherwise, build.
+    # FIXME: possibly merge these checks with `checkBuildOrder`.
     switch @order
       when @states.actions.forest
         break if @cell.base or @cell.pill or not @cell.isType('#')
@@ -174,7 +175,15 @@ class Builder extends BoloObject
         break if @cell.isType(' ') and @cell.hasTankOnBoat()
         @cell.setType '='; @trees = 0
         @soundEffect sounds.MAN_BUILDING
-      # FIXME
+      when @states.actions.repair
+        if @cell.pill
+          used = @cell.pill.repair(@trees); @trees -= used
+        else if @cell.isType('}')
+          @cell.setType '|'; @trees = 0
+        else
+          break
+        @soundEffect sounds.MAN_BUILDING
+      # FIXME: boat, building, pillbox, mine
 
     # Short pause while/after we build.
     @order = @states.waiting
