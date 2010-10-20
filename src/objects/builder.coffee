@@ -166,9 +166,13 @@ class Builder extends BoloObject
     switch @order
       when @states.actions.forest
         break if @cell.base or @cell.pill or not @cell.isType('#')
-        @cell.setType '.'
-        @trees = 4
+        @cell.setType '.'; @trees = 4
         @soundEffect sounds.FARMING_TREE
+      when @states.actions.road
+        break if @cell.base or @cell.pill or @cell.isType('|', '}', 'b', '^', '#', '=')
+        break if @cell.isType(' ') and @cell.hasTankOnBoat()
+        @cell.setType '='; @trees = 0
+        @soundEffect sounds.MAN_BUILDING
       # FIXME
 
     # Short pause while/after we build.
