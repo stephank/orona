@@ -1,4 +1,4 @@
-{floor}    = Math
+{round, floor, ceil, min, cos, sin, sqrt, atan2} = Math
 BoloObject = require '../object'
 
 
@@ -21,6 +21,21 @@ class Builder extends BoloObject
       mine:       16
 
   styled: yes
+
+  # Builders are only ever spawned and destroyed on the server.
+  constructor: (@world) ->
+    # Track position updates.
+    @on 'netUpdate', (changes) =>
+      if changes.hasOwnProperty('x') or changes.hasOwnProperty('y')
+        @updateCell()
+
+  # Helper, called in several places that change builder position.
+  updateCell: ->
+    @cell =
+      if @x? and @y?
+        @world.map.cellAtWorld @x, @y
+      else
+        null
 
   serialization: (isCreate, p) ->
     if isCreate
@@ -66,6 +81,7 @@ class Builder extends BoloObject
     @order = @states.actions[action]
     @x = @owner.$.x; @y = @owner.$.y
     [@targetX, @targetY] = cell.getWorldCoordinates()
+    @updateCell()
 
 
   #### World updates
@@ -86,12 +102,60 @@ class Builder extends BoloObject
       when @states.waiting
         if @waitTimer-- == 0 then @order = @states.returning
       when @states.returning
-        @move(@owner.$.x, @owner.$.y) unless @owner.$.armour == 255
+        @move(@owner.$.x, @owner.$.y, 128, 160) unless @owner.$.armour == 255
       else
-        @move(@targetX,   @targetY)
+        @move(@targetX,   @targetY,    16, 144)
 
-  move: (x, y) ->
+  move: (targetX, targetY, targetRadius, boatRadius) ->
+    # Get our speed, and see if we're on our owner's boat.
+    speed = @cell.getManSpeed(this)
+    onBoat = no
+    if @owner.$.armour != 255 and @owner.$.onBoat
+      ownerDx = @owner.$.x - @x; ownerDy = @owner.$.y - @y
+      ownerDistance = sqrt(ownerDx*ownerDx + ownerDy*ownerDy)
+      if ownerDistance < boatRadius
+        onBoat = yes
+        speed = 16
+
+    # Determine how far to move.
+    targetDx = targetX - @x; targetDy = targetY - @y
+    targetDistance = sqrt(targetDx*targetDx + targetDy*targetDy)
+    speed = min(speed, targetDistance)
+    rad = atan2(targetDy, targetDx)
+    newx = @x + (dx = round(cos(rad) * ceil(speed)))
+    newy = @y + (dy = round(sin(rad) * ceil(speed)))
+
+    # Check if we're running into an obstacle in either axis direction.
+    movementAxes = 0
+    targetCell = @world.map.cellAtWorld(targetX, targetY)
+    unless dx == 0
+      ahead = @world.map.cellAtWorld(newx, @y)
+      if onBoat or ahead == targetCell or ahead.getManSpeed(this) > 0
+        @x = newx; movementAxes++
+    unless dy == 0
+      ahead = @world.map.cellAtWorld(@x, newy)
+      if onBoat or ahead == targetCell or ahead.getManSpeed(this) > 0
+        @y = newy; movementAxes++
+
+    # Are we there yet?
+    if movementAxes == 0
+      @order = @states.returning
+    else
+      @updateCell()
+      targetDx = targetX - @x; targetDy = targetY - @y
+      targetDistance = sqrt(targetDx*targetDx + targetDy*targetDy)
+      @reached() if targetDistance <= targetRadius
+
+  reached: ->
+    if @order == @states.returning
+      @order = @states.inTank
+      @x = @y = null
+      return
+
     # FIXME
+    @order = @states.waiting
+    @waitTimer = 20
+
 
 ## Exports
 module.exports = Builder

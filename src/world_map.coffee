@@ -72,14 +72,12 @@ class WorldMapCell extends Map::CellClass
     @type.tankTurn
 
   getManSpeed: (man) ->
-    {tank} = man
+    tank = man.owner.$
     # Check for a pillbox.
     return 0 if @pill?.armour > 0
     # Check for an enemy base.
     if @base?.owner?
-      return 0 unless @base.owner == tank or tank.isAlly(@base.owner) or @base.armour <= 9
-    # Check if we're on a boat.
-    return 16 if man.onBoat and @isType('^', ' ')
+      return 0 unless @base.owner.$.isAlly(tank) or @base.armour <= 9
     # Take the land speed.
     @type.manSpeed
 
