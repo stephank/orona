@@ -1,5 +1,6 @@
 Loop             = require 'villain/loop'
 Progress         = require '../progress'
+Vignette         = require '../vignette'
 SoundKit         = require '../soundkit'
 DefaultRenderer  = require '../renderer/offscreen_2d'
 {TICK_LENGTH_MS} = require '../../constants'
@@ -14,27 +15,39 @@ BoloWorldMixin   = require '../../world_mixin'
 BoloClientWorldMixin =
 
   start: ->
-    @waitForCache =>
-      @loadResources =>
-        @loaded()
+    vignette = new Vignette()
+    @waitForCache vignette, =>
+      @loadResources vignette, =>
+        @loaded vignette
 
   # Wait for the applicationCache to finish downloading.
-  waitForCache: (callback) ->
+  waitForCache: (vignette, callback) ->
     return callback() unless applicationCache?
 
+    vignette.message 'Checking for newer versions'
     cache = $(applicationCache)
+
+    cache.bind 'downloading.bolo', ->
+      vignette.message 'Downloading latest version'
+      vignette.showProgress()
+      cache.bind 'progress.bolo', (p) -> vignette.progress(p)
+
+    cache.bind 'updateready.bolo', ->
+      vignette.hideProgress()
+      vignette.message 'Reloading latest version'
+      location.reload()
+
     afterCache = ->
+      vignette.hideProgress()
       cache.unbind '.bolo'
       callback()
-
     cache.bind 'cached.bolo', afterCache
     cache.bind 'noupdate.bolo', afterCache
-    cache.bind 'updateready.bolo', -> location.reload()
 
   # Loads all required resources.
-  loadResources: (callback) ->
+  loadResources: (vignette, callback) ->
+    vignette.message 'Loading resources'
     progress = new Progress()
-    progress.on 'complete', callback
 
     @images = {}
     @loadImages (name) =>
@@ -51,6 +64,12 @@ BoloClientWorldMixin =
       methodName = parts.join('')
       @soundkit.load methodName, src, progress.add()
 
+    unless applicationCache?
+      vignette.showProgress()
+      progress.on 'progress', (p) -> vignette.progress(p)
+    progress.on 'complete', ->
+      vignette.hideProgress()
+      callback()
     progress.wrapUp()
 
   loadImages: (i) ->

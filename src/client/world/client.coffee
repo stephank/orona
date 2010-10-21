@@ -25,16 +25,20 @@ class BoloClientWorld extends ClientWorld
     @processingServerMessages = no
 
   # Callback after resources have been loaded.
-  loaded: ->
+  loaded: (@vignette) ->
+    @vignette.message 'Connecting to the multiplayer game'
     @heartbeatTimer = 0
     @ws = new WebSocket("ws://#{location.host}/demo")
-    $(@ws).one 'message', (e) =>
-      @receiveMap(e.originalEvent)
+    $(@ws).one 'open', =>
+      @vignette.message 'Waiting for the game map'
+      $(@ws).one 'message', (e) =>
+        @receiveMap(e.originalEvent)
 
   # Callback after the map was received.
   receiveMap: (e) ->
     @map = WorldMap.load decodeBase64(e.data)
     @commonInitialization()
+    @vignette.message 'Waiting for the game state'
     $(@ws).bind 'message', (e) =>
       @handleMessage(e.originalEvent) if @ws?
 
@@ -43,6 +47,8 @@ class BoloClientWorld extends ClientWorld
     @player = tank
     @rebuildMapObjects()
     @renderer.initHud()
+    @vignette.destroy()
+    @vignette = null
     @loop.start()
 
   # Send the heartbeat (an empty message) every 10 ticks / 400ms.

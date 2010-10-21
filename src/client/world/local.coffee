@@ -18,12 +18,13 @@ class BoloLocalWorld extends NetLocalWorld
   authority: yes
 
   # Callback after resources have been loaded.
-  loaded: ->
+  loaded: (vignette) ->
     @map = WorldMap.load decodeBase64(EverardIsland)
     @commonInitialization()
     @spawnMapObjects()
     @player = @spawn Tank
     @renderer.initHud()
+    vignette.destroy()
     @loop.start()
 
   soundEffect: (sfx, x, y, owner) ->
