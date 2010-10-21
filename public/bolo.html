@@ -5,25 +5,11 @@
 <link rel="stylesheet" href="bolo-bundle.css">
 <script src="bolo-bundle.js"></script>
 <script>
-(function() {
-  var loaded = function() {
-    $(function() {
-      var World = require('bolo/client');
-      world = new World();
-      world.start();
-    });
-  };
-  if (typeof applicationCache !== 'undefined') {
-    applicationCache.addEventListener('cached',   loaded, false);
-    applicationCache.addEventListener('noupdate', loaded, false);
-    applicationCache.addEventListener('updateready', function() {
-      location.reload();
-    }, false);
-  }
-  else {
-    loaded();
-  }
-})();
+$(function() {
+  var World = require('bolo/client');
+  world = new World();
+  world.start();
+});
 </script>
 </head>
 <body>

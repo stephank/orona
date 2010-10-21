@@ -14,7 +14,22 @@ BoloWorldMixin   = require '../../world_mixin'
 BoloClientWorldMixin =
 
   start: ->
-    @loadResources => @loaded()
+    @waitForCache =>
+      @loadResources =>
+        @loaded()
+
+  # Wait for the applicationCache to finish downloading.
+  waitForCache: (callback) ->
+    return callback() unless applicationCache?
+
+    cache = $(applicationCache)
+    afterCache = ->
+      cache.unbind '.bolo'
+      callback()
+
+    cache.bind 'cached.bolo', afterCache
+    cache.bind 'noupdate.bolo', afterCache
+    cache.bind 'updateready.bolo', -> location.reload()
 
   # Loads all required resources.
   loadResources: (callback) ->
