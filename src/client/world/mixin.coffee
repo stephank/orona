@@ -21,51 +21,53 @@ BoloClientWorldMixin =
     progress = new Progress()
     progress.on 'complete', callback
 
-    @images = images = {}
-    loadImage = (name) ->
-      images[name] = img = new Image()
+    @images = {}
+    @loadImages (name) =>
+      @images[name] = img = new Image()
       $(img).load progress.add()
       img.src = "images/#{name}.png"
 
-    @soundkit = soundkit = new SoundKit()
-    loadSound = (name) ->
+    @soundkit = new SoundKit()
+    @loadSounds (name) =>
       src = "sounds/#{name}.ogg"
       parts = name.split('_')
       for i in [1...parts.length]
         parts[i] = parts[i].substr(0, 1).toUpperCase() + parts[i].substr(1)
       methodName = parts.join('')
-      soundkit.load methodName, src, progress.add()
-
-    loadImage 'base'
-    loadImage 'styled'
-    loadImage 'overlay'
-
-    loadSound 'big_explosion_far'
-    loadSound 'big_explosion_near'
-    loadSound 'bubbles'
-    loadSound 'farming_tree_far'
-    loadSound 'farming_tree_near'
-    loadSound 'hit_tank_far'
-    loadSound 'hit_tank_near'
-    loadSound 'hit_tank_self'
-    loadSound 'man_building_far'
-    loadSound 'man_building_near'
-    loadSound 'man_dying_far'
-    loadSound 'man_dying_near'
-    loadSound 'man_lay_mine_near'
-    loadSound 'mine_explosion_far'
-    loadSound 'mine_explosion_near'
-    loadSound 'shooting_far'
-    loadSound 'shooting_near'
-    loadSound 'shooting_self'
-    loadSound 'shot_building_far'
-    loadSound 'shot_building_near'
-    loadSound 'shot_tree_far'
-    loadSound 'shot_tree_near'
-    loadSound 'tank_sinking_far'
-    loadSound 'tank_sinking_near'
+      @soundkit.load methodName, src, progress.add()
 
     progress.wrapUp()
+
+  loadImages: (i) ->
+    i 'base'
+    i 'styled'
+    i 'overlay'
+
+  loadSounds: (s) ->
+    s 'big_explosion_far'
+    s 'big_explosion_near'
+    s 'bubbles'
+    s 'farming_tree_far'
+    s 'farming_tree_near'
+    s 'hit_tank_far'
+    s 'hit_tank_near'
+    s 'hit_tank_self'
+    s 'man_building_far'
+    s 'man_building_near'
+    s 'man_dying_far'
+    s 'man_dying_near'
+    s 'man_lay_mine_near'
+    s 'mine_explosion_far'
+    s 'mine_explosion_near'
+    s 'shooting_far'
+    s 'shooting_near'
+    s 'shooting_self'
+    s 'shot_building_far'
+    s 'shot_building_near'
+    s 'shot_tree_far'
+    s 'shot_tree_near'
+    s 'tank_sinking_far'
+    s 'tank_sinking_near'
 
   # Common initialization once the map is available.
   commonInitialization: ->
