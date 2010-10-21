@@ -12,12 +12,17 @@
 #
 # Typically, you specify an amount of tasks that are running, but it could just as well be a
 # remaining byte count or a percentage. The `amount` parameters are arbitrary numbers.
+#
+# An instance of `Progress` implements the `ProgressEvent` interface in the Progress Events
+# specification published by W3C. The `Progress` object itself is passed on `progress` events,
+# thus it should work for any loose implementation of a progress events consumer.
 
 class Progress extends EventEmitter
 
   constructor: (initialAmount) ->
+    @lengthComputable = yes
+    @loaded = 0
     @total = if initialAmount? then initialAmount else 0
-    @completed = 0
     @wrappingUp = no
 
   # Add the given amount to the total. `amount` is optional, and defaults to 1. The return value is
@@ -32,15 +37,15 @@ class Progress extends EventEmitter
       @step(amount)
       cb?()
 
-  # Mark the given amount as completed. `amount` is optional, and defaults to 1.
+  # Mark the given amount as loaded. `amount` is optional, and defaults to 1.
   step: (amount) ->
     amount = 1 unless amount?
-    @completed += amount
+    @loaded += amount
     @emit 'progress', this
     @checkComplete()
 
-  # Reset the both `total` and `completed` counters.
-  set: (@total, @completed) ->
+  # Reset the both `total` and `loaded` counters.
+  set: (@total, @loaded) ->
     @emit 'progress', this
     @checkComplete()
 
@@ -52,7 +57,7 @@ class Progress extends EventEmitter
 
   # An internal helper that emits the 'complete' signal when appropriate.
   checkComplete: ->
-    return unless @wrappingUp and @completed >= @total
+    return unless @wrappingUp and @loaded >= @total
     @emit 'complete'
 
 
