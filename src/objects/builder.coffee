@@ -197,7 +197,10 @@ class Builder extends BoloObject
         @pillbox.$.armour = 15; @trees = 0
         @pillbox.$.placeAt(@cell); @ref 'pillbox', null
         @soundEffect sounds.MAN_BUILDING
-      # FIXME: mine
+      when @states.actions.mine
+        break if @cell.base or @cell.pill or @cell.mine or @cell.isType('^', ' ', '|', 'b', '}')
+        @cell.setType null, yes, 0; @hasMine = no
+        @soundEffect sounds.MAN_LAY_MINE
 
     # Short pause while/after we build.
     @order = @states.waiting

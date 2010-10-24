@@ -85,7 +85,7 @@ class MapCell
       @type = TERRAIN_TYPES[newType]
       if not @type?
         throw "Invalid terrain type: #{newType}"
-    else
+    else unless newType == null
       @type = newType
 
     @map.retile(
@@ -94,7 +94,9 @@ class MapCell
     ) unless retileRadius < 0
 
   # Helper for retile methods. Short-hand for notifying the view of a retile.
+  # Also takes care of drawing mines.
   setTile: (tx, ty) ->
+    ty += 10 if @mine and not (@pill? or @base?)
     @map.view.onRetile this, tx, ty
 
   # Retile this cell. See map#retile.
@@ -116,7 +118,6 @@ class MapCell
         when '.' then @setTile 2, 1
         when '}' then @setTile 8, 1
         when 'b' then @retileBoat()
-      # FIXME: draw mine
 
   retileDeepSea: ->
     # We only care if our neighbours are deep sea, water or land.
