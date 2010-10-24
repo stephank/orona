@@ -85,6 +85,9 @@ class Builder extends BoloObject
     [@targetX, @targetY] = cell.getWorldCoordinates()
     @updateCell()
 
+  kill: ->
+    # FIXME
+
 
   #### World updates
 

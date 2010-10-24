@@ -142,6 +142,18 @@ class Tank extends BoloObject
         @sink() if @cell.isType('^')
     sounds.HIT_TANK
 
+  # We've taken a hit from a mine. Mostly similar to the above.
+  takeMineHit: ->
+    @armour -= 10
+    if @armour < 0
+      largeExplosion = @shells + @mines > 20
+      @ref 'fireball', @world.spawn(Fireball, @x, @y, @direction, largeExplosion)
+      @kill()
+    else if @onBoat
+      @onBoat = no
+      @speed = 0
+      @sink() if @cell.isType('^')
+
 
   #### World updates
 
