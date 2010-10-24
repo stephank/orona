@@ -6,6 +6,7 @@
 BoloObject        = require '../object'
 sounds            = require '../sounds'
 Explosion         = require './explosion'
+MineExplosion     = require './mine_explosion'
 Shell             = require './shell'
 Fireball          = require './fireball'
 Builder           = require './builder'
@@ -299,7 +300,9 @@ class Tank extends BoloObject
       @leaveBoat(oldcell) unless @cell.isType(' ', '^')
     else
       return @sink() if @cell.isType('^')
-      return @enterBoat() if @cell.isType('b')
+      @enterBoat() if @cell.isType('b')
+
+    @world.spawn MineExplosion, @cell if @cell.mine
 
   leaveBoat: (oldcell) ->
     # Check if we're running over another boat; destroy it if so.

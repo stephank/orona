@@ -1,6 +1,7 @@
 {round, floor, ceil, min, cos, sin, sqrt, atan2} = Math
-BoloObject = require '../object'
-sounds     = require '../sounds'
+BoloObject    = require '../object'
+sounds        = require '../sounds'
+MineExplosion = require './mine_explosion'
 
 
 class Builder extends BoloObject
@@ -164,6 +165,13 @@ class Builder extends BoloObject
       @hasMine = no
       return
 
+    # Is the builder trying to build on a mine? Yowch!
+    if @cell.mine
+      @world.spawn MineExplosion, @cell
+      @order = @states.waiting
+      @waitTimer = 20
+      return
+
     # Otherwise, build.
     # FIXME: possibly merge these checks with `checkBuildOrder`.
     switch @order
@@ -198,7 +206,7 @@ class Builder extends BoloObject
         @pillbox.$.placeAt(@cell); @ref 'pillbox', null
         @soundEffect sounds.MAN_BUILDING
       when @states.actions.mine
-        break if @cell.base or @cell.pill or @cell.mine or @cell.isType('^', ' ', '|', 'b', '}')
+        break if @cell.base or @cell.pill or @cell.isType('^', ' ', '|', 'b', '}')
         @cell.setType null, yes, 0; @hasMine = no
         @soundEffect sounds.MAN_LAY_MINE
 
