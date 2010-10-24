@@ -3,6 +3,7 @@
 
 {round, floor, ceil, min, sqrt, max, sin, cos, PI} = Math
 {TILE_SIZE_WORLD} = require '../constants'
+{distance} = require '../helpers'
 BoloObject        = require '../object'
 sounds            = require '../sounds'
 Explosion         = require './explosion'
@@ -253,8 +254,8 @@ class Tank extends BoloObject
       unless distance(this, other) > 255
         # FIXME: winbolo actually does an increasing size of nudges while the tanks are colliding,
         # keeping a static/global variable. But perhaps this should be combined with tank sliding?
-        if dx < 0 then @x++ else @x--
-        if dy < 0 then @y++ else @y--
+        if other.x < @x then @x++ else @x--
+        if other.y < @y then @y++ else @y--
 
   move: ->
     dx = dy = 0

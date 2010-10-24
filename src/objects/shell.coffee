@@ -58,8 +58,8 @@ class Shell extends BoloObject
     options ||= {}
 
     @ref 'owner', owner
-    if @owner.$.owner?
-      @ref 'attribution', @owner.$.owner
+    if @owner.$.hasOwnProperty('owner_idx')
+      @ref 'attribution', @owner.$.owner?.$
     else
       @ref 'attribution', @owner.$
 
@@ -69,7 +69,7 @@ class Shell extends BoloObject
     @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
     # Default for onWater (fired by pillboxes) is no.
     @onWater = options.onWater || no
-    # Start the owner's location, and move one step away.
+    # Start at the owner's location, and move one step away.
     @x = @owner.$.x; @y = @owner.$.y
     @move()
 
@@ -106,7 +106,7 @@ class Shell extends BoloObject
       return ['tank', tank] if distance(this, tank) <= 127
 
     # When fired from a tank, check for collision with enemy base.
-    if @owner.$ != @attribution.$ and base = @cell.base
+    if @attribution?.$ == @owner.$ and base = @cell.base
       if @onWater or (base.armour > 4 and base?.owner? and not base.owner.$.isAlly(@attribution.$))
         return ['cell', base]
 
