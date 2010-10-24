@@ -82,17 +82,12 @@ class Shell extends BoloObject
       if mode == 'cell'
         [x, y] = @cell.getWorldCoordinates()
         @world.soundEffect sfx, x, y
-        @world.spawn MineExplosion, @cell
       else # mode == 'tank'
         {x, y} = this
         victim.soundEffect sfx
-      @world.spawn Explosion, x, y
-      return @world.destroy this
-
-    if @lifespan-- == 0
-      @world.destroy this
-      @world.spawn Explosion, @x, @y
-      @world.spawn MineExplosion, @cell
+      @asplode(x, y)
+    else if @lifespan-- == 0
+      @asplode(@x, @y)
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
@@ -124,6 +119,11 @@ class Shell extends BoloObject
       else
         @cell.isType('|', '}', '#', 'b')
     return ['cell', @cell] if terrainCollision
+
+  asplode: (x, y) ->
+    @world.spawn Explosion, x, y
+    @world.spawn MineExplosion, @cell
+    @world.destroy this
 
 
 #### Exports
