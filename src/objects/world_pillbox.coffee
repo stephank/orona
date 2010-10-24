@@ -1,12 +1,11 @@
 # The pillbox is a map object, and thus a slightly special case of world object.
 
-{min, max, sqrt,
- round, ceil, PI
- cos, sin, atan2} = Math
+{min, max, round, ceil, PI, cos, sin} = Math
 {TILE_SIZE_WORLD} = require '../constants'
-BoloObject        = require '../object'
-sounds            = require '../sounds'
-Shell             = require './shell'
+{distance, heading} = require '../helpers'
+BoloObject = require '../object'
+sounds     = require '../sounds'
+Shell      = require './shell'
 
 
 class WorldPillbox extends BoloObject
@@ -106,21 +105,20 @@ class WorldPillbox extends BoloObject
       @speed = min(100, @speed + 1)
     return unless @reload >= @speed
 
-    target = null; distance = Infinity
+    target = null; targetDistance = Infinity
     for tank in @world.tanks when tank.armour != 255 and not @owner?.$.isAlly(tank)
-      dx = tank.x - @x; dy = tank.y - @y
-      d = sqrt(dx*dx + dy*dy)
-      if d <= 2048 and d < distance
-        target = tank; distance = d
+      d = distance(this, tank)
+      if d <= 2048 and d < targetDistance
+        target = tank; targetDistance = d
     return @haveTarget = no unless target
 
     # On the flank from idle to targetting, don't fire immediatly.
     if @haveTarget
       # FIXME: This code needs some helpers, taken from Tank.
       rad = (256 - target.getDirection16th() * 16) * 2 * PI / 256
-      dx = target.x + distance / 32 * round(cos(rad) * ceil(target.speed)) - @x
-      dy = target.y + distance / 32 * round(sin(rad) * ceil(target.speed)) - @y
-      direction = 256 - atan2(dy, dx) * 256 / (2*PI)
+      x = target.x + targetDistance / 32 * round(cos(rad) * ceil(target.speed))
+      y = target.y + targetDistance / 32 * round(sin(rad) * ceil(target.speed))
+      direction = 256 - heading(this, {x, y}) * 256 / (2*PI)
       @world.spawn Shell, this, {direction}
       @soundEffect sounds.SHOOTING
     @haveTarget = yes

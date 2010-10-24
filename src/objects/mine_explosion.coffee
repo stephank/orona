@@ -1,5 +1,5 @@
-{sqrt} = Math
 {TILE_SIZE_WORLD} = require '../constants'
+{distance} = require '../helpers'
 BoloObject = require '../object'
 sounds     = require '../sounds'
 Explosion  = require './explosion'
@@ -39,17 +39,11 @@ class MineExplosion extends BoloObject
     @cell.setType null, no, 0
 
     @cell.takeExplosionHit()
-
     for tank in @world.tanks when tank.armour != 255
-      dx = tank.x - @x; dy = tank.y - @y
-      distance = sqrt(dx*dx + dy*dy)
-      tank.takeMineHit() if distance < 384
-
+      tank.takeMineHit() if distance(this, tank) < 384
       builder = tank.builder.$
-      continue if builder.order in [builder.states.inTank, builder.states.parachuting]
-      dx = builder.x - @x; dy = builder.y - @y
-      distance = sqrt(dx*dx + dy*dy)
-      builder.kill() if distance < (TILE_SIZE_WORLD / 2)
+      unless builder.order in [builder.states.inTank, builder.states.parachuting]
+        builder.kill() if distance(this, builder) < (TILE_SIZE_WORLD / 2)
 
     @world.spawn Explosion, @x, @y
     @soundEffect sounds.MINE_EXPLOSION

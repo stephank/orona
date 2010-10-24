@@ -250,14 +250,11 @@ class Tank extends BoloObject
 
     # Also check if we're on top of another tank.
     for other in @world.tanks when other != this and other.armour != 255
-      dx = other.x - @x; dy = other.y - @y
-      distance = sqrt(dx*dx + dy*dy)
-      continue if distance > 255
-
-      # FIXME: winbolo actually does an increasing size of nudges while the tanks are colliding,
-      # keeping a static/global variable. But perhaps this should be combined with tank sliding?
-      if dx < 0 then @x++ else @x--
-      if dy < 0 then @y++ else @y--
+      unless distance(this, other) > 255
+        # FIXME: winbolo actually does an increasing size of nudges while the tanks are colliding,
+        # keeping a static/global variable. But perhaps this should be combined with tank sliding?
+        if dx < 0 then @x++ else @x--
+        if dy < 0 then @y++ else @y--
 
   move: ->
     dx = dy = 0

@@ -1,11 +1,11 @@
 # You shoot these. Many, in fact. With intent. At your opponent. Or perhaps some other obstacle.
 
-{round, floor, sqrt
- cos, sin, PI}      = Math
-BoloObject          = require '../object'
-{TILE_SIZE_WORLD}   = require '../constants'
-Explosion           = require './explosion'
-MineExplosion       = require './mine_explosion'
+{round, floor, cos, sin, PI} = Math
+{distance} = require '../helpers'
+BoloObject        = require '../object'
+{TILE_SIZE_WORLD} = require '../constants'
+Explosion         = require './explosion'
+MineExplosion     = require './mine_explosion'
 
 
 # This is the interface the handful of destructable objects implement. I'm talking about terrain
@@ -103,9 +103,7 @@ class Shell extends BoloObject
     # Check for collision with tanks. Carefully avoid hitting our owner when fired from a tank.
     # At the same time, remember that a pillbox *can* hit its owner.
     for tank in @world.tanks when tank != @owner?.$ and tank.armour != 255
-      dx = tank.x - @x; dy = tank.y - @y
-      distance = sqrt(dx*dx + dy*dy)
-      return ['tank', tank] if distance <= 127
+      return ['tank', tank] if distance(this, tank) <= 127
 
     # Check for collision with enemy base.
     if base = @cell.base

@@ -1,5 +1,6 @@
-{round, floor, ceil, min, cos, sin, sqrt, atan2} = Math
+{round, floor, ceil, min, cos, sin} = Math
 {TILE_SIZE_WORLD} = require '../constants'
+{distance, heading} = require '../helpers'
 BoloObject    = require '../object'
 sounds        = require '../sounds'
 MineExplosion = require './mine_explosion'
@@ -120,31 +121,26 @@ class Builder extends BoloObject
       when @states.waiting
         if @waitTimer-- == 0 then @order = @states.returning
       when @states.parachuting
-        @parachutingIn()
+        @parachutingIn(x: @targetX, y: @targetY)
       when @states.returning
-        @move(@owner.$.x, @owner.$.y, 128, 160) unless @owner.$.armour == 255
+        @move(@owner.$, 128, 160) unless @owner.$.armour == 255
       else
-        @move(@targetX,   @targetY,    16, 144)
+        @move({ x: @targetX, y: @targetY }, 16, 144)
 
-  move: (targetX, targetY, targetRadius, boatRadius) ->
+  move: (target, targetRadius, boatRadius) ->
     # Get our speed, and keep in mind special places a builder can move to.
     speed = @cell.getManSpeed(this)
     onBoat = no
     targetCell = @world.map.cellAtWorld(@targetX, @targetY)
     if @cell == targetCell
       speed = 16
-    if @owner.$.armour != 255 and @owner.$.onBoat
-      ownerDx = @owner.$.x - @x; ownerDy = @owner.$.y - @y
-      ownerDistance = sqrt(ownerDx*ownerDx + ownerDy*ownerDy)
-      if ownerDistance < boatRadius
-        onBoat = yes
-        speed = 16
+    if @owner.$.armour != 255 and @owner.$.onBoat and distance(this, @owner.$) < boatRadius
+      onBoat = yes
+      speed = 16
 
     # Determine how far to move.
-    targetDx = targetX - @x; targetDy = targetY - @y
-    targetDistance = sqrt(targetDx*targetDx + targetDy*targetDy)
-    speed = min(speed, targetDistance)
-    rad = atan2(targetDy, targetDx)
+    speed = min(speed, distance(this, target))
+    rad = heading(this, target)
     newx = @x + (dx = round(cos(rad) * ceil(speed)))
     newy = @y + (dy = round(sin(rad) * ceil(speed)))
 
@@ -164,9 +160,7 @@ class Builder extends BoloObject
       @order = @states.returning
     else
       @updateCell()
-      targetDx = targetX - @x; targetDy = targetY - @y
-      targetDistance = sqrt(targetDx*targetDx + targetDy*targetDy)
-      @reached() if targetDistance <= targetRadius
+      @reached() if distance(this, target) <= targetRadius
 
   reached: ->
     # Builder has returned to tank. Jump into the tank, and return resources.
@@ -232,15 +226,14 @@ class Builder extends BoloObject
     @order = @states.waiting
     @waitTimer = 20
 
-  parachutingIn: ->
-    targetDx = @targetX - @x; targetDy = @targetY - @y
-    targetDistance = sqrt(targetDx*targetDx + targetDy*targetDy)
-    return @order = @states.returning if targetDistance <= 16
-
-    rad = atan2(targetDy, targetDx)
-    @x += round(cos(rad) * 3)
-    @y += round(sin(rad) * 3)
-    @updateCell()
+  parachutingIn: (target) ->
+    if distance(this, target) <= 16
+      @order = @states.returning
+    else
+      rad = heading(this, target)
+      @x += round(cos(rad) * 3)
+      @y += round(sin(rad) * 3)
+      @updateCell()
 
 
 ## Exports
