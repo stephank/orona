@@ -10,8 +10,7 @@ class SoundKit
     @isSupported = no
     if Audio?
       dummy = new Audio()
-      if dummy.canPlayType?
-        @isSupported = !!dummy.canPlayType "audio/ogg; codecs='vorbis'"
+      @isSupported = dummy.canPlayType?
 
   # Register the effect at the given url with the given name, and build a helper method
   # on this instance to play the sound effect.
@@ -21,13 +20,15 @@ class SoundKit
 
   # Wait for the given effect to be loaded, then register it.
   load: (name, url, cb) ->
-    unless @isSupported
-      @register(name, url)
-      return cb?()
+    @register name, url
+    return cb?() unless @isSupported
     loader = new Audio()
-    $(loader).bind 'canplaythrough', =>
-      @register(name, loader.currentSrc)
-      cb?()
+    $(loader).one('canplaythrough', cb) if cb
+    $(loader).one 'error', (e) =>
+      # FIXME: support more error codes.
+      switch e.code
+        when e.MEDIA_ERR_SRC_NOT_SUPPORTED
+          @isSupported = no; cb?()
     loader.src = url
     loader.load()
 
