@@ -65,13 +65,12 @@ class MapCell
     num
 
   setType: (newType, mine, retileRadius) ->
-    mine ||= no
     retileRadius ||= 1
 
     oldType = @type
     hadMine = @mine
 
-    @mine = mine
+    @mine = mine unless mine == undefined
     if typeof(newType) == 'string'
       @type = TERRAIN_TYPES[newType]
       if newType.length != 1 or not @type?

@@ -5,6 +5,7 @@
 BoloObject          = require '../object'
 {TILE_SIZE_WORLD}   = require '../constants'
 Explosion           = require './explosion'
+MineExplosion       = require './mine_explosion'
 
 
 # This is the interface the handful of destructable objects implement. I'm talking about terrain
@@ -79,9 +80,9 @@ class Shell extends BoloObject
       [mode, victim] = collision
       sfx = victim.takeShellHit(this)
       if mode == 'cell'
-        x = (@cell.x + 0.5) * TILE_SIZE_WORLD
-        y = (@cell.y + 0.5) * TILE_SIZE_WORLD
+        [x, y] = @cell.getWorldCoordinates()
         @world.soundEffect sfx, x, y
+        @world.spawn MineExplosion, @cell
       else # mode == 'tank'
         {x, y} = this
         victim.soundEffect sfx
@@ -91,6 +92,7 @@ class Shell extends BoloObject
     if @lifespan-- == 0
       @world.destroy this
       @world.spawn Explosion, @x, @y
+      @world.spawn MineExplosion, @cell
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
