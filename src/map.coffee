@@ -373,14 +373,17 @@ class MapView
 # of `Map` wishes to use different classes for map objects, it simply needs to define new classes
 # with similar constructors and exposing the same attributes.
 
-class Pillbox
-  constructor: (map, @x, @y, @owner_idx, @armour, @speed) ->
+class MapObject
+  constructor: (@map) -> @cell = @map.cells[@y][@x]
 
-class Base
-  constructor: (map, @x, @y, @owner_idx, @armour, @shells, @mines) ->
+class Pillbox extends MapObject
+  constructor: (map, @x, @y, @owner_idx, @armour, @speed) -> super
 
-class Start
-  constructor: (map, @x, @y, @direction) ->
+class Base extends MapObject
+  constructor: (map, @x, @y, @owner_idx, @armour, @shells, @mines) -> super
+
+class Start extends MapObject
+  constructor: (map, @x, @y, @direction) -> super
 
 
 #### Map class

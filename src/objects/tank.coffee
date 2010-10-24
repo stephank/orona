@@ -40,8 +40,7 @@ class Tank extends BoloObject
   # (Re)spawn the tank. Initializes all state. Only ever called on the server.
   reset: ->
     startingPos = @world.map.getRandomStart()
-    @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
-    @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
+    [@x, @y] = startingPos.cell.getWorldCoordinates()
     @direction = startingPos.direction * 16
     @updateCell()
 

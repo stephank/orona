@@ -99,8 +99,7 @@ class Builder extends BoloObject
     else
       [@targetX, @targetY] = [@owner.$.x, @owner.$.y]
     startingPos = @world.map.getRandomStart()
-    @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
-    @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
+    [@x, @y] = startingPos.cell.getWorldCoordinates()
 
 
   #### World updates
