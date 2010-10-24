@@ -132,7 +132,7 @@ class Builder extends BoloObject
     speed = @cell.getManSpeed(this)
     onBoat = no
     targetCell = @world.map.cellAtWorld(@targetX, @targetY)
-    if @cell == targetCell
+    if speed == 0 and @cell == targetCell
       speed = 16
     if @owner.$.armour != 255 and @owner.$.onBoat and distance(this, @owner.$) < boatRadius
       onBoat = yes
