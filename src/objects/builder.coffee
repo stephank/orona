@@ -1,4 +1,5 @@
 {round, floor, ceil, min, cos, sin, sqrt, atan2} = Math
+{TILE_SIZE_WORLD} = require '../constants'
 BoloObject    = require '../object'
 sounds        = require '../sounds'
 MineExplosion = require './mine_explosion'
@@ -86,7 +87,20 @@ class Builder extends BoloObject
     @updateCell()
 
   kill: ->
-    # FIXME
+    return unless @world.authority
+    @soundEffect sounds.MAN_DYING
+    @order = @states.parachuting
+    @trees = 0; @hasMine = no
+    if @pillbox
+      @pillbox.$.placeAt @cell
+      @ref 'pillbox', null
+    if @owner.$.armour == 255
+      [@targetX, @targetY] = [@x, @y]
+    else
+      [@targetX, @targetY] = [@owner.$.x, @owner.$.y]
+    startingPos = @world.map.getRandomStart()
+    @x = (startingPos.x + 0.5) * TILE_SIZE_WORLD
+    @y = (startingPos.y + 0.5) * TILE_SIZE_WORLD
 
 
   #### World updates
@@ -106,6 +120,8 @@ class Builder extends BoloObject
     switch @order
       when @states.waiting
         if @waitTimer-- == 0 then @order = @states.returning
+      when @states.parachuting
+        @parachutingIn()
       when @states.returning
         @move(@owner.$.x, @owner.$.y, 128, 160) unless @owner.$.armour == 255
       else
@@ -216,6 +232,16 @@ class Builder extends BoloObject
     # Short pause while/after we build.
     @order = @states.waiting
     @waitTimer = 20
+
+  parachutingIn: ->
+    targetDx = @targetX - @x; targetDy = @targetY - @y
+    targetDistance = sqrt(targetDx*targetDx + targetDy*targetDy)
+    return @order = @states.returning if targetDistance <= 16
+
+    rad = atan2(targetDy, targetDx)
+    @x += round(cos(rad) * 3)
+    @y += round(sin(rad) * 3)
+    @updateCell()
 
 
 ## Exports
