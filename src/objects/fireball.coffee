@@ -73,22 +73,24 @@ class Fireball extends BoloObject
       @y = newy unless ahead.isObstacle()
 
   explode: ->
-    cell = @world.map.cellAtWorld(@x, @y)
-
+    cells = [@world.map.cellAtWorld(@x, @y)]
     if @largeExplosion
       dx = if @dx > 0 then 1 else -1
       dy = if @dy > 0 then 1 else -1
-      for c in [cell.neigh(dx, 0), cell.neigh(0, dy), cell.neigh(dx, dy)]
-        [x, y] = c.getWorldCoordinates()
-        @world.spawn Explosion, x, y
-        c.takeExplosionHit()
+      cells.push cells[0].neigh(dx,  0)
+      cells.push cells[0].neigh( 0, dy)
+      cells.push cells[0].neigh(dx, dy)
       @soundEffect sounds.BIG_EXPLOSION
     else
       @soundEffect sounds.MINE_EXPLOSION
 
-    [x, y] = cell.getWorldCoordinates()
-    @world.spawn Explosion, x, y
-    cell.takeExplosionHit()
+    for cell in cells
+      cell.takeExplosionHit()
+      for tank in @world.tanks when builder = tank.builder.$
+        unless builder.order in [builder.states.inTank, builder.states.parachuting]
+          builder.kill() if builder.cell == cell
+      [x, y] = cell.getWorldCoordinates()
+      @world.spawn Explosion, x, y
 
 
 #### Exports

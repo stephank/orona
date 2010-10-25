@@ -39,8 +39,8 @@ class MineExplosion extends BoloObject
     @cell.setType null, no, 0
 
     @cell.takeExplosionHit()
-    for tank in @world.tanks when tank.armour != 255
-      tank.takeMineHit() if distance(this, tank) < 384
+    for tank in @world.tanks
+      tank.takeMineHit() if tank.armour != 255 and distance(this, tank) < 384
       builder = tank.builder.$
       unless builder.order in [builder.states.inTank, builder.states.parachuting]
         builder.kill() if distance(this, builder) < (TILE_SIZE_WORLD / 2)

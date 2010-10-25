@@ -85,9 +85,9 @@ class Shell extends BoloObject
       else # mode == 'tank'
         {x, y} = this
         victim.soundEffect sfx
-      @asplode(x, y)
+      @asplode(x, y, mode)
     else if @lifespan-- == 0
-      @asplode(@x, @y)
+      @asplode(@x, @y, 'eol')
 
   move: ->
     @radians ||= (256 - @direction) * 2 * PI / 256
@@ -119,7 +119,13 @@ class Shell extends BoloObject
         @cell.isType('|', '}', '#', 'b')
     return ['cell', @cell] if terrainCollision
 
-  asplode: (x, y) ->
+  asplode: (x, y, mode) ->
+    for tank in @world.tanks when builder = tank.builder.$
+      unless builder.order in [builder.states.inTank, builder.states.parachuting]
+        if mode == 'cell'
+          builder.kill() if builder.cell == @cell
+        else
+          builder.kill() if distance(this, builder) < (TILE_SIZE_WORLD / 2)
     @world.spawn Explosion, x, y
     @world.spawn MineExplosion, @cell
     @world.destroy this
