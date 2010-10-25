@@ -1,9 +1,10 @@
 # The pillbox is a map object, and thus a slightly special case of world object.
 
-{min, max}        = Math
+{min, max} = Math
 {TILE_SIZE_WORLD} = require '../constants'
-BoloObject        = require '../object'
-sounds            = require '../sounds'
+{distance} = require '../helpers'
+BoloObject = require '../object'
+sounds     = require '../sounds'
 
 
 class WorldBase extends BoloObject
@@ -97,6 +98,10 @@ class WorldBase extends BoloObject
     return
 
   takeShellHit: (shell) ->
+    if @owner
+      for pill in @world.map.pills when not (pill.inTank or pill.carried) and pill.armour > 0
+        if pill.owner?.$.isAlly(@owner.$) and distance(this, pill) <= 2304
+          pill.aggravate()
     @armour = max(0, @armour - 5)
     sounds.SHOT_BUILDING
 

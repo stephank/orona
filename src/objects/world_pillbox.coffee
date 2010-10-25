@@ -124,10 +124,13 @@ class WorldPillbox extends BoloObject
     @haveTarget = yes
     @reload = 0
 
-  takeShellHit: (shell) ->
-    @armour = max(0, @armour - 1)
+  aggravate: ->
     @coolDown = 32
     @speed = max(6, round(@speed / 2))
+
+  takeShellHit: (shell) ->
+    @aggravate()
+    @armour = max(0, @armour - 1)
     @cell.retile()
     sounds.SHOT_BUILDING
 
