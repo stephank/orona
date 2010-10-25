@@ -159,7 +159,12 @@ class Tank extends BoloObject
 
   spawn: ->
     # FIXME: Proper way to select teams.
-    @team = @world.tanks.length % 2
+    red = blue = 0
+    for tank in @world.tanks
+      red++  if tank.team == 0
+      blue++ if tank.team == 1
+    @team = if blue < red then 1 else 0
+
     @reset()
     @ref 'builder', @world.spawn(Builder, this)
 
