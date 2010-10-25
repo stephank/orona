@@ -131,6 +131,7 @@ BoloClientWorldMixin =
     return [false] if builder.order != builder.states.inTank
 
     # FIXME: These should notify the user why they failed.
+    return [false] if cell.mine
     [action, trees, flexible] = switch action
       when 'forest'
         if cell.base or cell.pill or not cell.isType('#') then [false]
