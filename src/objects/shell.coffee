@@ -107,8 +107,8 @@ class Shell extends BoloObject
       return ['tank', tank] if distance(this, tank) <= 127
 
     # When fired from a tank, check for collision with enemy base.
-    if @attribution?.$ == @owner.$ and base = @cell.base
-      if @onWater or (base.armour > 4 and base?.owner? and not base.owner.$.isAlly(@attribution.$))
+    if @attribution?.$ == @owner?.$ and (base = @cell.base) and base.armour > 4
+      if @onWater or (base?.owner? and not base.owner.$.isAlly(@attribution?.$))
         return ['cell', base]
 
     # Check for terrain collision
