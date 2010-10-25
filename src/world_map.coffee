@@ -11,6 +11,7 @@ net                  = require './net'
 sounds               = require './sounds'
 WorldPillbox         = require './objects/world_pillbox'
 WorldBase            = require './objects/world_base'
+FloodFill            = require './objects/flood_fill'
 
 
 ## Terrain data
@@ -129,15 +130,15 @@ class WorldMapCell extends Map::CellClass
         when '|' then '}'
         when 'b' then ' '
       @setType nextType
+    @map.world?.spawn(FloodFill, this) if @isType ' '
     sfx
 
   takeExplosionHit: ->
-    if @pill?
-      @pill.takeExplosionHit()
-    else if @isType 'b'
-      @setType ' '
-    else unless @isType ' ', '^', 'b'
-      @setType '%'
+    return @pill.takeExplosionHit() if @pill?
+    if @isType('b') then @setType ' '
+    else if not @isType(' ', '^', 'b') then @setType '%'
+    else return
+    @map.world?.spawn(FloodFill, this)
 
 
 ## Map class
