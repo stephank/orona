@@ -97,8 +97,9 @@ class Shell extends BoloObject
 
   collide: ->
     # Check for a collision with a pillbox, but not our owner.
-    if pill = @cell.pill
-      return ['cell', pill] if pill.armour > 0 and pill != @owner?.$
+    if (pill = @cell.pill) and pill.armour > 0 and pill != @owner?.$
+      [x, y] = @cell.getWorldCoordinates()
+      return ['cell', pill] if distance(this, {x, y}) <= 127
 
     # Check for collision with tanks. Carefully avoid hitting our owner when fired from a tank.
     # At the same time, remember that a pillbox *can* hit its owner.
