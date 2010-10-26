@@ -50,10 +50,10 @@ class MineExplosion extends BoloObject
     @spread()
 
   spread: ->
-    n = @cell.neigh( 1,  0); @world.spawn(MineExplosion, n) unless n.isType '^'
-    n = @cell.neigh( 0,  1); @world.spawn(MineExplosion, n) unless n.isType '^'
-    n = @cell.neigh(-1,  0); @world.spawn(MineExplosion, n) unless n.isType '^'
-    n = @cell.neigh( 0, -1); @world.spawn(MineExplosion, n) unless n.isType '^'
+    n = @cell.neigh( 1,  0); @world.spawn(MineExplosion, n) unless n.isEdgeCell()
+    n = @cell.neigh( 0,  1); @world.spawn(MineExplosion, n) unless n.isEdgeCell()
+    n = @cell.neigh(-1,  0); @world.spawn(MineExplosion, n) unless n.isEdgeCell()
+    n = @cell.neigh( 0, -1); @world.spawn(MineExplosion, n) unless n.isEdgeCell()
 
 
 ## Exports

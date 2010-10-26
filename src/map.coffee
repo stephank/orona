@@ -35,7 +35,7 @@ createTerrainMap()
 class MapCell
   constructor: (@map, @x, @y) ->
     @type = TERRAIN_TYPES['^']
-    @mine = no
+    @mine = @isEdgeCell()
 
     # This is just a unique index for this cell; used in a couple of places for convenience.
     @idx = @y * MAP_SIZE_TILES + @x
@@ -57,6 +57,9 @@ class MapCell
       type = arguments[i]
       return yes if @type == type or @type.ascii == type
     no
+
+  isEdgeCell: ->
+    @x <= 20 or @x >= 236 or @y <= 20 or @y >= 236
 
   getNumericType: ->
     return -1 if @type.ascii == '^'
@@ -86,6 +89,8 @@ class MapCell
         throw "Invalid terrain type: #{newType}"
     else unless newType == null
       @type = newType
+
+    @mine = yes if @isEdgeCell()
 
     @map.retile(
       @x - retileRadius, @y - retileRadius,
@@ -436,7 +441,7 @@ class Map
   clear: (sx, sy, ex, ey) ->
     @each (cell) ->
       cell.type = TERRAIN_TYPES['^']
-      cell.mine = no
+      cell.mine = cell.isEdgeCell()
     , sx, sy, ex, ey
 
   # Recalculate the tile cache for each cell, or for a specific area.
