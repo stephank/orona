@@ -4,12 +4,9 @@
 # are stubbed out here. All renderers also implement the `MapView` interface.
 
 
-{round, cos, sin,
- PI, sqrt}         = Math
-{TILE_SIZE_PIXELS,
- TILE_SIZE_WORLD,
- PIXEL_SIZE_WORLD} = require '../../constants'
-sounds             = require '../../sounds'
+{min, max, round, cos, sin, PI, sqrt} = Math
+{TILE_SIZE_PIXELS, TILE_SIZE_WORLD, PIXEL_SIZE_WORLD, MAP_SIZE_PIXELS} = require '../../constants'
+sounds = require '../../sounds'
 
 
 class BaseRenderer
@@ -142,7 +139,9 @@ class BaseRenderer
   getViewAreaAtWorld: (x, y) ->
     {width, height} = @canvas[0]
     left = round(x / PIXEL_SIZE_WORLD - width  / 2)
-    top =  round(y / PIXEL_SIZE_WORLD - height / 2)
+    left = max(0, min(MAP_SIZE_PIXELS - width, left))
+    top  = round(y / PIXEL_SIZE_WORLD - height / 2)
+    top  = max(0, min(MAP_SIZE_PIXELS - height, top))
     [left, top, width, height]
 
   # Get the map cell at the given screen coordinates.
