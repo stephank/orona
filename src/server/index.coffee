@@ -3,6 +3,8 @@
 # sharing the interval timer and the lobby across these games.
 
 
+{random, round} = Math
+
 fs   = require 'fs'
 url  = require 'url'
 path = require 'path'
@@ -203,7 +205,7 @@ allObjects.registerWithWorld BoloServerWorld.prototype
 class Application
 
   constructor: ->
-    @games = []
+    @games = {}
 
     @mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
 
@@ -215,9 +217,27 @@ class Application
     @loop.start()
 
     # FIXME: this is for the demo
-    data = fs.readFileSync "#{@mapPath}/everard-island.map"
+    @demo = @createGame('everard-island')
+
+  createGameId: ->
+    charset = 'abcdefghijklmnopqrstuvwxyz'
+    loop
+      gid = for i in [1..20]
+        charset.charAt(round(random() * (charset.length - 1)))
+      gid = gid.join('')
+      break unless @games.hasOwnProperty(gid)
+    gid
+
+  createGame: (mapName) ->
+    data = fs.readFileSync "#{@mapPath}/#{mapName}.map"
     map = WorldMap.load data
-    @games.push new BoloServerWorld(map)
+
+    gid = @createGameId()
+    @games[gid] = game = new BoloServerWorld(map)
+    game.gid = gid
+    console.log "Created game '#{gid}'"
+
+    game
 
   #### Loop callbacks
 
@@ -236,10 +256,14 @@ class Application
     if path == '/lobby' then false
 
     # FIXME: Match joining based on a UUID.
-    else if path.indexOf('/match/') == 0 then false
+    else if m = /^\/match\/([a-z]{20})$/.exec(path)
+      if @games.hasOwnProperty(m[1])
+        (ws) => @games[m[1]].onConnect ws
+      else
+        false
 
     # FIXME: This is the temporary entry point.
-    else if path == '/demo' then (ws) => @games[0].onConnect ws
+    else if path == '/demo' then (ws) => @demo.onConnect ws
 
     else false
 
@@ -262,7 +286,7 @@ redirectMiddleware = (req, res, next) ->
   requrl = url.parse(req.url)
   if requrl.pathname == '/'
     query = ''
-  else if m = /^\/match\/([a-zA-Z0-9]+)$/.exec(requrl.pathname)
+  else if m = /^\/match\/([a-z]{20})$/.exec(requrl.pathname)
     query = "?#{m[1]}"
   else
     return next()

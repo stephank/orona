@@ -29,9 +29,12 @@ class BoloClientWorld extends ClientWorld
     @vignette.message 'Connecting to the multiplayer game'
     @heartbeatTimer = 0
 
-    path =
-      if m = /^\?([a-zA-Z0-9]+)$/.exec(location.search) then "/match/#{m[1]}"
-      else "/demo"
+    if m = /^\?([a-z]{20})$/.exec(location.search)
+      path = "/match/#{m[1]}"
+    else if location.search
+      return @vignette.message 'Invalid game ID'
+    else
+      path = "/demo"
     @ws = new WebSocket("ws://#{location.host}#{path}")
 
     $(@ws).one 'open', =>
