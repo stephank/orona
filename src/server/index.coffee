@@ -286,9 +286,9 @@ createBoloServer = ->
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)
-  boloApp = new Application()
+  server.bolo = new Application()
   server.on 'upgrade', (request, connection, initialData) ->
-    boloApp.handleWebsocket(request, connection, initialData)
+    server.bolo.handleWebsocket(request, connection, initialData)
 
   server
 
