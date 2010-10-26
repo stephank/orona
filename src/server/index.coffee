@@ -238,7 +238,7 @@ class Application
     # FIXME: Match joining based on a UUID.
     else if path.indexOf('/match/') == 0 then false
 
-    # FIXME: This is the temporary entry point while none of the above is implemented.
+    # FIXME: This is the temporary entry point.
     else if path == '/demo' then (ws) => @games[0].onConnect ws
 
     else false
@@ -257,12 +257,17 @@ class Application
 
 ## Entry point
 
-# Helper middleware to redirect from the root.
+# Helper middleware to redirect from the root or from '/match/*'.
 redirectMiddleware = (req, res, next) ->
   requrl = url.parse(req.url)
-  return next() unless requrl.pathname == '/'
+  if requrl.pathname == '/'
+    query = ''
+  else if m = /^\/match\/([a-zA-Z0-9]+)$/.exec(requrl.pathname)
+    query = "?#{m[1]}"
+  else
+    return next()
   host = requrl.host || req.headers['host']
-  res.writeHead 301, 'Location': "http://#{host}/bolo.html"
+  res.writeHead 301, 'Location': "http://#{host}/bolo.html#{query}"
   res.end()
 
 # Don't export a server directly, but this factory function. Once called, the timer loop will

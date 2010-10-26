@@ -28,11 +28,18 @@ class BoloClientWorld extends ClientWorld
   loaded: (@vignette) ->
     @vignette.message 'Connecting to the multiplayer game'
     @heartbeatTimer = 0
-    @ws = new WebSocket("ws://#{location.host}/demo")
+
+    path =
+      if m = /^\?([a-zA-Z0-9]+)$/.exec(location.search) then "/match/#{m[1]}"
+      else "/demo"
+    @ws = new WebSocket("ws://#{location.host}#{path}")
+
     $(@ws).one 'open', =>
       @vignette.message 'Waiting for the game map'
       $(@ws).one 'message', (e) =>
         @receiveMap(e.originalEvent)
+    $(@ws).one 'close', =>
+      @vignette?.message 'Game does not exist'
 
   # Callback after the map was received.
   receiveMap: (e) ->
