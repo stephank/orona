@@ -242,7 +242,7 @@ class Application
   #### Loop callbacks
 
   tick: ->
-    for game in @games
+    for gid, game of @games
       game.tick()
     return
 
