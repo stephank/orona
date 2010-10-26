@@ -63,6 +63,7 @@ class Tank extends BoloObject
 
     @reload   = 0
     @shooting = no
+    @firingRange = 7
 
     @waterTimer = 0
     @onBoat = yes
@@ -99,6 +100,9 @@ class Tank extends BoloObject
     p 'B', 'mines'
     p 'B', 'trees'
     p 'B', 'reload'
+    p 'B', 'firingRange',
+      tx: (v) -> v * 2
+      rx: (v) -> v / 2
     p 'B', 'waterTimer'
 
     # Group bit fields.
@@ -127,6 +131,10 @@ class Tank extends BoloObject
 
   # Tell whether the other tank is an ally.
   isAlly: (other) -> other == this or (@team != 255 and other.team == @team)
+
+  # Adjust the firing range.
+  increaseRange: -> @firingRange = min(7, @firingRange + 0.5)
+  decreaseRange: -> @firingRange = max(1, @firingRange - 0.5)
 
   # We've taken a hit. Check if we were killed, otherwise slide and possibly kill our boat.
   takeShellHit: (shell) ->
@@ -198,10 +206,8 @@ class Tank extends BoloObject
     return unless @shooting and @reload == 0 and @shells > 0
     # We're clear to fire a shot.
 
-    @reload = 13
-    @shells--
-    # FIXME: variable firing distance
-    @world.spawn Shell, this, onWater: @onBoat
+    @shells--; @reload = 13
+    @world.spawn Shell, this, range: @firingRange, onWater: @onBoat
     @soundEffect sounds.SHOOTING
 
   turn: ->

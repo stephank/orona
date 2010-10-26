@@ -66,7 +66,7 @@ class Shell extends BoloObject
     # Default direction is the owner's.
     @direction = options.direction || @owner.$.direction
     # Default lifespan (fired by pillboxes) is 7 tiles.
-    @lifespan = options.lifespan || (7 * TILE_SIZE_WORLD / 32 - 2)
+    @lifespan = (options.range || 7) * TILE_SIZE_WORLD / 32 - 2
     # Default for onWater (fired by pillboxes) is no.
     @onWater = options.onWater || no
     # Start at the owner's location, and move one step away.

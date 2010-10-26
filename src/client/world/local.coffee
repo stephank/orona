@@ -27,6 +27,17 @@ class BoloLocalWorld extends NetLocalWorld
     vignette.destroy()
     @loop.start()
 
+  tick: ->
+    super
+
+    if @increasingRange != @decreasingRange
+      if ++@rangeAdjustTimer == 6
+        if @increasingRange then @player.increaseRange()
+        else @player.decreaseRange()
+        @rangeAdjustTimer = 0
+    else
+      @rangeAdjustTimer = 0
+
   soundEffect: (sfx, x, y, owner) ->
     @renderer.playSound(sfx, x, y, owner)
 
@@ -35,7 +46,6 @@ class BoloLocalWorld extends NetLocalWorld
   #### Input handlers.
 
   handleKeydown: (e) ->
-    e.preventDefault()
     switch e.which
       when 32 then @player.shooting = yes
       when 37 then @player.turningCounterClockwise = yes
@@ -44,7 +54,6 @@ class BoloLocalWorld extends NetLocalWorld
       when 40 then @player.braking = yes
 
   handleKeyup: (e) ->
-    e.preventDefault()
     switch e.which
       when 32 then @player.shooting = no
       when 37 then @player.turningCounterClockwise = no

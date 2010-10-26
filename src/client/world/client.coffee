@@ -54,6 +54,15 @@ class BoloClientWorld extends ClientWorld
   # Send the heartbeat (an empty message) every 10 ticks / 400ms.
   tick: ->
     super
+
+    if @ws? and @increasingRange != @decreasingRange
+      if ++@rangeAdjustTimer == 6
+        if @increasingRange then @ws.send net.INC_RANGE
+        else @ws.send net.DEC_RANGE
+        @rangeAdjustTimer = 0
+    else
+      @rangeAdjustTimer = 0
+
     if ++@heartbeatTimer == 10
       @heartbeatTimer = 0
       @ws.send('')
@@ -76,7 +85,6 @@ class BoloClientWorld extends ClientWorld
   #### Input handlers.
 
   handleKeydown: (e) ->
-    e.preventDefault()
     return unless @ws?
     switch e.which
       when 32 then @ws.send net.START_SHOOTING
@@ -86,7 +94,6 @@ class BoloClientWorld extends ClientWorld
       when 40 then @ws.send net.START_BRAKING
 
   handleKeyup: (e) ->
-    e.preventDefault()
     return unless @ws?
     switch e.which
       when 32 then @ws.send net.STOP_SHOOTING

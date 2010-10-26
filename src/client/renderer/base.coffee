@@ -161,8 +161,7 @@ class BaseRenderer
   drawReticle: ->
     return if @world.player.armour == 255
 
-    # FIXME: variable firing distance
-    distance = 7 * TILE_SIZE_PIXELS
+    distance = @world.player.firingRange * TILE_SIZE_PIXELS
     rad = (256 - @world.player.direction) * 2 * PI / 256
     x = round(@world.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
     y = round(@world.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2

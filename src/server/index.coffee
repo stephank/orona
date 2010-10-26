@@ -118,6 +118,8 @@ class BoloServerWorld extends ServerWorld
       when net.STOP_BRAKING       then tank.braking = no
       when net.START_SHOOTING     then tank.shooting = yes
       when net.STOP_SHOOTING      then tank.shooting = no
+      when net.INC_RANGE          then tank.increaseRange()
+      when net.DEC_RANGE          then tank.decreaseRange()
       when net.BUILD_ORDER
         [action, trees, x, y] = message.slice(2).split(',')
         trees = parseInt(trees); x = parseInt(x); y = parseInt(y)
