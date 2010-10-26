@@ -64,6 +64,7 @@ class Tank extends BoloObject
     @reload   = 0
     @shooting = no
 
+    @waterTimer = 0
     @onBoat = yes
 
   serialization: (isCreate, p) ->
@@ -98,6 +99,7 @@ class Tank extends BoloObject
     p 'B', 'mines'
     p 'B', 'trees'
     p 'B', 'reload'
+    p 'B', 'waterTimer'
 
     # Group bit fields.
     p 'f', 'accelerating'
@@ -304,6 +306,15 @@ class Tank extends BoloObject
 
       # Check our new terrain if we changed cells.
       @checkNewCell(oldcell) if oldcell != @cell
+
+    if not @onBoat and @speed <= 3 and @cell.isType(' ')
+      if ++@waterTimer == 15
+        @soundEffect sounds.BUBBLES if @shells != 0 or @mines != 0
+        @shells = max(0, @shells - 1)
+        @mines  = max(0, @mines  - 1)
+        @waterTimer = 0
+    else
+      @waterTimer = 0
 
   checkNewCell: (oldcell) ->
     # FIXME: check for mine impact
