@@ -7,5 +7,5 @@ var lib  = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
 bolo = require(lib + '/server');
 puts = require('sys').puts;
 
-bolo().listen(8124);
+bolo({ log: true, gzip: true }).listen(8124);
 puts("Bolo server listening on port 8124.");
