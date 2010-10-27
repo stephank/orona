@@ -296,7 +296,7 @@ redirectMiddleware = (req, res, next) ->
 
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
-createBoloServer = (options) ->
+createBoloAppServer = (options) ->
   options ||= {}
   webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../public'
 
@@ -314,7 +314,7 @@ createBoloServer = (options) ->
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)
-  server.bolo = new Application()
+  server.app = new Application()
   server.on 'upgrade', (request, connection, initialData) ->
     server.bolo.handleWebsocket(request, connection, initialData)
 
@@ -322,4 +322,4 @@ createBoloServer = (options) ->
 
 
 ## Exports
-module.exports = createBoloServer
+module.exports = createBoloAppServer
