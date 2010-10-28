@@ -16,6 +16,7 @@ ServerWorld = require 'villain/world/net/server'
 {pack}      = require 'villain/struct'
 
 WebSocket        = require './websocket'
+MapIndex         = require './map_index'
 helpers          = require '../helpers'
 BoloWorldMixin   = require '../world_mixin'
 allObjects       = require '../objects/all'
@@ -207,7 +208,8 @@ class Application
   constructor: (@base) ->
     @games = {}
 
-    @mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
+    mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
+    @maps = new MapIndex(mapPath)
 
     # FIXME: The interval should be deactivated automatically when
     # there are no games. (And reactivated once a new one starts.)
@@ -217,7 +219,9 @@ class Application
     @loop.start()
 
     # FIXME: this is for the demo
-    @demo = @createGame('everard-island')
+    fs.readFile "#{mapPath}/Everard Island.map", (err, data) =>
+      return console.log "Unable to start demo game: #{err.toString()}" if err
+      @demo = @createGame(data)
 
   createGameId: ->
     charset = 'abcdefghijklmnopqrstuvwxyz'
@@ -228,9 +232,8 @@ class Application
       break unless @games.hasOwnProperty(gid)
     gid
 
-  createGame: (mapName) ->
-    data = fs.readFileSync "#{@mapPath}/#{mapName}.map"
-    map = WorldMap.load data
+  createGame: (mapData) ->
+    map = WorldMap.load mapData
 
     gid = @createGameId()
     @games[gid] = game = new BoloServerWorld(map)
@@ -264,7 +267,7 @@ class Application
         false
 
     # FIXME: This is the temporary entry point.
-    else if path == '/demo' then (ws) => @demo.onConnect ws
+    else if path == '/demo' and @demo then (ws) => @demo.onConnect ws
 
     else false
 
