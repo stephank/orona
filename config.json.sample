@@ -1,5 +1,6 @@
 {
   "web": {
+    "base": "http://localhost:8124",
     "port": 8124,
     "log": true,
     "gzip": true

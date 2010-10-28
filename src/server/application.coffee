@@ -282,17 +282,17 @@ class Application
 ## Entry point
 
 # Helper middleware to redirect from the root or from '/match/*'.
-redirectMiddleware = (req, res, next) ->
-  requrl = url.parse(req.url)
-  if requrl.pathname == '/'
-    query = ''
-  else if m = /^\/match\/([a-z]{20})$/.exec(requrl.pathname)
-    query = "?#{m[1]}"
-  else
-    return next()
-  host = requrl.host || req.headers['host']
-  res.writeHead 301, 'Location': "http://#{host}/bolo.html#{query}"
-  res.end()
+redirector = (base) ->
+  (req, res, next) ->
+    requrl = url.parse(req.url)
+    if requrl.pathname == '/'
+      query = ''
+    else if m = /^\/match\/([a-z]{20})$/.exec(requrl.pathname)
+      query = "?#{m[1]}"
+    else
+      return next()
+    res.writeHead 301, 'Location': "#{base}/bolo.html#{query}"
+    res.end()
 
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
@@ -301,8 +301,10 @@ createBoloAppServer = (options) ->
   webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../public'
 
   server = connect.createServer()
+  server.base = options.base
   if options.log
     server.use '/', connect.logger()
+  server.use '/', redirector(options.base)
   if options.gzip
     server.use '/', connect.staticGzip(
       root: webroot,
@@ -316,7 +318,7 @@ createBoloAppServer = (options) ->
   # (Servers that wrap this application will fail.)
   server.app = new Application()
   server.on 'upgrade', (request, connection, initialData) ->
-    server.bolo.handleWebsocket(request, connection, initialData)
+    server.app.handleWebsocket(request, connection, initialData)
 
   server
 
