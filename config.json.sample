@@ -1,0 +1,7 @@
+{
+  "web": {
+    "port": 8124,
+    "log": true,
+    "gzip": true
+  }
+}
