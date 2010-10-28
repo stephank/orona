@@ -40,14 +40,23 @@ class BoloIrc
 createBoloIrcClient = (server, options) ->
   irc = new BoloIrc(options)
 
+  findHisGame = (userident) ->
+    for gid, game of server.app.games
+      return game if game.owner == userident
+    return
+
   irc.watch_for /^map\s+(.+?)$/, (m) ->
-    # FIXME: Limit number of games, and one per user.
+    userident = "#{m.person.user}@#{m.person.host}"
+    return m.say "You already have a game open." if findHisGame(userident)
+    return m.say "All game slots are full at the moment." unless server.app.haveOpenSlots()
+
     matches = server.app.maps.fuzzy m.match_data[1]
     if matches.length == 1
       [descr] = matches
       fs.readFile descr.path, (err, data) ->
         return m.say "Having some trouble loading that map, sorry." if err
         game = server.app.createGame(data)
+        game.owner = userident
         m.say "Started game “#{descr.name}” at: #{game.url}"
     else if matches.length == 0
       m.say "I can't find any map like that."

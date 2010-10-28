@@ -10,7 +10,7 @@ exports.run = ->
     return
   config = JSON.parse fs.readFileSync(process.argv[2], 'utf-8')
 
-  server = createBoloAppServer config.web
+  server = createBoloAppServer config
   server.listen config.web.port
   puts "Bolo server listening on port #{config.web.port}."
 

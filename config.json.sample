@@ -1,6 +1,9 @@
 {
-  "web": {
+  "general": {
     "base": "http://localhost:8124",
+    "maxgames": 5
+  },
+  "web": {
     "port": 8124,
     "log": true,
     "gzip": true

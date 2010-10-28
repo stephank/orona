@@ -205,7 +205,7 @@ allObjects.registerWithWorld BoloServerWorld.prototype
 
 class Application
 
-  constructor: (@base) ->
+  constructor: (@options) ->
     @games = {}
 
     mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
@@ -223,6 +223,9 @@ class Application
       return console.log "Unable to start demo game: #{err.toString()}" if err
       @demo = @createGame(data)
 
+  haveOpenSlots: ->
+    Object.getOwnPropertyNames(@games).length < @options.general.maxgames
+
   createGameId: ->
     charset = 'abcdefghijklmnopqrstuvwxyz'
     loop
@@ -238,7 +241,7 @@ class Application
     gid = @createGameId()
     @games[gid] = game = new BoloServerWorld(map)
     game.gid = gid
-    game.url = "#{@base}/match/#{gid}"
+    game.url = "#{@options.general.base}/match/#{gid}"
     console.log "Created game '#{gid}'"
 
     game
@@ -305,10 +308,10 @@ createBoloAppServer = (options) ->
   webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../public'
 
   server = connect.createServer()
-  if options.log
+  if options.web.log
     server.use '/', connect.logger()
-  server.use '/', redirector(options.base)
-  if options.gzip
+  server.use '/', redirector(options.general.base)
+  if options.web.gzip
     server.use '/', connect.staticGzip(
       root: webroot,
       compress: [
@@ -319,7 +322,7 @@ createBoloAppServer = (options) ->
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)
-  server.app = new Application(options.base)
+  server.app = new Application(options)
   server.on 'upgrade', (request, connection, initialData) ->
     server.app.handleWebsocket(request, connection, initialData)
 
