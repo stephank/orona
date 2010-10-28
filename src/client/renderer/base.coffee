@@ -6,7 +6,8 @@
 
 {min, max, round, cos, sin, PI, sqrt} = Math
 {TILE_SIZE_PIXELS, TILE_SIZE_WORLD, PIXEL_SIZE_WORLD, MAP_SIZE_PIXELS} = require '../../constants'
-sounds = require '../../sounds'
+sounds      = require '../../sounds'
+TEAM_COLORS = require '../../team_colors'
 
 
 class BaseRenderer
@@ -248,14 +249,27 @@ class BaseRenderer
   updateHud: ->
     # Pillboxes.
     @hud.find('#pillStatus .pill').each (i, node) =>
-      # FIXME: allegiance
-      $(node).attr('status', 'neutral')
+      node = $(node); pill = node.data('pill')
+      if pill.inTank or pill.carried
+        node.attr('status', 'carried')
+      else if pill.armour == 0
+        node.attr('status', 'dead')
+      else
+        node.attr('status', 'healthy')
+      color = TEAM_COLORS[pill.team] or { r: 112, g: 112, b: 112 }
+      node.css 'background-color': "rgb(#{color.r},#{color.g},#{color.b})"
 
     # Bases.
     @hud.find('#baseStatus .base').each (i, node) =>
-      # FIXME: allegiance
-      $(node).attr('status', 'neutral')
+      node = $(node); base = node.data('base')
+      if base.armour <= 9
+        node.attr 'status', 'vulnerable'
+      else
+        node.attr 'status', 'healthy'
+      color = TEAM_COLORS[base.team] or { r: 112, g: 112, b: 112 }
+      node.css 'background-color': "rgb(#{color.r},#{color.g},#{color.b})"
 
+    # Tank.
     {shells, mines, armour, trees} = @world.player
     shells = mines = armour = trees = 0 if armour == 255
     @hud.find('#tankShells .gauge-content').css(height: "#{round(shells / 40 * 100)}%")

@@ -48,16 +48,20 @@ canvas {
   background: black;
 }
 
+.deco {
+  background: url(images/hud.png);
+}
+
 #tankStatus {
   bottom: 8px; right: 8px;
   width: 51px; height: 150px;
 }
 
 #tankStatus .deco {
-  background: url(images/tankstats.png);
   position: absolute;
   bottom: 3px; left: 3px;
   width: 45px; height: 9px;
+  background-position: -112px 0px;
 }
 
 .gauge {
@@ -72,7 +76,7 @@ canvas {
   background: yellow;
 }
 
-#tankShells { left: 6px; }
+#tankShells { left:  6px; }
 #tankMines  { left: 18px; }
 #tankArmour { left: 30px; }
 #tankTrees  { left: 42px; }
@@ -85,14 +89,13 @@ canvas {
   position: absolute;
   bottom: 3px; right: 4px;
   width: 16px; height: 16px;
-  background: url(images/small.png);
 }
 
 #pillStatus .pill, #baseStatus .base {
   float: left;
-  width: 14px; height: 14px;
-  margin: 3px 0 0 3px;
-  border: 2px solid;
+  width: 16px; height: 16px;
+  margin: 4px 1px 1px 4px;
+  background: url(images/hud.png);
 }
 
 #pillStatus {
@@ -100,30 +103,23 @@ canvas {
 }
 
 #pillStatus .deco {
-  background-position: -240px -64px;
+  background-position: 0px 0px;
 }
 
-/* FIXME: this slows down things a bit. Perhaps just use images? */
-/*
-#pillStatus .pill {
-  -moz-border-radius: 8px;
-  -webkit-border-radius: 8px;
-  border-radius: 8px;
-}
-*/
+#pillStatus .pill[status='dead']    { background-position: -64px 0px; }
+#pillStatus .pill[status='healthy'] { background-position: -80px 0px; }
+#pillStatus .pill[status='carried'] { background-position: -96px 0px; }
 
 #baseStatus {
   bottom: 8px; left: 149px;
 }
 
 #baseStatus .deco {
-  background-position: -256px -64px;
+  background-position: -16px 0px;
 }
 
-#pillStatus .pill[status='neutral'], #baseStatus .base[status='neutral'] {
-  border-color: #f0f0f0;
-  background: #a0a0a0;
-}
+#baseStatus .base[status='healthy']    { background-position: -32px 0px; }
+#baseStatus .base[status='vulnerable'] { background-position: -48px 0px; }
 
 #tool-select {
   position: absolute;
@@ -134,11 +130,11 @@ canvas {
 
 .bolo-tool {
   width: 46px; height: 42px;
-  background: url(images/tools.png);
+  background: url(images/hud.png);
 }
 
-.bolo-tool-forest   { background-position: -0px   0; }
-.bolo-tool-road     { background-position: -46px  0; }
-.bolo-tool-building { background-position: -92px  0; }
-.bolo-tool-pillbox  { background-position: -138px 0; }
-.bolo-tool-mine     { background-position: -184px 0; }
+.bolo-tool-forest   { background-position:    0px -16px; }
+.bolo-tool-road     { background-position:  -46px -16px; }
+.bolo-tool-building { background-position:  -92px -16px; }
+.bolo-tool-pillbox  { background-position: -138px -16px; }
+.bolo-tool-mine     { background-position: -184px -16px; }
