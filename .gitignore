@@ -5,3 +5,5 @@ public/bolo-bundle.css
 public/bolo-bundle.js
 public/bolo.manifest
 *.gz
+config.json
+maps/**
