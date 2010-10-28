@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "connect": ">=0.2.4",
+    "jerk": ">=1.0.0",
     "villain": "=0.1.2"
   },
 

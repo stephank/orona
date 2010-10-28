@@ -204,7 +204,7 @@ allObjects.registerWithWorld BoloServerWorld.prototype
 
 class Application
 
-  constructor: ->
+  constructor: (@base) ->
     @games = {}
 
     @mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
@@ -235,6 +235,7 @@ class Application
     gid = @createGameId()
     @games[gid] = game = new BoloServerWorld(map)
     game.gid = gid
+    game.url = "#{@base}/match/#{gid}"
     console.log "Created game '#{gid}'"
 
     game
@@ -301,7 +302,6 @@ createBoloAppServer = (options) ->
   webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../public'
 
   server = connect.createServer()
-  server.base = options.base
   if options.log
     server.use '/', connect.logger()
   server.use '/', redirector(options.base)
@@ -316,7 +316,7 @@ createBoloAppServer = (options) ->
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)
-  server.app = new Application()
+  server.app = new Application(options.base)
   server.on 'upgrade', (request, connection, initialData) ->
     server.app.handleWebsocket(request, connection, initialData)
 

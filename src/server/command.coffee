@@ -1,6 +1,7 @@
 {puts} = require 'sys'
 fs     = require 'fs'
 createBoloAppServer = require './application'
+createBoloIrcClient = require './irc'
 
 exports.run = ->
   # FIXME: I want YAML, damnit!
@@ -12,3 +13,9 @@ exports.run = ->
   server = createBoloAppServer config.web
   server.listen config.web.port
   puts "Bolo server listening on port #{config.web.port}."
+
+  if config.irc
+    for link, options of config.irc
+      createBoloIrcClient(server, options)
+
+  return

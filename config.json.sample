@@ -4,5 +4,18 @@
     "port": 8124,
     "log": true,
     "gzip": true
+  },
+  "irc": {
+    "freenode": {
+      "server": "irc.freenode.net",
+      "encoding": "utf-8",
+      "nick": "birnie",
+      "channels": ["#orona"],
+      "log": true,
+      "user": {
+        "username": "birnie",
+        "realname": "Birnie West"
+      }
+    }
   }
 }
