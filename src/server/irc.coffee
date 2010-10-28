@@ -19,6 +19,7 @@ class BoloIrc
       completeText = m.params[m.params.length - 1]
       return unless match = @didAddressMe.exec(completeText)
       m.text = match[1]
+      m.person.ident = "#{m.person.user}@#{m.person.host}"
       m.say = (text) =>
         @client.privmsg m.channel, "#{m.person.nick}: #{text}", yes
       for [re, callback] in @watchers
@@ -40,14 +41,13 @@ class BoloIrc
 createBoloIrcClient = (server, options) ->
   irc = new BoloIrc(options)
 
-  findHisGame = (userident) ->
+  findHisGame = (ident) ->
     for gid, game of server.app.games
-      return game if game.owner == userident
+      return game if game.owner == ident
     return
 
   irc.watch_for /^map\s+(.+?)$/, (m) ->
-    userident = "#{m.person.user}@#{m.person.host}"
-    return m.say "You already have a game open." if findHisGame(userident)
+    return m.say "You already have a game open." if findHisGame(m.person.ident)
     return m.say "All game slots are full at the moment." unless server.app.haveOpenSlots()
 
     matches = server.app.maps.fuzzy m.match_data[1]
@@ -56,7 +56,7 @@ createBoloIrcClient = (server, options) ->
       fs.readFile descr.path, (err, data) ->
         return m.say "Having some trouble loading that map, sorry." if err
         game = server.app.createGame(data)
-        game.owner = userident
+        game.owner = m.person.ident
         m.say "Started game “#{descr.name}” at: #{game.url}"
     else if matches.length == 0
       m.say "I can't find any map like that."
@@ -65,6 +65,11 @@ createBoloIrcClient = (server, options) ->
     else
       names = "“#{descr.name}”" for descr in matches
       m.say "Did you mean one of these: #{names.join(', ')}"
+
+  irc.watch_for /^close$/, (m) ->
+    return m.say "You don't have a game open." unless game = findHisGame(m.person.ident)
+    server.app.closeGame(game)
+    m.say "Your game was closed."
 
   irc.watch_for /^reindex$/, (m) ->
     # FIXME: Only allow admins to do this!

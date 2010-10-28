@@ -39,6 +39,10 @@ class BoloServerWorld extends ServerWorld
     @oddTick = no
     @spawnMapObjects()
 
+  close: ->
+    for {client} in @tanks when client?
+      client.end()
+
   #### Callbacks
 
   # Update, and then send packets to the client.
@@ -211,12 +215,8 @@ class Application
     mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
     @maps = new MapIndex(mapPath)
 
-    # FIXME: The interval should be deactivated automatically when
-    # there are no games. (And reactivated once a new one starts.)
-    # Maybe we shouldn't update empty games either?
     @loop = new Loop(this)
     @loop.tickRate = TICK_LENGTH_MS
-    @loop.start()
 
     # FIXME: this is for the demo
     fs.readFile "#{mapPath}/Everard Island.map", (err, data) =>
@@ -243,10 +243,23 @@ class Application
     game.gid = gid
     game.url = "#{@options.general.base}/match/#{gid}"
     console.log "Created game '#{gid}'"
+    @startLoop()
 
     game
 
-  #### Loop callbacks
+  closeGame: (game) ->
+    delete @games[game.gid]
+    @possiblyStopLoop()
+    game.close()
+    console.log "Closed game '#{game.gid}'"
+
+  #### Loop control
+
+  startLoop: ->
+    @loop.start()
+
+  possiblyStopLoop: ->
+    @loop.stop() unless @haveOpenSlots()
 
   tick: ->
     for gid, game of @games
