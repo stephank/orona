@@ -176,11 +176,23 @@ class BaseRenderer
   # Create the HUD container.
   initHud: ->
     @hud = $('<div/>').appendTo('body')
+    @initTankStatus()
     @initHudPillboxes()
     @initHudBases()
     @initHudToolSelect()
     @initHudNotices()
     @updateHud()
+
+  initTankStatus: ->
+    container = $("""
+        <div id='tankStatus'>
+          <div class='deco'></div>
+          <div class='gauge' id='tankShells'> <div class='gauge-content'></div> </div>
+          <div class='gauge' id='tankMines'>  <div class='gauge-content'></div> </div>
+          <div class='gauge' id='tankArmour'> <div class='gauge-content'></div> </div>
+          <div class='gauge' id='tankTrees'>  <div class='gauge-content'></div> </div>
+        </div>
+      """).appendTo(@hud)
 
   # Create the pillbox status indicator.
   initHudPillboxes: ->
@@ -243,6 +255,13 @@ class BaseRenderer
     @hud.find('#baseStatus .base').each (i, node) =>
       # FIXME: allegiance
       $(node).attr('status', 'neutral')
+
+    {shells, mines, armour, trees} = @world.player
+    shells = mines = armour = trees = 0 if armour == 255
+    @hud.find('#tankShells .gauge-content').css(height: "#{round(shells / 40 * 100)}%")
+    @hud.find('#tankMines  .gauge-content').css(height: "#{round(mines  / 40 * 100)}%")
+    @hud.find('#tankArmour .gauge-content').css(height: "#{round(armour / 40 * 100)}%")
+    @hud.find('#tankTrees  .gauge-content').css(height: "#{round(trees  / 40 * 100)}%")
 
 
 #### Exports
