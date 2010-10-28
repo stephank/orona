@@ -39,10 +39,7 @@ class MapIndex
 
   fuzzy: (s) ->
     matcher = new RegExp s.replace(/[\W_]+/g, '').split('').join('\\w*'), 'i'
-    for fuzzed, descr of @fuzzyIndex
-      if matcher.test(fuzzed)
-        return descr
-    return undefined
+    descr for fuzzed, descr of @fuzzyIndex when matcher.test(fuzzed)
 
 
 ## Exports

@@ -42,13 +42,20 @@ createBoloIrcClient = (server, options) ->
 
   irc.watch_for /^map\s+(.+?)$/, (m) ->
     # FIXME: Limit number of games, and one per user.
-    if descr = server.app.maps.fuzzy m.match_data[1]
+    matches = server.app.maps.fuzzy m.match_data[1]
+    if matches.length == 1
+      [descr] = matches
       fs.readFile descr.path, (err, data) ->
         return m.say "Having some trouble loading that map, sorry." if err
         game = server.app.createGame(data)
         m.say "Started game “#{descr.name}” at: #{game.url}"
+    else if matches.length == 0
+      m.say "I can't find any map like that."
+    else if matches.length > 4
+      m.say "You need to be a bit more specific than that."
     else
-      m.say "I don't seem to have that map, sorry."
+      names = "“#{descr.name}”" for descr in matches
+      m.say "Did you mean one of these: #{names.join(', ')}"
 
   irc.watch_for /^reindex$/, (m) ->
     # FIXME: Only allow admins to do this!
