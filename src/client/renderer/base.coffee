@@ -231,7 +231,7 @@ class BaseRenderer
         if @currentTool == toolType
           @currentTool = null
           tools.find('input').removeAttr('checked')
-          tools.data('buttonset').refresh()
+          tools.buttonset('refresh')
         else
           @currentTool = toolType
         @world.input.focus()

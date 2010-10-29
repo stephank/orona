@@ -120,7 +120,7 @@ class BoloClientWorld extends ClientWorld
     return unless nick and team != -1
 
     $.cookie('nick', nick)
-    @joinDialog.data('dialog').destroy(); @joinDialog = null
+    @joinDialog.dialog('destroy'); @joinDialog = null
     @ws.send JSON.stringify { command: 'join', nick, team }
     @input.focus()
 
