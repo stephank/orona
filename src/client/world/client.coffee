@@ -225,7 +225,7 @@ class BoloClientWorld extends ClientWorld
         error = e
     if error
       @failure 'Connection lost (protocol error)'
-      console?.log "Following exception occurred while processing message:", data
+      console?.log "Following exception occurred while processing message:", e.data
       throw error
 
   handleBinaryCommand: (command, data, offset) ->
@@ -273,6 +273,10 @@ class BoloClientWorld extends ClientWorld
     switch data.command
       when 'nick'
         @objects[data.idx].name = data.nick
+      when 'msg'
+        console.log "#{@objects[data.idx].name}: #{data.text}"
+      when 'teamMsg'
+        console.log "#{@objects[data.idx].name} [team]: #{data.text}"
       else
         throw new Error "Bad JSON command '#{data.command}' from server."
 

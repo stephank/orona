@@ -155,8 +155,17 @@ class BoloServerWorld extends ServerWorld
         throw new Error("Received an invalid JSON message")
     catch e
       return @onError ws, e
+    if message.command == 'join'
+      if ws.tank
+        @onError ws, new Error("Client tried to join twice.")
+      else
+        @onJoinMessage ws, message
+      return
+    unless tank = ws.tank
+      return @onError ws, new Error("Received a JSON message from a spectator")
     switch message.command
-      when 'join' then @onJoinMessage(ws, message)
+      when 'msg'     then @onTextMessage(ws, tank, message)
+      when 'teamMsg' then @onTeamTextMessage(ws, tank, message)
       else
         sanitized = message.command.slice(0, 10).replace(/\W+/, '')
         @onError ws, new Error("Received an unknown JSON command: #{sanitized}")
@@ -164,8 +173,6 @@ class BoloServerWorld extends ServerWorld
   # Creates a tank for a connection and synchronizes it to everyone. Then tells the connection
   # that this new tank is his.
   onJoinMessage: (ws, message) ->
-    if ws.tank
-      @onError ws, new Error("Client tried to join twice.")
     if typeof(message.nick) != 'string' or message.nick.length > 20
       @onError ws, new Error("Client specified invalid nickname.")
     if typeof(message.team) != 'number' or not (message.team == 0 or message.team == 1)
@@ -180,11 +187,32 @@ class BoloServerWorld extends ServerWorld
     @broadcast JSON.stringify
       command: 'nick'
       idx: ws.tank.idx
-      nick: message.name
+      nick: message.nick
 
     packet = pack('BH', net.WELCOME_MESSAGE, ws.tank.idx)
     packet = new Buffer(packet).toString('base64')
     ws.sendMessage(packet)
+
+  onTextMessage: (ws, tank, message) ->
+    if typeof(message.text) != 'string' or message.text.length > 140
+      @onError ws, new Error("Client sent an invalid text message.")
+
+    @broadcast JSON.stringify
+      command: 'msg'
+      idx: tank.idx
+      text: message.text
+
+  onTeamTextMessage: (ws, tank, message) ->
+    if typeof(message.text) != 'string' or message.text.length > 140
+      @onError ws, new Error("Client sent an invalid text message.")
+    if tank.team == 255 then return
+
+    out = JSON.stringify
+      command: 'teamMsg'
+      idx: tank.idx
+      text: message.text
+    for client in @clients when client.tank.team == tank.team
+      client.sendMessage(out)
 
   #### Helpers
 
