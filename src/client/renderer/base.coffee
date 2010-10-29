@@ -177,14 +177,14 @@ class BaseRenderer
   # Create the HUD container.
   initHud: ->
     @hud = $('<div/>').appendTo('body')
-    @initTankStatus()
+    @initHudTankStatus()
     @initHudPillboxes()
     @initHudBases()
     @initHudToolSelect()
     @initHudNotices()
     @updateHud()
 
-  initTankStatus: ->
+  initHudTankStatus: ->
     container = $("""
         <div id='tankStatus'>
           <div class='deco'></div>
