@@ -12,12 +12,12 @@
     "freenode": {
       "server": "irc.freenode.net",
       "encoding": "utf-8",
-      "nick": "birnie",
-      "channels": ["#orona"],
+      "nick": "MyBoloBot",
+      "channels": ["#mytestchannel"],
       "log": true,
       "user": {
-        "username": "birnie",
-        "realname": "Birnie West"
+        "username": "orona",
+        "realname": "Orona Bot"
       }
     }
   }
