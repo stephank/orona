@@ -22,7 +22,7 @@ class BoloLocalWorld extends NetLocalWorld
     @map = WorldMap.load decodeBase64(EverardIsland)
     @commonInitialization()
     @spawnMapObjects()
-    @player = @spawn Tank
+    @player = @spawn Tank, 0
     @renderer.initHud()
     vignette.destroy()
     @loop.start()
