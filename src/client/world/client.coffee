@@ -11,6 +11,15 @@ helpers          = require '../../helpers'
 # FIXME: Better error handling all around.
 
 
+JOIN_DIALOG_TEMPLATE = """
+    <div>
+      <p><label for="join-nick-field">What is your name?</label></p>
+      <p><input type="text" name="join-nick-field" id="join-nick-field"></input></p>
+      <p><input type="button" name="join-submit" id="join-submit" value="Join game"></input></p>
+    </div>
+  """
+
+
 ## Networked game
 
 # The `BoloClientWorld` class implements a networked game using a WebSocket.
@@ -62,6 +71,21 @@ class BoloClientWorld extends ClientWorld
     @vignette.destroy()
     @vignette = null
     @loop.start()
+
+    @joinDialog = $(JOIN_DIALOG_TEMPLATE).dialog(dialogClass: 'unclosable')
+    @joinDialog.find('#join-nick-field')
+      .focus()
+      .keydown (e) =>
+        @join() if e.which == 13
+    @joinDialog.find('#join-submit').button()
+      .click =>
+        @join()
+
+  join: ->
+    nick = @joinDialog.find('#join-nick-field').val()
+    @joinDialog.data('dialog').destroy(); @joinDialog = null
+    @ws.send JSON.stringify { command: 'join', nick }
+    @input.focus()
 
   # Callback after the welcome message was received.
   receiveWelcome: (tank) ->
