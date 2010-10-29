@@ -16,6 +16,10 @@ body {
   background: black;
 }
 
+.unclosable .ui-dialog-titlebar-close {
+  display: none;
+}
+
 canvas {
   cursor: crosshair;
 }

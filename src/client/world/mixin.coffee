@@ -143,7 +143,7 @@ BoloClientWorldMixin =
   # Method called when things go awry.
   failure: (message) ->
     @loop?.stop()
-    $('<div/>').text(message).dialog(modal: yes)
+    $('<div/>').text(message).dialog(modal: yes, dialogClass: 'unclosable')
 
   # Check and rewrite the build order that the user just tried to do.
   checkBuildOrder: (action, cell) ->
