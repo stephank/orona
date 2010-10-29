@@ -117,6 +117,29 @@ class Common2dRenderer extends BaseRenderer
 
     @ctx.restore()
 
+  drawNames: ->
+    @ctx.save()
+    @ctx.strokeStyle = @ctx.fillStyle = 'white'
+    @ctx.font = 'sans-serif 11px'
+    @ctx.textBaselines = 'alphabetic'
+    @ctx.textAlign = 'left'
+    player = @world.player
+    for tank in @world.tanks when tank.name and tank.armour != 255 and tank != player
+      if player
+        continue if (dist = distance(player, tank)) <= 768
+        @ctx.globalAlpha = min(1.0, (dist - 768) / 1536)
+      else
+        @ctx.globalAlpha = 1.0
+      metrics = @ctx.measureText tank.name
+      @ctx.beginPath()
+      @ctx.moveTo(
+        x = round(tank.x / PIXEL_SIZE_WORLD) + 16,
+        y = round(tank.y / PIXEL_SIZE_WORLD) - 16)
+      @ctx.lineTo x += 12, y -= 9
+      @ctx.lineTo x + metrics.width, y
+      @ctx.stroke()
+      @ctx.fillText tank.name, x, y - 2
+    @ctx.restore()
 
 #### Exports
 module.exports = Common2dRenderer

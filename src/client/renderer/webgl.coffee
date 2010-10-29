@@ -340,6 +340,9 @@ class WebglRenderer extends BaseRenderer
   drawBuilderIndicator: (b) ->
     # FIXME
 
+  drawNames: ->
+    # FIXME
+
 
 ## Exports
 module.exports = WebglRenderer

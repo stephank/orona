@@ -167,6 +167,7 @@ class BaseRenderer
       unless b.order == b.states.inTank or b.order == b.states.parachuting
         @drawBuilderIndicator(b)
       @drawReticle()
+    @drawNames()
     @drawCursor()
 
   drawReticle: ->
