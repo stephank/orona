@@ -12,10 +12,23 @@ helpers          = require '../../helpers'
 
 
 JOIN_DIALOG_TEMPLATE = """
-    <div>
-      <p><label for="join-nick-field">What is your name?</label></p>
-      <p><input type="text" name="join-nick-field" id="join-nick-field"></input></p>
-      <p><input type="button" name="join-submit" id="join-submit" value="Join game"></input></p>
+    <div id="join-dialog">
+      <div>
+        <p>What is your name?</p>
+        <p><input type="text" name="join-nick-field" id="join-nick-field"></input></p>
+      </div>
+      <div id="join-team">
+        <p>Choose a side:</p>
+        <p>
+          <input type="radio" id="join-team-red" name="join-team" value="red"></input>
+          <label for="join-team-red"><span class="bolo-team bolo-team-red"></span></label>
+          <input type="radio" id="join-team-blue" name="join-team" value="blue"></input>
+          <label for="join-team-blue"><span class="bolo-team bolo-team-blue"></span></label>
+        </p>
+      </div>
+      <div>
+        <p><input type="button" name="join-submit" id="join-submit" value="Join game"></input></p>
+      </div>
     </div>
   """
 
@@ -72,21 +85,43 @@ class BoloClientWorld extends ClientWorld
     @vignette = null
     @loop.start()
 
+    red = blue = 0
+    for tank in @tanks
+      red++  if tank.team == 0
+      blue++ if tank.team == 1
+    disadvantaged = if blue < red then 'blue' else 'red'
+
     @joinDialog = $(JOIN_DIALOG_TEMPLATE).dialog(dialogClass: 'unclosable')
-    @joinDialog.find('#join-nick-field')
-      .val($.cookie('nick') or '')
-      .focus()
-      .keydown (e) =>
-        @join() if e.which == 13
-    @joinDialog.find('#join-submit').button()
-      .click =>
-        @join()
+    @joinDialog
+      .find('#join-nick-field')
+        .val($.cookie('nick') or '')
+        .focus()
+        .keydown (e) =>
+          @join() if e.which == 13
+      .end()
+      .find("#join-team-#{disadvantaged}")
+        .attr('checked', 'checked')
+      .end()
+      .find("#join-team")
+        .buttonset()
+      .end()
+      .find('#join-submit')
+        .button()
+        .click =>
+          @join()
 
   join: ->
     nick = @joinDialog.find('#join-nick-field').val()
+    team = @joinDialog.find('#join-team input[checked]').val()
+    team = switch team
+      when 'red'  then 0
+      when 'blue' then 1
+      else -1
+    return unless nick and team != -1
+
     $.cookie('nick', nick)
     @joinDialog.data('dialog').destroy(); @joinDialog = null
-    @ws.send JSON.stringify { command: 'join', nick }
+    @ws.send JSON.stringify { command: 'join', nick, team }
     @input.focus()
 
   # Callback after the welcome message was received.

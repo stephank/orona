@@ -20,6 +20,26 @@ body {
   display: none;
 }
 
+#join-team {
+  margin: 0;
+}
+
+#join-team .ui-button {
+  margin-right: 5px;
+}
+
+#join-team .ui-button-text {
+  line-height: 0;
+}
+
+.bolo-team {
+  display: inline-block;
+  width: 32px; height: 32px;
+}
+
+.bolo-team-red  { background: #ff0000; }
+.bolo-team-blue { background: #0000ff; }
+
 canvas {
   cursor: crosshair;
 }

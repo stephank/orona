@@ -149,8 +149,10 @@ class BoloServerWorld extends ServerWorld
           @onError ws, new Error("Client tried to join twice.")
         else if typeof(message.nick) != 'string' or message.nick.length > 40
           @onError ws, new Error("Client specified invalid nickname.")
+        else if typeof(message.team) != 'number' or message.team < 0 or message.team > 1
+          @onError ws, new Error("Client specified invalid team.")
         else
-          @createPlayer(ws, message.nick)
+          @createPlayer(ws, message.nick, message.team)
       else
         sanitized = message.command.slice(0, 10).replace(/\W+/, '')
         @onError ws, new Error("Received an unknown JSON command: #{sanitized}")
@@ -164,8 +166,8 @@ class BoloServerWorld extends ServerWorld
 
   # Creates a tank for a connection and synchronizes it to everyone. Then tells the connection
   # that this new tank is his.
-  createPlayer: (ws, name) ->
-    ws.tank = @spawn Tank
+  createPlayer: (ws, name, team) ->
+    ws.tank = @spawn Tank, team
     packet = @changesPacket(yes)
     packet = new Buffer(packet).toString('base64')
     @broadcast packet
