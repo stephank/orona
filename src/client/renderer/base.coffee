@@ -245,7 +245,7 @@ class BaseRenderer
         This is a work-in-progress; less than alpha quality!<br>
         To see multiplayer in action, follow instructions on Github.
       ''').css(
-        'position': 'absolute', 'top': '8px', 'left': '0px', 'width': '100%', 'text-align': 'center',
+        'position': 'absolute', 'top': '70px', 'left': '0px', 'width': '100%', 'text-align': 'center',
         'font-family': 'monospace', 'font-size': '16px', 'font-weight': 'bold', 'color': 'white'
       ).appendTo(@hud)
 
