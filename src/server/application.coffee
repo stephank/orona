@@ -85,8 +85,18 @@ class BoloServerWorld extends ServerWorld
     packet = []
     for obj in @objects
       packet = packet.concat [net.CREATE_MESSAGE, obj._net_type_idx]
-    packet = packet.concat [net.UPDATE_MESSAGE], @dumpTick(yes), [net.SYNC_MESSAGE]
+    packet = packet.concat [net.UPDATE_MESSAGE], @dumpTick(yes)
     packet = new Buffer(packet).toString('base64')
+    ws.sendMessage(packet)
+
+    # Synchronize all player names.
+    messages = for tank in @tanks
+      { command: 'nick', idx: tank.idx, nick: tank.name }
+    messages = JSON.stringify(messages)
+    ws.sendMessage(messages)
+
+    # Finish with a 'sync' message.
+    packet = new Buffer([net.SYNC_MESSAGE]).toString('base64')
     ws.sendMessage(packet)
 
   onEnd: (ws) ->

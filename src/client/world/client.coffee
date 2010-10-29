@@ -201,6 +201,12 @@ class BoloClientWorld extends ClientWorld
         @handleJsonCommand JSON.parse(e.data)
       catch e
         error = e
+    else if e.data.charAt(0) == '['
+      try
+        for message in JSON.parse(e.data)
+          @handleJsonCommand message
+      catch e
+        error = e
     else
       @netRestore()
       try
