@@ -94,7 +94,7 @@ class BoloServerWorld extends ServerWorld
     @onDisconnect(ws)
 
   onError: (ws, error) ->
-    console.log error.toString()
+    console.log(error?.toString() or 'Unknown error on client connection')
     ws.destroy()
     @onDisconnect(ws)
 
