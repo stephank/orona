@@ -128,6 +128,7 @@ class BoloClientWorld extends ClientWorld
   receiveWelcome: (tank) ->
     @player = tank
     @renderer.initHud()
+    @initChat()
 
   # Send the heartbeat (an empty message) every 10 ticks / 400ms.
   tick: ->
@@ -167,6 +168,42 @@ class BoloClientWorld extends ClientWorld
       @mapChanges[cell.idx] = cell
     return
 
+  #### Chat handlers
+
+  initChat: ->
+    @chatMessages = $('<div/>', id: 'chat-messages').appendTo(@renderer.hud)
+    @chatContainer = $('<div/>', id: 'chat-input').appendTo(@renderer.hud).hide()
+    @chatInput = $('<input/>', type: 'text', name: 'chat', maxlength: 140)
+      .appendTo(@chatContainer).keydown (e) => @handleChatKeydown(e)
+
+  openChat: (options) ->
+    options ||= {}
+    @chatContainer.show()
+    @chatInput.val('').focus().team = options.team
+
+  commitChat: ->
+    @ws.send JSON.stringify
+      command: if @chatInput.team then 'teamMsg' else 'msg'
+      text: @chatInput.val()
+    @closeChat()
+
+  closeChat: ->
+    @chatContainer.hide()
+    @input.focus()
+
+  receiveChat: (who, text, options) ->
+    options ||= {}
+    element =
+      if options.team
+        $('<p/>', class: 'msg-team').text("<#{who.name}> #{text}")
+      else
+        # FIXME: Style the name according to team, but the palette colors might not be readable.
+        $('<p/>', class: 'msg').text("<#{who.name}> #{text}")
+    @chatMessages.append(element)
+    window.setTimeout =>
+      element.remove()
+    , 7000
+
   #### Input handlers.
 
   handleKeydown: (e) ->
@@ -177,6 +214,8 @@ class BoloClientWorld extends ClientWorld
       when 38 then @ws.send net.START_ACCELERATING
       when 39 then @ws.send net.START_TURNING_CW
       when 40 then @ws.send net.START_BRAKING
+      when 84 then @openChat()
+      when 82 then @openChat(team: yes)
 
   handleKeyup: (e) ->
     return unless @ws and @player
@@ -186,6 +225,14 @@ class BoloClientWorld extends ClientWorld
       when 38 then @ws.send net.STOP_ACCELERATING
       when 39 then @ws.send net.STOP_TURNING_CW
       when 40 then @ws.send net.STOP_BRAKING
+
+  handleChatKeydown: (e) ->
+    return unless @ws and @player
+    switch e.which
+      when 13 then @commitChat()
+      when 27 then @closeChat()
+      else return
+    e.preventDefault()
 
   buildOrder: (action, trees, cell) ->
     return unless @ws and @player
@@ -274,9 +321,9 @@ class BoloClientWorld extends ClientWorld
       when 'nick'
         @objects[data.idx].name = data.nick
       when 'msg'
-        console.log "#{@objects[data.idx].name}: #{data.text}"
+        @receiveChat @objects[data.idx], data.text
       when 'teamMsg'
-        console.log "#{@objects[data.idx].name} [team]: #{data.text}"
+        @receiveChat @objects[data.idx], data.text, team: yes
       else
         throw new Error "Bad JSON command '#{data.command}' from server."
 
