@@ -119,20 +119,22 @@ BoloClientWorldMixin =
     @decreasingRange = no
     @rangeAdjustTimer = 0
 
-    @input = d = $('<input id="input-dummy" type="text" autocomplete="off" />')
-    d.insertBefore(@renderer.canvas).focus()
-    d.keydown (e) =>
-      e.preventDefault()
-      switch e.which
-        when 90 then @increasingRange = yes
-        when 88 then @decreasingRange = yes
-        else @handleKeydown(e)
-    d.keyup (e) =>
-      e.preventDefault()
-      switch e.which
-        when 90 then @increasingRange = no
-        when 88 then @decreasingRange = no
-        else @handleKeyup(e)
+    @input = $('<input/>', id: 'input-dummy', type: 'text', autocomplete: 'off')
+    @input.insertBefore(@renderer.canvas).focus()
+
+    @input.add(@renderer.canvas).add('#tool-select label')
+      .keydown (e) =>
+        e.preventDefault()
+        switch e.which
+          when 90 then @increasingRange = yes
+          when 88 then @decreasingRange = yes
+          else @handleKeydown(e)
+      .keyup (e) =>
+        e.preventDefault()
+        switch e.which
+          when 90 then @increasingRange = no
+          when 88 then @decreasingRange = no
+          else @handleKeyup(e)
 
   # Loop has processed all ticks for this iteration, draw a frame.
   idle: ->
