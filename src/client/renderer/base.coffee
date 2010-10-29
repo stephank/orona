@@ -54,6 +54,9 @@ class BaseRenderer
   # its work in onRetile.
   drawMap: (sx, sy, w, h) ->
 
+  # Draw an arrow towards the builder. Only called when the builder is outside the tank.
+  drawBuilderIndicator: (builder) ->
+
   # Inherited from MapView.
   onRetile: (cell, tx, ty) ->
 
@@ -156,17 +159,18 @@ class BaseRenderer
   # Draw HUD elements that overlay the map. These are elements that need to be drawn in regular
   # game coordinates, rather than screen coordinates.
   drawOverlay: ->
-    @drawReticle()
+    unless (player = @world.player).armour == 255
+      b = @world.player.builder.$
+      unless b.order == b.states.inTank or b.order == b.states.parachuting
+        @drawBuilderIndicator(b)
+      @drawReticle()
     @drawCursor()
 
   drawReticle: ->
-    return if @world.player.armour == 255
-
     distance = @world.player.firingRange * TILE_SIZE_PIXELS
     rad = (256 - @world.player.direction) * 2 * PI / 256
     x = round(@world.player.x / PIXEL_SIZE_WORLD + cos(rad) * distance) - TILE_SIZE_PIXELS / 2
     y = round(@world.player.y / PIXEL_SIZE_WORLD + sin(rad) * distance) - TILE_SIZE_PIXELS / 2
-
     @drawTile 17, 4, x, y
 
   drawCursor: ->

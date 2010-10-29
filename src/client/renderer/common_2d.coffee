@@ -3,11 +3,11 @@
 # individual tiles. Subclasses differ mostly in the way they deal with drawing the map.
 
 
-{min, round}       = Math
-BaseRenderer       = require './base'
-{TILE_SIZE_PIXELS,
- PIXEL_SIZE_WORLD} = require '../../constants'
-TEAM_COLORS        = require '../../team_colors'
+{min, round, PI, sin, cos} = Math
+{TILE_SIZE_PIXELS, PIXEL_SIZE_WORLD} = require '../../constants'
+{distance, heading} = require '../../helpers'
+BaseRenderer = require './base'
+TEAM_COLORS  = require '../../team_colors'
 
 
 class Common2dRenderer extends BaseRenderer
@@ -94,6 +94,27 @@ class Common2dRenderer extends BaseRenderer
     [left, top, width, height] = @getViewAreaAtWorld x, y
     @ctx.translate(-left, -top)
     cb left, top, width, height
+    @ctx.restore()
+
+  drawBuilderIndicator: (b) ->
+    player = b.owner.$
+    return if (dist = distance(player, b)) <= 128
+    px = player.x / PIXEL_SIZE_WORLD; py = player.y / PIXEL_SIZE_WORLD
+    @ctx.save()
+
+    @ctx.globalCompositeOperation = 'source-over'
+    @ctx.globalAlpha = min(1.0, (dist - 128) / 1024)
+    offset = min(50, dist / 10240 * 50) + 32
+    rad = heading(player, b)
+    @ctx.beginPath()
+    @ctx.moveTo(x = px + cos(rad) * offset, y = py + sin(rad) * offset)
+    rad += PI
+    @ctx.lineTo(x + cos(rad - 0.4) * 10, y + sin(rad - 0.4) * 10)
+    @ctx.lineTo(x + cos(rad + 0.4) * 10, y + sin(rad + 0.4) * 10)
+    @ctx.closePath()
+    @ctx.fillStyle = 'yellow'
+    @ctx.fill()
+
     @ctx.restore()
 
 

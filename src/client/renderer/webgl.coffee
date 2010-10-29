@@ -337,6 +337,9 @@ class WebglRenderer extends BaseRenderer
           flushArray()
       flushArray()
 
+  drawBuilderIndicator: (b) ->
+    # FIXME
+
 
 ## Exports
 module.exports = WebglRenderer
