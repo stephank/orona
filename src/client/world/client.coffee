@@ -15,7 +15,7 @@ JOIN_DIALOG_TEMPLATE = """
     <div id="join-dialog">
       <div>
         <p>What is your name?</p>
-        <p><input type="text" name="join-nick-field" id="join-nick-field"></input></p>
+        <p><input type="text" id="join-nick-field" name="join-nick-field" maxlength=20></input></p>
       </div>
       <div id="join-team">
         <p>Choose a side:</p>

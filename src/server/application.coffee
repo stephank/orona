@@ -147,7 +147,7 @@ class BoloServerWorld extends ServerWorld
       when 'join'
         if ws.tank
           @onError ws, new Error("Client tried to join twice.")
-        else if typeof(message.nick) != 'string' or message.nick.length > 40
+        else if typeof(message.nick) != 'string' or message.nick.length > 20
           @onError ws, new Error("Client specified invalid nickname.")
         else if typeof(message.team) != 'number' or message.team < 0 or message.team > 1
           @onError ws, new Error("Client specified invalid team.")
