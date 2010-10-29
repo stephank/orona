@@ -2,24 +2,15 @@
 <html manifest="bolo.manifest">
 <head>
 <title>Bolo</title>
-<link rel="stylesheet" media="screen" href="bolo.css">
-<script src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+<link rel="stylesheet" href="bolo-bundle.css">
+<link rel="shortcut icon" href="images/favicon.png">
 <script src="bolo-bundle.js"></script>
 <script>
-(function() {
-  var loaded = function() {
-    $(function() {
-      var World = require('bolo/client');
-      world = new World();
-      world.start();
-    });
-  };
-  applicationCache.addEventListener('cached',   loaded, false);
-  applicationCache.addEventListener('noupdate', loaded, false);
-  applicationCache.addEventListener('updateready', function() {
-    location.reload();
-  }, false);
-})();
+$(function() {
+  var World = require('bolo/client');
+  world = new World();
+  world.start();
+});
 </script>
 </head>
 <body>
