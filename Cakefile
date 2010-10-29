@@ -117,8 +117,11 @@ createStyleCompressorStream = (wrappee) ->
 
 ## Tasks
 
-task 'vendor:jqueryui', 'Fetch jQuery and jQuery UI', ->
+task 'vendor:jquery-ui', 'Fetch jQuery and jQuery UI', ->
   unzip fetch "http://jquery-ui.googlecode.com/files/jquery-ui-#{JQUERYUI_VERSION}.zip"
+
+task 'vendor:jquery-cookie', 'Fetch the jQuery cookie plugin', ->
+  fetch 'http://plugins.jquery.com/files/jquery.cookie.js.txt'
 
 # A task that recreates the `src/` directory structure under `lib/`, and
 # compiles any CoffeeScript in the process.
@@ -145,6 +148,7 @@ task 'build:client:jsbundle', 'Compile the Bolo client JavaScript bundle', ->
         uipath('dialog')
         uipath('tabs')
         uipath('progressbar')
+        path.join('vendor', 'jquery.cookie.js.txt')
       ]
   output.end()
 
@@ -193,7 +197,8 @@ task 'build:client:manifest', 'Create the manifest file', ->
 
 # The conventional default target.
 task 'build', 'Compile Bolo', ->
-  invoke 'vendor:jqueryui'
+  invoke 'vendor:jquery-ui'
+  invoke 'vendor:jquery-cookie'
   invoke 'build:modules'
   invoke 'build:client:cssbundle'
   invoke 'build:client:jsbundle'

@@ -74,6 +74,7 @@ class BoloClientWorld extends ClientWorld
 
     @joinDialog = $(JOIN_DIALOG_TEMPLATE).dialog(dialogClass: 'unclosable')
     @joinDialog.find('#join-nick-field')
+      .val($.cookie('nick') or '')
       .focus()
       .keydown (e) =>
         @join() if e.which == 13
@@ -83,6 +84,7 @@ class BoloClientWorld extends ClientWorld
 
   join: ->
     nick = @joinDialog.find('#join-nick-field').val()
+    $.cookie('nick', nick)
     @joinDialog.data('dialog').destroy(); @joinDialog = null
     @ws.send JSON.stringify { command: 'join', nick }
     @input.focus()
