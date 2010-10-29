@@ -20,7 +20,7 @@ class BaseRenderer
     @soundkit = @world.soundkit
 
     @canvas = $('<canvas/>').appendTo('body')
-    @lastCenter = [0, 0]
+    @lastCenter = @world.map.findCenterCell().getWorldCoordinates()
 
     @mouse = [0, 0]
     @canvas.click (e) => @handleClick(e)
@@ -64,8 +64,11 @@ class BaseRenderer
 
   # Draw a single frame.
   draw: ->
-    {x, y} = @world.player
-    {x, y} = @world.player.fireball.$ if @world.player.fireball?
+    if @world.player
+      {x, y} = @world.player
+      {x, y} = @world.player.fireball.$ if @world.player.fireball?
+    else
+      x = y = null
 
     # Remember or restore the last center position. We use this after tank
     # death, so as to keep drawing something useful while we fade.
@@ -87,12 +90,12 @@ class BaseRenderer
       @drawOverlay()
 
     # Update all DOM HUD elements.
-    @updateHud()
+    @updateHud() if @hud
 
   # Play a sound effect.
   playSound: (sfx, x, y, owner) ->
     mode =
-      if owner == @world.player then 'Self'
+      if @world.player and owner == @world.player then 'Self'
       else
         dx = x - @lastCenter[0]; dy = y - @lastCenter[1]
         dist = sqrt(dx*dx + dy*dy)
@@ -159,8 +162,8 @@ class BaseRenderer
   # Draw HUD elements that overlay the map. These are elements that need to be drawn in regular
   # game coordinates, rather than screen coordinates.
   drawOverlay: ->
-    unless (player = @world.player).armour == 255
-      b = @world.player.builder.$
+    if (player = @world.player) and player.armour != 255
+      b = player.builder.$
       unless b.order == b.states.inTank or b.order == b.states.parachuting
         @drawBuilderIndicator(b)
       @drawReticle()

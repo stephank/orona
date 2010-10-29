@@ -17,6 +17,7 @@
 
 # These are the server message identifiers both sides need to know about.
 # The server sends binary data (encoded as base64). So we need to compare character codes.
+exports.SYNC_MESSAGE        = 's'.charCodeAt(0)
 exports.WELCOME_MESSAGE     = 'W'.charCodeAt(0)
 exports.CREATE_MESSAGE      = 'C'.charCodeAt(0)
 exports.DESTROY_MESSAGE     = 'D'.charCodeAt(0)

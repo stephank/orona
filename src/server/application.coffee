@@ -35,12 +35,13 @@ class BoloServerWorld extends ServerWorld
   constructor: (@map) ->
     super
     @boloInit()
+    @clients = []
     @map.world = this
     @oddTick = no
     @spawnMapObjects()
 
   close: ->
-    for {client} in @tanks when client?
+    for client in @clients
       client.end()
 
   #### Callbacks
@@ -63,20 +64,14 @@ class BoloServerWorld extends ServerWorld
   #### Connection handling.
 
   onConnect: (ws) ->
-    tank = @spawn Tank
-    packet = @changesPacket(yes)
-    packet = new Buffer(packet).toString('base64')
-    for {client} in @tanks when client?
-      client.sendMessage(packet)
-
     # Set-up the websocket parameters.
-    tank.client = ws
+    @clients.push ws
     ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
-    ws.on 'message', (message) => @onMessage(tank, message)
-    ws.on 'end', => @onEnd(tank)
-    ws.on 'error', (exception) => @onError(tank, exception)
-    ws.on 'timeout', => @onError(tank, 'Timed out')
+    ws.on 'message', (message) => @onMessage(ws, message)
+    ws.on 'end', => @onEnd(ws)
+    ws.on 'error', (error) => @onError ws, error
+    ws.on 'timeout', => @onError ws, new Error('Connection timed out')
 
     # Send the current map state. We don't send pillboxes and bases, because the client
     # receives create messages for those, and then fills the map structure based on those.
@@ -90,31 +85,35 @@ class BoloServerWorld extends ServerWorld
     packet = []
     for obj in @objects
       packet = packet.concat [net.CREATE_MESSAGE, obj._net_type_idx]
-    packet = packet.concat [net.UPDATE_MESSAGE], @dumpTick(yes)
-    packet = packet.concat pack('BH', net.WELCOME_MESSAGE, tank.idx)
+    packet = packet.concat [net.UPDATE_MESSAGE], @dumpTick(yes), [net.SYNC_MESSAGE]
     packet = new Buffer(packet).toString('base64')
     ws.sendMessage(packet)
 
-  onEnd: (tank) ->
-    return unless ws = tank.client
-    tank.client = null
+  onEnd: (ws) ->
     ws.end()
-    @onDisconnect(tank)
+    @onDisconnect(ws)
 
-  onError: (tank, exception) ->
-    return unless ws = tank.client
-    tank.client = null
-    # FIXME: log exception
+  onError: (ws, error) ->
+    console.log error.toString()
     ws.destroy()
-    @onDisconnect(tank)
+    @onDisconnect(ws)
 
-  onDisconnect: (tank) ->
-    @destroy tank
+  onDisconnect: (ws) ->
+    @destroy ws.tank if ws.tank
+    ws.tank = null
+    if (idx = @clients.indexOf(ws)) != -1
+      @clients.splice(idx, 1)
 
-  onMessage: (tank, message) ->
-    return unless tank.client?
-    switch message.charAt(0)
-      when '' then tank.client.heartbeatTimer = 0
+  onMessage: (ws, message) ->
+    if message == '' then ws.heartbeatTimer = 0
+    else if message.charAt(0) == '{' then @onJsonMessage(ws, message)
+    else @onSimpleMessage(ws, message)
+
+  onSimpleMessage: (ws, message) ->
+    unless tank = ws.tank
+      return @onError ws, new Error("Received a game command from a spectator")
+    command = message.charAt(0)
+    switch command
       when net.START_TURNING_CCW  then tank.turningCounterClockwise = yes
       when net.STOP_TURNING_CCW   then tank.turningCounterClockwise = no
       when net.START_TURNING_CW   then tank.turningClockwise = yes
@@ -132,12 +131,54 @@ class BoloServerWorld extends ServerWorld
         trees = parseInt(trees); x = parseInt(x); y = parseInt(y)
         builder = tank.builder.$
         if trees < 0 or not builder.states.actions.hasOwnProperty(action)
-          @onError(tank, 'Received invalid build order')
+          @onError ws, new Error("Received invalid build order")
         else
           builder.performOrder action, trees, @map.cellAtTile(x, y)
-      else @onError(tank, 'Received an unknown command')
+      else
+        sanitized = command.replace(/\W+/, '')
+        @onError ws, new Error("Received an unknown command: #{sanitized}")
+
+  onJsonMessage: (ws, message) ->
+    try
+      message = JSON.parse(message)
+    catch e
+      return @onError ws, e
+    switch message.command
+      when 'join'
+        if ws.tank
+          @onError ws, new Error("Client tried to join twice.")
+        else if typeof(message.nick) != 'string' or message.nick.length > 40
+          @onError ws, new Error("Client specified invalid nickname.")
+        else
+          @createPlayer(ws, message.nick)
+      else
+        sanitized = message.command.slice(0, 10).replace(/\W+/, '')
+        @onError ws, new Error("Received an unknown JSON command: #{sanitized}")
 
   #### Helpers
+
+  # Simple helper to send a message to everyone.
+  broadcast: (message) ->
+    for client in @clients
+      client.sendMessage(message)
+
+  # Creates a tank for a connection and synchronizes it to everyone. Then tells the connection
+  # that this new tank is his.
+  createPlayer: (ws, name) ->
+    ws.tank = @spawn Tank
+    packet = @changesPacket(yes)
+    packet = new Buffer(packet).toString('base64')
+    @broadcast packet
+
+    ws.tank.name = name
+    @broadcast JSON.stringify
+      command: 'nick'
+      idx: ws.tank.idx
+      nick: name
+
+    packet = pack('BH', net.WELCOME_MESSAGE, ws.tank.idx)
+    packet = new Buffer(packet).toString('base64')
+    ws.sendMessage(packet)
 
   # We send critical updates every frame, and non-critical updates every other frame. On top of
   # that, non-critical updates may be dropped, if the client's hearbeats are interrupted.
@@ -152,7 +193,7 @@ class BoloServerWorld extends ServerWorld
       smallPacket = new Buffer(smallPacket).toString('base64')
       largePacket = new Buffer(largePacket).toString('base64')
 
-    for {client} in @tanks when client?
+    for client in @clients
       if client.heartbeatTimer > 40
         client.sendMessage(smallPacket)
       else

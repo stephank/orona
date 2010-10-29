@@ -3,7 +3,7 @@
 # modules that is useful on it's own.
 
 
-{floor, min}     = Math
+{round, floor, min} = Math
 {MAP_SIZE_TILES} = require './constants'
 
 
@@ -449,6 +449,22 @@ class Map
     @each (cell) ->
       cell.retile()
     , sx, sy, ex, ey
+
+  # Find the cell at the center of the 'painted' map area.
+  findCenterCell: ->
+    t = l = MAP_SIZE_TILES - 1
+    b = r = 0
+    @each (c) ->
+      l = c.x if l > c.x
+      r = c.x if r < c.x
+      t = c.y if t > c.y
+      b = c.y if b < c.y
+    if l > r
+      t = l = 0
+      b = r = MAP_SIZE_TILES - 1
+    x = round(l + (r - l) / 2)
+    y = round(t + (b - t) / 2)
+    @cellAtTile(x, y)
 
   #### Saving and loading
 

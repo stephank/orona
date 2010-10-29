@@ -56,14 +56,17 @@ class BoloClientWorld extends ClientWorld
     $(@ws).bind 'message.bolo', (e) =>
       @handleMessage(e.originalEvent)
 
-  # Callback after the welcome message was received.
-  receiveWelcome: (tank) ->
-    @player = tank
+  # Callback after the server tells us we are synchronized.
+  synchronized: ->
     @rebuildMapObjects()
-    @renderer.initHud()
     @vignette.destroy()
     @vignette = null
     @loop.start()
+
+  # Callback after the welcome message was received.
+  receiveWelcome: (tank) ->
+    @player = tank
+    @renderer.initHud()
 
   # Send the heartbeat (an empty message) every 10 ticks / 400ms.
   tick: ->
@@ -106,7 +109,7 @@ class BoloClientWorld extends ClientWorld
   #### Input handlers.
 
   handleKeydown: (e) ->
-    return unless @ws?
+    return unless @ws and @player
     switch e.which
       when 32 then @ws.send net.START_SHOOTING
       when 37 then @ws.send net.START_TURNING_CCW
@@ -115,7 +118,7 @@ class BoloClientWorld extends ClientWorld
       when 40 then @ws.send net.START_BRAKING
 
   handleKeyup: (e) ->
-    return unless @ws?
+    return unless @ws and @player
     switch e.which
       when 32 then @ws.send net.STOP_SHOOTING
       when 37 then @ws.send net.STOP_TURNING_CCW
@@ -124,37 +127,46 @@ class BoloClientWorld extends ClientWorld
       when 40 then @ws.send net.STOP_BRAKING
 
   buildOrder: (action, trees, cell) ->
-    return unless @ws?
+    return unless @ws and @player
     trees ||= 0
     @ws.send [net.BUILD_ORDER, action, trees, cell.x, cell.y].join(',')
 
   #### Network message handlers.
 
   handleMessage: (e) ->
-    @netRestore()
-    @processingServerMessages = yes
-    data = decodeBase64(e.data)
-    pos = 0
-    length = data.length
     error = null
-    while pos < length
-      command = data[pos++]
+    if e.data.charAt(0) == '{'
       try
-        ate = @handleServerCommand command, data, pos
+        @handleJsonCommand JSON.parse(e.data)
       catch e
         error = e
-        break
-      pos += ate
-    if pos != length
-      error = new Error("Message length mismatch, processed #{pos} out of #{length} bytes")
+    else
+      @netRestore()
+      try
+        data = decodeBase64(e.data)
+        pos = 0
+        length = data.length
+        @processingServerMessages = yes
+        while pos < length
+          command = data[pos++]
+          ate = @handleBinaryCommand command, data, pos
+          pos += ate
+        @processingServerMessages = no
+        if pos != length
+          error = new Error("Message length mismatch, processed #{pos} out of #{length} bytes")
+      catch e
+        error = e
     if error
       @failure 'Connection lost (protocol error)'
       console?.log "Following exception occurred while processing message:", data
       throw error
-    @processingServerMessages = no
 
-  handleServerCommand: (command, data, offset) ->
+  handleBinaryCommand: (command, data, offset) ->
     switch command
+      when net.SYNC_MESSAGE
+        @synchronized()
+        0
+
       when net.WELCOME_MESSAGE
         [[tank_idx], bytes] = unpack('H', data, offset)
         @receiveWelcome @objects[tank_idx]
@@ -189,6 +201,13 @@ class BoloClientWorld extends ClientWorld
 
       else
         throw new Error "Bad command '#{command}' from server, at offset #{offset - 1}"
+
+  handleJsonCommand: (data) ->
+    switch data.command
+      when 'nick'
+        @objects[data.idx].name = data.nick
+      else
+        throw new Error "Bad JSON command '#{data.command}' from server."
 
   #### Helpers
 
