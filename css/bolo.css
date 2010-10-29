@@ -76,10 +76,10 @@ canvas {
   background: yellow;
 }
 
-#tankShells { left:  6px; }
-#tankMines  { left: 18px; }
-#tankArmour { left: 30px; }
-#tankTrees  { left: 42px; }
+#tank-shells { left:  6px; }
+#tank-mines  { left: 18px; }
+#tank-armour { left: 30px; }
+#tank-trees  { left: 42px; }
 
 #pillStatus, #baseStatus {
   width: 129px; height: 66px;

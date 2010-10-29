@@ -189,27 +189,31 @@ class BaseRenderer
     @updateHud()
 
   initHudTankStatus: ->
-    container = $("""
-        <div id='tankStatus'>
-          <div class='deco'></div>
-          <div class='gauge' id='tankShells'> <div class='gauge-content'></div> </div>
-          <div class='gauge' id='tankMines'>  <div class='gauge-content'></div> </div>
-          <div class='gauge' id='tankArmour'> <div class='gauge-content'></div> </div>
-          <div class='gauge' id='tankTrees'>  <div class='gauge-content'></div> </div>
-        </div>
-      """).appendTo(@hud)
+    container = $('<div/>', id: 'tankStatus').appendTo(@hud)
+    $('<div/>', class: 'deco').appendTo(container)
+    @tankIndicators = {}
+    for indicator in ['shells', 'mines', 'armour', 'trees']
+      bar = $('<div/>', class: 'gauge', id: "tank-#{indicator}").appendTo(container)
+      @tankIndicators[indicator] = $('<div class="gauge-content"></div>').appendTo(bar)
+    return
 
   # Create the pillbox status indicator.
   initHudPillboxes: ->
     container = $('<div/>', id: 'pillStatus').appendTo(@hud)
     $('<div/>', class: 'deco').appendTo(container)
-    $('<div/>', class: 'pill').appendTo(container).data('pill', pill) for pill in @world.map.pills
+    @pillIndicators = for pill in @world.map.pills
+      node = $('<div/>', class: 'pill').appendTo(container)
+      [node, pill]
+    return
 
   # Create the base status indicator.
   initHudBases: ->
     container = $('<div/>', id: 'baseStatus').appendTo(@hud)
     $('<div/>', class: 'deco').appendTo(container)
-    $('<div/>', class: 'base').appendTo(container).data('base', base) for base in @world.map.bases
+    @baseIndicators = for base in @world.map.bases
+      node = $('<div/>', class: 'base').appendTo(container)
+      [node, base]
+    return
 
   # Create the build tool selection
   initHudToolSelect: ->
@@ -252,8 +256,7 @@ class BaseRenderer
   # Update the HUD elements.
   updateHud: ->
     # Pillboxes.
-    @hud.find('#pillStatus .pill').each (i, node) =>
-      node = $(node); pill = node.data('pill')
+    for [node, pill] in @pillIndicators
       if pill.inTank or pill.carried
         node.attr('status', 'carried')
       else if pill.armour == 0
@@ -264,8 +267,7 @@ class BaseRenderer
       node.css 'background-color': "rgb(#{color.r},#{color.g},#{color.b})"
 
     # Bases.
-    @hud.find('#baseStatus .base').each (i, node) =>
-      node = $(node); base = node.data('base')
+    for [node, base] in @baseIndicators
       if base.armour <= 9
         node.attr 'status', 'vulnerable'
       else
@@ -274,12 +276,10 @@ class BaseRenderer
       node.css 'background-color': "rgb(#{color.r},#{color.g},#{color.b})"
 
     # Tank.
-    {shells, mines, armour, trees} = @world.player
-    shells = mines = armour = trees = 0 if armour == 255
-    @hud.find('#tankShells .gauge-content').css(height: "#{round(shells / 40 * 100)}%")
-    @hud.find('#tankMines  .gauge-content').css(height: "#{round(mines  / 40 * 100)}%")
-    @hud.find('#tankArmour .gauge-content').css(height: "#{round(armour / 40 * 100)}%")
-    @hud.find('#tankTrees  .gauge-content').css(height: "#{round(trees  / 40 * 100)}%")
+    p = @world.player
+    for prop, node of @tankIndicators
+      value = if p.armour == 255 then 0 else p[prop]
+      node.css height: "#{round(value / 40 * 100)}%"
 
 
 #### Exports
