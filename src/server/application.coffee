@@ -151,21 +151,40 @@ class BoloServerWorld extends ServerWorld
   onJsonMessage: (ws, message) ->
     try
       message = JSON.parse(message)
+      unless typeof(message.command) == 'string'
+        throw new Error("Received an invalid JSON message")
     catch e
       return @onError ws, e
     switch message.command
-      when 'join'
-        if ws.tank
-          @onError ws, new Error("Client tried to join twice.")
-        else if typeof(message.nick) != 'string' or message.nick.length > 20
-          @onError ws, new Error("Client specified invalid nickname.")
-        else if typeof(message.team) != 'number' or message.team < 0 or message.team > 1
-          @onError ws, new Error("Client specified invalid team.")
-        else
-          @createPlayer(ws, message.nick, message.team)
+      when 'join' then @onJoinMessage(ws, message)
       else
         sanitized = message.command.slice(0, 10).replace(/\W+/, '')
         @onError ws, new Error("Received an unknown JSON command: #{sanitized}")
+
+  # Creates a tank for a connection and synchronizes it to everyone. Then tells the connection
+  # that this new tank is his.
+  onJoinMessage: (ws, message) ->
+    if ws.tank
+      @onError ws, new Error("Client tried to join twice.")
+    if typeof(message.nick) != 'string' or message.nick.length > 20
+      @onError ws, new Error("Client specified invalid nickname.")
+    if typeof(message.team) != 'number' or not (message.team == 0 or message.team == 1)
+      @onError ws, new Error("Client specified invalid team.")
+
+    ws.tank = @spawn Tank, message.team
+    packet = @changesPacket(yes)
+    packet = new Buffer(packet).toString('base64')
+    @broadcast packet
+
+    ws.tank.name = message.name
+    @broadcast JSON.stringify
+      command: 'nick'
+      idx: ws.tank.idx
+      nick: message.name
+
+    packet = pack('BH', net.WELCOME_MESSAGE, ws.tank.idx)
+    packet = new Buffer(packet).toString('base64')
+    ws.sendMessage(packet)
 
   #### Helpers
 
@@ -173,24 +192,6 @@ class BoloServerWorld extends ServerWorld
   broadcast: (message) ->
     for client in @clients
       client.sendMessage(message)
-
-  # Creates a tank for a connection and synchronizes it to everyone. Then tells the connection
-  # that this new tank is his.
-  createPlayer: (ws, name, team) ->
-    ws.tank = @spawn Tank, team
-    packet = @changesPacket(yes)
-    packet = new Buffer(packet).toString('base64')
-    @broadcast packet
-
-    ws.tank.name = name
-    @broadcast JSON.stringify
-      command: 'nick'
-      idx: ws.tank.idx
-      nick: name
-
-    packet = pack('BH', net.WELCOME_MESSAGE, ws.tank.idx)
-    packet = new Buffer(packet).toString('base64')
-    ws.sendMessage(packet)
 
   # We send critical updates every frame, and non-critical updates every other frame. On top of
   # that, non-critical updates may be dropped, if the client's hearbeats are interrupted.
