@@ -36,21 +36,25 @@ class BoloClientWorld extends ClientWorld
     else
       path = "/demo"
     @ws = new WebSocket("ws://#{location.host}#{path}")
+    ws = $(@ws)
+    ws.one 'open.bolo', =>
+      @connected()
+    ws.one 'close.bolo', =>
+      @failure 'Connection lost'
 
-    $(@ws).one 'open', =>
-      @vignette.message 'Waiting for the game map'
-      $(@ws).one 'message', (e) =>
-        @receiveMap(e.originalEvent)
-    $(@ws).one 'close', =>
-      @vignette?.message 'Game does not exist'
+  connected: ->
+    @vignette.message 'Waiting for the game map'
+    ws = $(@ws)
+    ws.one 'message.bolo', (e) =>
+      @receiveMap(e.originalEvent)
 
   # Callback after the map was received.
   receiveMap: (e) ->
     @map = WorldMap.load decodeBase64(e.data)
     @commonInitialization()
     @vignette.message 'Waiting for the game state'
-    $(@ws).bind 'message', (e) =>
-      @handleMessage(e.originalEvent) if @ws?
+    $(@ws).bind 'message.bolo', (e) =>
+      @handleMessage(e.originalEvent)
 
   # Callback after the welcome message was received.
   receiveWelcome: (tank) ->
@@ -65,7 +69,7 @@ class BoloClientWorld extends ClientWorld
   tick: ->
     super
 
-    if @ws? and @increasingRange != @decreasingRange
+    if @increasingRange != @decreasingRange
       if ++@rangeAdjustTimer == 6
         if @increasingRange then @ws.send net.INC_RANGE
         else @ws.send net.DEC_RANGE
@@ -76,6 +80,13 @@ class BoloClientWorld extends ClientWorld
     if ++@heartbeatTimer == 10
       @heartbeatTimer = 0
       @ws.send('')
+
+  failure: (message) ->
+    if @ws
+      @ws.close()
+      $(@ws).unbind '.bolo'
+      @ws = null
+    super
 
   # On the client, this is a no-op.
   soundEffect: (sfx, x, y, owner) ->
@@ -125,22 +136,21 @@ class BoloClientWorld extends ClientWorld
     data = decodeBase64(e.data)
     pos = 0
     length = data.length
+    error = null
     while pos < length
       command = data[pos++]
-      ate = @handleServerCommand command, data, pos
-      if ate == -1
-        error = yes
+      try
+        ate = @handleServerCommand command, data, pos
+      catch e
+        error = e
         break
       pos += ate
     if pos != length
-      console.log "Message length mismatch, processed #{pos} / #{length} bytes"
-      error = yes
+      error = new Error("Message length mismatch, processed #{pos} out of #{length} bytes")
     if error
-      # FIXME: Do something better than this when console is not available.
-      console.log "Message was:", data
-      @loop.stop()
-      @ws.close()
-      @ws = null
+      @failure 'Connection lost (protocol error)'
+      console?.log "Following exception occurred while processing message:", data
+      throw error
     @processingServerMessages = no
 
   handleServerCommand: (command, data, offset) ->
@@ -178,10 +188,7 @@ class BoloClientWorld extends ClientWorld
         @netTick data, offset
 
       else
-        # FIXME: Do something better than this when console is not available.
-        console.log "Bad command '#{command}' from server, and offset #{offset - 1}"
-        # Tell handleMessage to bail.
-        -1
+        throw new Error "Bad command '#{command}' from server, at offset #{offset - 1}"
 
   #### Helpers
 
