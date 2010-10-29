@@ -120,7 +120,7 @@ class Common2dRenderer extends BaseRenderer
   drawNames: ->
     @ctx.save()
     @ctx.strokeStyle = @ctx.fillStyle = 'white'
-    @ctx.font = 'sans-serif 11px'
+    @ctx.font = 'bold 11px sans-serif'
     @ctx.textBaselines = 'alphabetic'
     @ctx.textAlign = 'left'
     player = @world.player

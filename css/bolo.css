@@ -174,12 +174,11 @@ canvas {
 
 #chat-input, #chat-messages {
   position: absolute; left: 8px;
-  font-family: sans-serif;
-  font-size: 11px;
 }
 
 #chat-input input, #chat-messages {
   width: 400px;
+  font: bold 11px sans-serif;
 }
 
 #chat-input { top: 70px; }
