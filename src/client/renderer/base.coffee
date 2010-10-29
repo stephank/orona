@@ -257,6 +257,10 @@ class BaseRenderer
   updateHud: ->
     # Pillboxes.
     for [node, pill] in @pillIndicators
+      statuskey = "#{pill.inTank};#{pill.carried};#{pill.armour};#{pill.team}"
+      continue if pill.hudStatusKey == statuskey
+      pill.hudStatusKey = statuskey
+
       if pill.inTank or pill.carried
         node.attr('status', 'carried')
       else if pill.armour == 0
@@ -268,6 +272,10 @@ class BaseRenderer
 
     # Bases.
     for [node, base] in @baseIndicators
+      statuskey = "#{base.armour};#{base.team}"
+      continue if base.hudStatusKey == statuskey
+      base.hudStatusKey = statuskey
+
       if base.armour <= 9
         node.attr 'status', 'vulnerable'
       else
@@ -276,9 +284,12 @@ class BaseRenderer
       node.css 'background-color': "rgb(#{color.r},#{color.g},#{color.b})"
 
     # Tank.
-    p = @world.player
+    p = @world.player; p.hudLastStatus ||= {}
     for prop, node of @tankIndicators
       value = if p.armour == 255 then 0 else p[prop]
+      continue if p.hudLastStatus[prop] == value
+      p.hudLastStatus[prop] = value
+
       node.css height: "#{round(value / 40 * 100)}%"
 
 
