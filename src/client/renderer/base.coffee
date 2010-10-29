@@ -220,12 +220,10 @@ class BaseRenderer
     @currentTool = null
     tools = $('<div id="tool-select" />').appendTo(@hud)
     for toolType in ['forest', 'road', 'building', 'pillbox', 'mine']
-      tool = $("<input type='radio' name='tool' id='tool-#{toolType}' />").appendTo(tools)
-      tools.append("""
-          <label for='tool-#{toolType}'>
-            <div class='bolo-tool bolo-tool-#{toolType}' />
-          </label>
-        """)
+      toolname = "tool-#{toolType}"
+      tool = $('<input/>', type: 'radio', name: 'tool', id: toolname).appendTo(tools)
+      label = $('<label/>', for: toolname).appendTo(tools)
+      label.append $('<span/>', class: "bolo-tool bolo-#{toolname}")
       tool.click (e) =>
         if @currentTool == toolType
           @currentTool = null

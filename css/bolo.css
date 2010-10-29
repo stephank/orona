@@ -123,12 +123,21 @@ canvas {
 
 #tool-select {
   position: absolute;
-  top: 0px; left: 0px;
-  width: 100%;
+  top: 8px; left: 50%;
+  margin: 0 0 0 -140px; width: 280px;
   text-align: center;
 }
 
+#tool-select .ui-button {
+  margin-right: 1px;
+}
+
+#tool-select .ui-button-text {
+  padding: 3px; line-height: 0;
+}
+
 .bolo-tool {
+  display: inline-block;
   width: 46px; height: 42px;
   background: url(images/hud.png);
 }
