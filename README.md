@@ -1,6 +1,6 @@
 # Bolo
 
-Bolo is a top-down game of tank warfare originally written by Stuart Chesire for the BBC Micro and
+Bolo is a top-down game of tank warfare originally written by Stuart Cheshire for the BBC Micro and
 Apple Macintosh, and also notably rewritten for Windows and Linux by John Morrison.
 
  * [The Bolo homepage][Bolo]
@@ -14,47 +14,45 @@ in [CoffeeScript], and relies on some of the newer technologies made possible by
 
 The name comes from an uninhabited island situated in the central Pacific Ocean.
 
-## Work-in-progress
+## Playing Orona
 
-Orona is a work-in-progress, thus you will find many basic features are missing.
-Consider it less than alpha quality!
-
-But there is something to see, and you can see it in action on-line, right now, without even having
-to download it. (Though you'll be alone in the game.) Just visit the [GitHub Pages] site for a
-demonstration!
-
-There's also a [multiplayer instance] kindly hosted by [Joyent].
-
-Finally, you can run Orona locally, on your own computer. For that, read on.
+Orona is alpha quality, but still very playable. Take a look at [GitHub Pages] to see a single
+player game in action, which should work on most modern browsers. There's also a
+[multiplayer instance] kindly hosted by [Joyent], but browser support is more limited.
 
 If you're seeing odd things in your browser, take a look at the [browser compatibility] wiki page,
 and feel free to extend it with your experiences. [Issue] reports are also welcome.
 
-## Running Orona
+## Running an Orona server
 
-Orona depends on several other projects, which you will have to install to run it. You'll find this
-is easiest on a Linux or Mac OS X machine, though you need a bit of commandline-fu to get it all
-set up. Here's the recipe:
+These instructions are written from a Linux perspective, but they should work for Mac OS X, or
+other Unix-likes that can run node.js. Some commandline-fu is required.
 
- * [CoffeeScript], the language Orona is written in. Tested with 0.9.4.
- * [node.js], a server-side JavaScript framework. Tested with 0.2.0.
- * [Connect], a node.js middleware framework. Tested with 0.2.4.
- * [Villain], a framework for real-time browser games. Tested with version 0.1.1
+A fast way to get going is to install [node.js] 0.2.x, [npm], and then Orona itself:
 
-A fast way to get going is to install node.js, then install [npm], and use npm to install the rest:
+    npm install orona
+    bolo-server
 
-    npm install coffee-script
-    npm install connect
-    npm install villain
+You will need a small config file; `bolo-server` will tell you how to create one. Note that the IRC
+functionality is optional, but the only way to do match-making at the moment. If you don't want to
+connect to an IRC network, simply remove the `irc` section from the config file.
 
-To run Orona, clone it, build it, then run it:
+## Hacking Orona
+
+The Orona project lives on [GitHub]. You can grab the source using:
 
     git clone http://github.com/stephank/orona.git
     cd orona
+
+If you've installed Orona using npm before, most dependencies should already be installed.
+Otherwise, take a look at the `package.json` file for what you need. You also need [CoffeeScript]:
+
+    npm install coffee-script
+
+Then, to build and run from the source directory, do:
+
     cake build
     bin/bolo-server
-
-Now visit `http://localhost:8124/bolo.html`.
 
 ## License
 
@@ -66,36 +64,37 @@ in the COPYING file.
 Some files, or parts of files, are subject to other licenses, where indicated in the files
 themselves. A short overview of those parts follows.
 
-Parts of the 'Cakefile' are based on:
-
- * [CoffeeScript] 'command.coffee', © 2010 Jeremy Ashkenas, MIT-licensed.
- * [Yabble] 'yabbler.js', © 2010 James Brantly, MIT-licensed.
-
 The source file 'src/server/websocket.coffee' is a modification/rewrite based on:
 
  * [Socket.IO], © 2010 LearnBoost, MIT-licensed.
-
-The source file 'src/client/brequire.coffee' is a modification based on:
-
- * [Brequire], © 2010 Jonah Fox.
 
 All the graphic and sound files are from:
 
  * [Bolo], © 1993 Stuart Cheshire.
 
+For the browser client, Orona also bundles:
+
+ * [jQuery], © 2010 John Resig, licensed MIT and GPLv2.
+ * [Sizzle], © 2010 The Dojo Foundation, licensed MIT, BSD and GPL.
+ * [jQuery UI], © 2010 The jQuery UI Team, licensed MIT and GPLv2.
+ * [jQuery Cookie plugin], © 2006 Klaus Hartl, licensed MIT and GPLv2.
+ * Components that are part of [Villain].
+
  [Bolo]: http://www.lgm.com/bolo/
  [WinBolo]: http://www.winbolo.com/
  [WinBolo project]: http://code.google.com/p/winbolo/
+ [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [GitHub Pages]: http://stephank.github.com/orona/
  [multiplayer instance]: http://wadna-ramet.no.de/
  [Joyent]: http://www.joyent.com/
  [browser compatibility]: http://github.com/stephank/orona/wiki/Browser-compatibility
  [Issue]: http://github.com/stephank/orona/issues
- [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [node.js]: http://nodejs.org/
- [Connect]: http://github.com/senchalabs/connect
  [npm]: http://github.com/isaacs/npm
- [Yabble]: http://github.com/jbrantly/yabble
+ [GitHub]: http://github.com/stephank/orona
  [Socket.IO]: http://socket.io/
- [Brequire]: http://github.com/weepy/brequire
+ [jQuery]: http://jquery.com/
+ [Sizzle]: http://sizzlejs.com/
+ [jQuery UI]: http://jqueryui.com/
+ [jQuery Cookie plugin]: http://plugins.jquery.com/project/Cookie
  [Villain]: http://github.com/stephank/villain
