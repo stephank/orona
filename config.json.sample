@@ -18,7 +18,8 @@
       "user": {
         "username": "orona",
         "realname": "Orona Bot"
-      }
+      },
+      "admin": "~me@myprovider.net"
     }
   }
 }

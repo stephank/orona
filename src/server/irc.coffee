@@ -22,8 +22,14 @@ class BoloIrc
       m.person.ident = "#{m.person.user}@#{m.person.host}"
       m.say = (text) =>
         @client.privmsg m.channel, "#{m.person.nick}: #{text}", yes
-      for [re, callback] in @watchers
-        return callback(m) if m.match_data = m.text.match(re)
+      for watcher in @watchers
+        if m.match_data = m.text.match(watcher.re)
+          if watcher.onlyAdmin and m.person.ident != options.admin
+            m.say "I can't let you do that."
+          else
+            watcher.callback(m)
+          break
+      return
 
     @client.addListener 'disconnected', =>
       @reconnectTimer = setTimeout =>
@@ -34,7 +40,9 @@ class BoloIrc
     @client.connect()
 
   watch_for: (re, callback) ->
-    @watchers.push [re, callback]
+    @watchers.push {re, callback}
+  watch_for_admin: (re, callback) ->
+    @watchers.push {re, callback, onlyAdmin: yes}
 
 
 # The gist of the IRC functionality we provide.
@@ -71,8 +79,7 @@ createBoloIrcClient = (server, options) ->
     server.app.closeGame(game)
     m.say "Your game was closed."
 
-  irc.watch_for /^reindex$/, (m) ->
-    # FIXME: Only allow admins to do this!
+  irc.watch_for_admin /^reindex$/, (m) ->
     server.app.maps.reindex ->
       m.say "Index rebuilt."
 
