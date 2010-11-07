@@ -89,6 +89,10 @@ createBoloIrcClient = (server, options) ->
     server.app.maps.reindex ->
       m.say "Index rebuilt."
 
+  irc.watch_for_admin /^reset demo$/, (m) ->
+    server.app.resetDemo (err) ->
+      m.say(err ? 'Demo game reset.')
+
   irc.watch_for_admin /^shutdown$/, (m) ->
     server.app.shutdown()
 

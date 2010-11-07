@@ -295,15 +295,22 @@ class Application
     @ircClients = []
 
     mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
-    @maps = new MapIndex(mapPath)
+    @maps = new MapIndex mapPath, =>
+      @resetDemo (err) ->
+        console.log err if err
 
     @loop = new Loop(this)
     @loop.tickRate = TICK_LENGTH_MS
 
-    # FIXME: this is for the demo
-    fs.readFile "#{mapPath}/Everard Island.map", (err, data) =>
-      return console.log "Unable to start demo game: #{err.toString()}" if err
+  # FIXME: this is for the demo
+  resetDemo: (cb) ->
+    @closeGame(@demo) if @demo
+    unless everard = @maps.get('Everard Island')
+      return cb? "Could not find Everard Island."
+    fs.readFile everard.path, (err, data) =>
+      return cb? "Unable to start demo game: #{err.toString()}" if err
       @demo = @createGame(data)
+      cb?()
 
   haveOpenSlots: ->
     Object.getOwnPropertyNames(@games).length < @options.general.maxgames
