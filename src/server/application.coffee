@@ -288,11 +288,11 @@ allObjects.registerWithWorld BoloServerWorld.prototype
 
 
 ## HTTP server application
-
 class Application
 
-  constructor: (@options) ->
+  constructor: (@httpServer, @options) ->
     @games = {}
+    @ircClients = []
 
     mapPath = path.join path.dirname(fs.realpathSync(__filename)), '../../maps'
     @maps = new MapIndex(mapPath)
@@ -334,6 +334,17 @@ class Application
     @possiblyStopLoop()
     game.close()
     console.log "Closed game '#{game.gid}'"
+
+  registerIrcClient: (irc) ->
+    @ircClients.push irc
+
+  shutdown: ->
+    for client in @ircClients
+      client.shutdown()
+    for gid, game of @games
+      game.close()
+    @loop.stop()
+    @httpServer.close()
 
   #### Loop control
 
@@ -417,7 +428,7 @@ createBoloAppServer = (options) ->
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)
-  server.app = new Application(options)
+  server.app = new Application(server, options)
   server.on 'upgrade', (request, connection, initialData) ->
     server.app.handleWebsocket(request, connection, initialData)
 

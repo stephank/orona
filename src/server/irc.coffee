@@ -32,6 +32,7 @@ class BoloIrc
       return
 
     @client.addListener 'disconnected', =>
+      return if @shuttingDown
       @reconnectTimer = setTimeout =>
         @reconnectTimer = null
         @client.connect()
@@ -39,8 +40,13 @@ class BoloIrc
 
     @client.connect()
 
+  shutdown: ->
+    @shuttingDown = yes
+    @client.quit 'Augh, they got me!'
+
   watch_for: (re, callback) ->
     @watchers.push {re, callback}
+
   watch_for_admin: (re, callback) ->
     @watchers.push {re, callback, onlyAdmin: yes}
 
@@ -82,6 +88,9 @@ createBoloIrcClient = (server, options) ->
   irc.watch_for_admin /^reindex$/, (m) ->
     server.app.maps.reindex ->
       m.say "Index rebuilt."
+
+  irc.watch_for_admin /^shutdown$/, (m) ->
+    server.app.shutdown()
 
   irc
 

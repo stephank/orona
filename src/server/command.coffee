@@ -41,6 +41,6 @@ exports.run = ->
 
   if config.irc
     for link, options of config.irc
-      createBoloIrcClient(server, options)
+      server.app.registerIrcClient createBoloIrcClient(server, options)
 
   return
