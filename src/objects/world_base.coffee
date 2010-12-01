@@ -79,7 +79,7 @@ class WorldBase extends BoloObject
   # Look for someone to refuel, and check if he's claiming us too. Be careful to prevent rapid
   # reclaiming if two tanks are on the same tile.
   findSubject: ->
-    tanks = tank for tank in @world.tanks when tank.armour != 255 and tank.cell == @cell
+    tanks = for tank in @world.tanks when tank.armour != 255 and tank.cell == @cell then tank
     for tank in tanks
       if @owner?.$.isAlly(tank)
         @ref 'refueling', tank

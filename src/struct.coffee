@@ -146,7 +146,7 @@ pack = (fmt) ->
 # value is a pair containing an array of the unpacked values, and the number of bytes taken.
 unpack = (fmt, data, offset) ->
   unpacker = buildUnpacker(data, offset)
-  values = unpacker(type) for type in fmt
+  values = for type in fmt then unpacker(type)
   [values, unpacker.finish()]
 
 

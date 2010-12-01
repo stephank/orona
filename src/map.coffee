@@ -513,11 +513,11 @@ class Map
     starts = if options.noStarts then [] else @starts
 
     # Build the header.
-    data = c.charCodeAt(0) for c in 'BMAPBOLO'
+    data = for c in 'BMAPBOLO' then c.charCodeAt(0)
     data.push(1, pills.length, bases.length, starts.length)
-    data.push(p.x, p.y, p.owner_idx, p.armour, p.speed) for p in pills
-    data.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines) for b in bases
-    data.push(s.x, s.y, s.direction) for s in starts
+    for p in pills  then data.push(p.x, p.y, p.owner_idx, p.armour, p.speed)
+    for b in bases  then data.push(b.x, b.y, b.owner_idx, b.armour, b.shells, b.mines)
+    for s in starts then data.push(s.x, s.y, s.direction)
 
     # While building the map data, we collect sequences and runs.
     # What follows are helpers to deal with flushing these two arrays to data.
@@ -610,7 +610,7 @@ class Map
       sub = try
         # FIXME: This is lame, but ensures we're not dealing with a Buffer object.
         # The only reason for that is because we can't pass a Buffer as a splat.
-        x for x in buffer.slice(filePos, filePos + num)
+        for x in buffer.slice(filePos, filePos + num) then x
       catch e
         throw msg
       filePos += num
@@ -627,9 +627,9 @@ class Map
     map = new this()
 
     # Read the map objects.
-    pillsData  = readBytes(5, "Incomplete pillbox data")      for i in [0...numPills]
-    basesData  = readBytes(6, "Incomplete base data")         for i in [0...numBases]
-    startsData = readBytes(3, "Incomplete player start data") for i in [0...numStarts]
+    pillsData  = for i in [0...numPills]  then readBytes(5, "Incomplete pillbox data")
+    basesData  = for i in [0...numBases]  then readBytes(6, "Incomplete base data")
+    startsData = for i in [0...numStarts] then readBytes(3, "Incomplete player start data")
 
     # Read map data.
     loop
@@ -660,9 +660,9 @@ class Map
             map.cellAtTile(x++, y).setType type, undefined, -1
 
     # Instantiate the map objects. Late, so they can do postprocessing on the map.
-    map.pills  = new map.PillboxClass(map, args...) for args in pillsData
-    map.bases  = new    map.BaseClass(map, args...) for args in basesData
-    map.starts = new   map.StartClass(map, args...) for args in startsData
+    map.pills  = for args in pillsData  then new map.PillboxClass(map, args...)
+    map.bases  = for args in basesData  then new    map.BaseClass(map, args...)
+    map.starts = for args in startsData then new   map.StartClass(map, args...)
 
     map
 

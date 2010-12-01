@@ -4,6 +4,7 @@
 fs     = require 'fs'
 url    = require 'url'
 path   = require 'path'
+{puts} = require 'sys'
 {exec} = require 'child_process'
 
 villain     = require 'villain/build/cake'

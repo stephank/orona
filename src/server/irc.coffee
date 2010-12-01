@@ -77,7 +77,7 @@ createBoloIrcClient = (server, options) ->
     else if matches.length > 4
       m.say "You need to be a bit more specific than that."
     else
-      names = "“#{descr.name}”" for descr in matches
+      names = for descr in matches then "“#{descr.name}”"
       m.say "Did you mean one of these: #{names.join(', ')}"
 
   irc.watch_for /^close$/, (m) ->
