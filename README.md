@@ -85,7 +85,7 @@ For the browser client, Orona also bundles:
  [WinBolo project]: http://code.google.com/p/winbolo/
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [GitHub Pages]: http://stephank.github.com/orona/
- [multiplayer instance]: http://wadna-ramet.no.de/
+ [multiplayer instance]: http://orona.no.de/
  [Joyent]: http://www.joyent.com/
  [browser compatibility]: http://github.com/stephank/orona/wiki/Browser-compatibility
  [Issue]: http://github.com/stephank/orona/issues
