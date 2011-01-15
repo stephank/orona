@@ -17,8 +17,8 @@ if process.env.YUICSSMIN
 ## Helpers
 
 # Dependency versions we use.
-JQUERY_VERSION   = '1.4.2'
-JQUERYUI_VERSION = '1.8.5'
+JQUERY_VERSION   = '1.4.4'
+JQUERYUI_VERSION = '1.8.8'
 
 # Base paths to dependencies.
 VILLAIN_LIB = villainMain.getLibraryPath()
