@@ -5,8 +5,7 @@
   },
   "web": {
     "port": 8124,
-    "log": true,
-    "gzip": true
+    "log": true
   },
   "irc": {
     "freenode": {

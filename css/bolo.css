@@ -73,7 +73,7 @@ canvas {
 }
 
 .deco {
-  background: url(images/hud.png);
+  background: url(../images/hud.png);
 }
 
 #tankStatus {
@@ -119,7 +119,7 @@ canvas {
   float: left;
   width: 16px; height: 16px;
   margin: 4px 1px 1px 4px;
-  background: url(images/hud.png);
+  background: url(../images/hud.png);
 }
 
 #pillStatus {
@@ -163,7 +163,7 @@ canvas {
 .bolo-tool {
   display: inline-block;
   width: 46px; height: 42px;
-  background: url(images/hud.png);
+  background: url(../images/hud.png);
 }
 
 .bolo-tool-forest   { background-position:    0px -16px; }

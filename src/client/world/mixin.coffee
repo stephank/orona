@@ -22,7 +22,8 @@ BoloClientWorldMixin =
 
   # Wait for the applicationCache to finish downloading.
   waitForCache: (vignette, callback) ->
-    return callback() unless applicationCache?
+    # FIXME: Use applicationCache again.
+    return callback() #unless applicationCache?
 
     vignette.message 'Checking for newer versions'
     cache = $(applicationCache)

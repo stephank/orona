@@ -1,9 +1,6 @@
-lib
-docs
-vendor
-public/bolo-bundle.css
-public/bolo-bundle.js
-public/bolo.manifest
+/node_modules
+/js/bolo-bundle.js
+/bolo.manifest
 *.gz
-config.json
-maps/**
+/config.json
+/maps/**

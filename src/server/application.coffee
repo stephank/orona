@@ -391,8 +391,8 @@ class Application
   handleWebsocket: (request, connection, initialData) ->
     return connection.destroy() unless request.method == 'GET'
 
-    path = url.parse(request.url).pathname
-    handler = @getSocketPathHandler(path)
+    path = request.url
+    handler = @getSocketPathHandler path
     return connection.destroy() if handler == false
 
     ws = new WebSocket(request, connection, initialData)
@@ -401,37 +401,26 @@ class Application
 
 ## Entry point
 
-# Helper middleware to redirect from the root or from '/match/*'.
-redirector = (base) ->
-  (req, res, next) ->
-    requrl = url.parse(req.url)
-    if requrl.pathname == '/'
-      query = ''
-    else if m = /^\/match\/([a-z]{20})$/.exec(requrl.pathname)
-      query = "?#{m[1]}"
-    else
-      return next()
-    res.writeHead 301, 'Location': "#{base}/bolo.html#{query}"
-    res.end()
+# Helper middleware to redirect from '/match/*'.
+redirector = (base) -> (req, res, next) ->
+  if m = /^\/match\/([a-z]{20})$/.exec req.url
+    query = "?#{m[1]}"
+  else
+    return next()
+  res.writeHead 301, 'Location': "#{base}/#{query}"
+  res.end()
 
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
 createBoloAppServer = (options) ->
   options ||= {}
-  webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../public'
+  webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../'
 
   server = connect.createServer()
   if options.web.log
     server.use '/', connect.logger()
   server.use '/', redirector(options.general.base)
-  if options.web.gzip
-    server.use '/', connect.staticGzip(
-      root: webroot,
-      compress: [
-        'text/html', 'text/cache-manifest', 'text/css', 'application/javascript',
-        'image/png', 'application/ogg']
-    )
-  server.use '/', connect.staticProvider(webroot)
+  server.use '/', connect.static(webroot)
 
   # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
   # (Servers that wrap this application will fail.)

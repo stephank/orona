@@ -15,21 +15,17 @@
   },
 
   "engines: ": {
-    "node": ">=0.2.0"
+    "node": "0.4"
   },
   "dependencies": {
-    "connect": ">=0.2.4",
-    "irc-js": ">=0.2.6",
-    "villain": "=0.1.3"
+    "coffee-script": "1",
+    "villain": "=0.2.0",
+    "connect": "1.5",
+    "irc-js": "0.2",
+    "browserify": "1.2",
+    "uglify-js": "1.0"
   },
 
-  "main": "./lib/simulation",
-  "modules": {
-    "map": "./lib/map",
-    "simulation": "./lib/simulation",
-    "server": "./lib/server",
-    "client": "./lib/client"
-  },
   "bin": {
     "bolo-server": "./bin/bolo-server"
   }
