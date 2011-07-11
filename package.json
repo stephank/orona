@@ -22,8 +22,7 @@
     "villain": "=0.2.0",
     "connect": "1.5",
     "irc-js": "0.2",
-    "browserify": "1.2",
-    "uglify-js": "1.0"
+    "browserify": "1.2"
   },
 
   "bin": {
