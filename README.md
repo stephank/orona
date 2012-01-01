@@ -80,7 +80,7 @@ For the browser client, Orona also bundles:
  * [jQuery Cookie plugin], © 2006 Klaus Hartl, licensed MIT and GPLv2.
  * Components that are part of [Villain].
 
- [Bolo]: http://www.lgm.com/bolo/
+ [Bolo]: http://www.bolo.net/
  [WinBolo]: http://www.winbolo.com/
  [WinBolo project]: http://code.google.com/p/winbolo/
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
