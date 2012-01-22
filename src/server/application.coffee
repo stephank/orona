@@ -15,7 +15,7 @@ connect = require 'connect'
 ServerWorld    = require 'villain/world/net/server'
 {pack}         = require 'villain/struct'
 
-WebSocket        = require './websocket'
+WebSocket        = require 'faye-websocket'
 MapIndex         = require './map_index'
 helpers          = require '../helpers'
 BoloWorldMixin   = require '../world_mixin'
@@ -66,19 +66,16 @@ class BoloServerWorld extends ServerWorld
   onConnect: (ws) ->
     # Set-up the websocket parameters.
     @clients.push ws
-    ws.setTimeout 10000 # Disconnect after 10s of inactivity.
     ws.heartbeatTimer = 0
-    ws.on 'message', (message) => @onMessage(ws, message)
-    ws.on 'end', => @onEnd(ws)
-    ws.on 'error', (error) => @onError ws, error
-    ws.on 'timeout', => @onError ws, new Error('Connection timed out')
+    ws.onmessage = (e) => @onMessage ws, e.data
+    ws.onclose = (e) => @onEnd ws, e.code, e.reason
 
     # Send the current map state. We don't send pillboxes and bases, because the client
     # receives create messages for those, and then fills the map structure based on those.
     # The client expects this as a separate message.
     packet = @map.dump(noPills: yes, noBases: yes)
     packet = new Buffer(packet).toString('base64')
-    ws.sendMessage(packet)
+    ws.send packet
 
     # To synchronize the object list to the client, we simulate creation of all objects.
     # Then, we tell the client which tank is his, using the welcome message.
@@ -87,32 +84,24 @@ class BoloServerWorld extends ServerWorld
       packet = packet.concat [net.CREATE_MESSAGE, obj._net_type_idx]
     packet = packet.concat [net.UPDATE_MESSAGE], @dumpTick(yes)
     packet = new Buffer(packet).toString('base64')
-    ws.sendMessage(packet)
+    ws.send packet
 
     # Synchronize all player names.
     messages = for tank in @tanks
       { command: 'nick', idx: tank.idx, nick: tank.name }
     messages = JSON.stringify(messages)
-    ws.sendMessage(messages)
+    ws.send messages
 
     # Finish with a 'sync' message.
     packet = new Buffer([net.SYNC_MESSAGE]).toString('base64')
-    ws.sendMessage(packet)
+    ws.send packet
 
-  onEnd: (ws) ->
-    ws.end()
-    @onDisconnect(ws)
-
-  onError: (ws, error) ->
-    console.log(error?.toString() or 'Unknown error on client connection')
-    ws.destroy()
-    @onDisconnect(ws)
-
-  onDisconnect: (ws) ->
+  onEnd: (ws, code, reason) ->
     @destroy ws.tank if ws.tank
     ws.tank = null
     if (idx = @clients.indexOf(ws)) != -1
       @clients.splice(idx, 1)
+    ws.close()
 
   onMessage: (ws, message) ->
     if message == '' then ws.heartbeatTimer = 0
@@ -191,7 +180,7 @@ class BoloServerWorld extends ServerWorld
 
     packet = pack('BH', net.WELCOME_MESSAGE, ws.tank.idx)
     packet = new Buffer(packet).toString('base64')
-    ws.sendMessage(packet)
+    ws.send(packet)
 
   onTextMessage: (ws, tank, message) ->
     if typeof(message.text) != 'string' or message.text.length > 140
@@ -212,14 +201,14 @@ class BoloServerWorld extends ServerWorld
       idx: tank.idx
       text: message.text
     for client in @clients when client.tank.team == tank.team
-      client.sendMessage(out)
+      client.send(out)
 
   #### Helpers
 
   # Simple helper to send a message to everyone.
   broadcast: (message) ->
     for client in @clients
-      client.sendMessage(message)
+      client.send(message)
 
   # We send critical updates every frame, and non-critical updates every other frame. On top of
   # that, non-critical updates may be dropped, if the client's hearbeats are interrupted.
@@ -236,9 +225,9 @@ class BoloServerWorld extends ServerWorld
 
     for client in @clients
       if client.heartbeatTimer > 40
-        client.sendMessage(smallPacket)
+        client.send(smallPacket)
       else
-        client.sendMessage(largePacket)
+        client.send(largePacket)
         client.heartbeatTimer++
 
   # Get a data stream for critical updates. The optional `fullCreate` flag is used to transmit
@@ -393,7 +382,7 @@ class Application
     return connection.destroy() if handler == false
 
     ws = new WebSocket(request, connection, initialData)
-    ws.on 'connect', -> handler(ws)
+    handler ws
 
 
 ## Entry point
