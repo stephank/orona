@@ -11,9 +11,9 @@ path = require 'path'
 
 connect = require 'connect'
 
-Loop        = require 'villain/loop'
-ServerWorld = require 'villain/world/net/server'
-{pack}      = require 'villain/struct'
+{ createLoop } = require 'villain/loop'
+ServerWorld    = require 'villain/world/net/server'
+{pack}         = require 'villain/struct'
 
 WebSocket        = require './websocket'
 MapIndex         = require './map_index'
@@ -299,8 +299,7 @@ class Application
       @resetDemo (err) ->
         console.log err if err
 
-    @loop = new Loop(this)
-    @loop.tickRate = TICK_LENGTH_MS
+    @loop = createLoop rate: TICK_LENGTH_MS, tick: @tick
 
   # FIXME: this is for the demo
   resetDemo: (cb) ->
@@ -361,12 +360,10 @@ class Application
   possiblyStopLoop: ->
     @loop.stop() unless @haveOpenSlots()
 
-  tick: ->
+  tick: =>
     for gid, game of @games
       game.tick()
     return
-
-  idle: ->
 
   #### WebSocket handling
 

@@ -1,4 +1,4 @@
-Loop             = require 'villain/loop'
+{ createLoop }   = require 'villain/loop'
 Progress         = require '../progress'
 Vignette         = require '../vignette'
 SoundKit         = require '../soundkit'
@@ -113,8 +113,10 @@ BoloClientWorldMixin =
 
     @boloInit()
 
-    @loop = new Loop(this)
-    @loop.tickRate = TICK_LENGTH_MS
+    @loop = createLoop
+      rate: TICK_LENGTH_MS
+      tick: () => @tick()
+      frame: () => @renderer.draw()
 
     @increasingRange = no
     @decreasingRange = no
@@ -136,10 +138,6 @@ BoloClientWorldMixin =
           when 90 then @increasingRange = no
           when 88 then @decreasingRange = no
           else @handleKeyup(e)
-
-  # Loop has processed all ticks for this iteration, draw a frame.
-  idle: ->
-    @renderer.draw()
 
   # Method called when things go awry.
   failure: (message) ->
