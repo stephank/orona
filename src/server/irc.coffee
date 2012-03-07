@@ -52,24 +52,24 @@ class BoloIrc
 
 
 # The gist of the IRC functionality we provide.
-createBoloIrcClient = (server, options) ->
+createBoloIrcClient = (app, options) ->
   irc = new BoloIrc(options)
 
   findHisGame = (ident) ->
-    for gid, game of server.app.games
+    for gid, game of app.games
       return game if game.owner == ident
     return
 
   irc.watch_for /^map\s+(.+?)$/, (m) ->
     return m.say "You already have a game open." if findHisGame(m.person.ident)
-    return m.say "All game slots are full at the moment." unless server.app.haveOpenSlots()
+    return m.say "All game slots are full at the moment." unless app.haveOpenSlots()
 
-    matches = server.app.maps.fuzzy m.match_data[1]
+    matches = app.maps.fuzzy m.match_data[1]
     if matches.length == 1
       [descr] = matches
       fs.readFile descr.path, (err, data) ->
         return m.say "Having some trouble loading that map, sorry." if err
-        game = server.app.createGame(data)
+        game = app.createGame(data)
         game.owner = m.person.ident
         m.say "Started game “#{descr.name}” at: #{game.url}"
     else if matches.length == 0
@@ -82,19 +82,19 @@ createBoloIrcClient = (server, options) ->
 
   irc.watch_for /^close$/, (m) ->
     return m.say "You don't have a game open." unless game = findHisGame(m.person.ident)
-    server.app.closeGame(game)
+    app.closeGame(game)
     m.say "Your game was closed."
 
   irc.watch_for_admin /^reindex$/, (m) ->
-    server.app.maps.reindex ->
+    app.maps.reindex ->
       m.say "Index rebuilt."
 
   irc.watch_for_admin /^reset demo$/, (m) ->
-    server.app.resetDemo (err) ->
+    app.resetDemo (err) ->
       m.say(err ? 'Demo game reset.')
 
   irc.watch_for_admin /^shutdown$/, (m) ->
-    server.app.shutdown()
+    app.shutdown()
 
   irc
 

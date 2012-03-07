@@ -1,7 +1,7 @@
 {puts} = require 'sys'
 fs     = require 'fs'
 path   = require 'path'
-createBoloAppServer = require './application'
+createBoloApp = require './application'
 createBoloIrcClient = require './irc'
 
 exports.run = ->
@@ -35,12 +35,12 @@ exports.run = ->
     puts "I don't understand the contents of that file."
     throw e
 
-  server = createBoloAppServer config
-  server.listen config.web.port
+  app = createBoloApp config
+  app.listen config.web.port
   puts "Bolo server listening on port #{config.web.port}."
 
   if config.irc
     for link, options of config.irc
-      server.app.registerIrcClient createBoloIrcClient(server, options)
+      app.registerIrcClient createBoloIrcClient(app, options)
 
   return

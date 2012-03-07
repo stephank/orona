@@ -279,7 +279,20 @@ allObjects.registerWithWorld BoloServerWorld.prototype
 ## HTTP server application
 class Application
 
-  constructor: (@httpServer, @options) ->
+  constructor: (@options={}) ->
+    webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../'
+
+    @connectServer = connect.createServer()
+    if options.web.log
+      @connectServer.use '/', connect.logger()
+    @connectServer.use '/', redirector(options.general.base)
+    @connectServer.use '/', connect.static(webroot)
+
+    # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
+    # (Servers that wrap this application will fail.)
+    @connectServer.on 'upgrade', (request, connection, initialData) =>
+      @handleWebsocket(request, connection, initialData)
+
     @games = {}
     @ircClients = []
 
@@ -332,6 +345,9 @@ class Application
 
   registerIrcClient: (irc) ->
     @ircClients.push irc
+
+  listen: () ->
+    @httpServer = @connectServer.listen.apply @connectServer, arguments
 
   shutdown: ->
     for client in @ircClients
@@ -398,24 +414,8 @@ redirector = (base) -> (req, res, next) ->
 
 # Don't export a server directly, but this factory function. Once called, the timer loop will
 # start. I believe it's untidy to have timer loops start after a simple require().
-createBoloAppServer = (options) ->
-  options ||= {}
-  webroot = path.join path.dirname(fs.realpathSync(__filename)), '../../'
-
-  server = connect.createServer()
-  if options.web.log
-    server.use '/', connect.logger()
-  server.use '/', redirector(options.general.base)
-  server.use '/', connect.static(webroot)
-
-  # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
-  # (Servers that wrap this application will fail.)
-  server.app = new Application(server, options)
-  server.on 'upgrade', (request, connection, initialData) ->
-    server.app.handleWebsocket(request, connection, initialData)
-
-  server
+createBoloApp = (options) -> new Application options
 
 
 ## Exports
-module.exports = createBoloAppServer
+module.exports = createBoloApp
