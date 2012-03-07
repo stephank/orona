@@ -15,15 +15,15 @@
   },
 
   "engines: ": {
-    "node": "0.4"
+    "node": "0.6"
   },
   "dependencies": {
     "coffee-script": "1",
     "villain": "=0.2.0",
-    "faye-websocket": "0.3",
-    "connect": "1.8",
-    "irc-js": "0.2",
-    "browserify": "1.9"
+    "faye-websocket": "0.4",
+    "connect": "2",
+    "irc-js": "2",
+    "browserify": "1.10"
   },
 
   "bin": {
