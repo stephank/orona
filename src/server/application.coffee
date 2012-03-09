@@ -288,10 +288,8 @@ class Application
     @connectServer.use '/', redirector(options.general.base)
     @connectServer.use '/', connect.static(webroot)
 
-    # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
-    # (Servers that wrap this application will fail.)
-    @connectServer.on 'upgrade', (request, connection, initialData) =>
-      @handleWebsocket(request, connection, initialData)
+    @connectServer.use middleware = (req, res, next) -> next()
+    middleware.upgrade = @handleWebsocket
 
     @games = {}
     @ircClients = []
@@ -390,7 +388,7 @@ class Application
     else false
 
   # Handle the 'upgrade' event.
-  handleWebsocket: (request, connection, initialData) ->
+  handleWebsocket: (request, connection, initialData) =>
     return connection.destroy() unless request.method == 'GET'
 
     path = request.url
