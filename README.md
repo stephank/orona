@@ -17,42 +17,25 @@ The name comes from an uninhabited island situated in the central Pacific Ocean.
 ## Playing Orona
 
 Orona is alpha quality, but still very playable. Take a look at [GitHub Pages] to see a single
-player game in action, which should work on most modern browsers. There's also a
-[multiplayer instance] kindly hosted by [Joyent], but browser support is more limited.
+player game in action, which should work on most modern browsers.
 
 If you're seeing odd things in your browser, take a look at the [browser compatibility] wiki page,
 and feel free to extend it with your experiences. [Issue] reports are also welcome.
 
 ## Running an Orona server
 
-These instructions are written from a Linux perspective, but they should work for Mac OS X, or
-other Unix-likes that can run node.js. Some commandline-fu is required.
+Currently, you need [Node.js] 0.6 and [git] to run Orona. To build and run.
 
-A fast way to get going is to install [node.js] 0.2.x, [npm], and then Orona itself:
-
-    npm install orona
-    bolo-server
+    git clone https://github.com/stephank/orona.git
+    cd orona
+    git submodule update --init
+    npm install
+    cake build
+    bin/bolo-server
 
 You will need a small config file; `bolo-server` will tell you how to create one. Note that the IRC
 functionality is optional, but the only way to do match-making at the moment. If you don't want to
 connect to an IRC network, simply remove the `irc` section from the config file.
-
-## Hacking Orona
-
-The Orona project lives on [GitHub]. You can grab the source using:
-
-    git clone http://github.com/stephank/orona.git
-    cd orona
-
-If you've installed Orona using npm before, most dependencies should already be installed.
-Otherwise, take a look at the `package.json` file for what you need. You also need [CoffeeScript]:
-
-    npm install coffee-script
-
-Then, to build and run from the source directory, do:
-
-    cake build
-    bin/bolo-server
 
 ## License
 
@@ -85,13 +68,10 @@ For the browser client, Orona also bundles:
  [WinBolo project]: http://code.google.com/p/winbolo/
  [CoffeeScript]: http://jashkenas.github.com/coffee-script/
  [GitHub Pages]: http://stephank.github.com/orona/
- [multiplayer instance]: http://orona.no.de/
- [Joyent]: http://www.joyent.com/
  [browser compatibility]: http://github.com/stephank/orona/wiki/Browser-compatibility
  [Issue]: http://github.com/stephank/orona/issues
- [node.js]: http://nodejs.org/
- [npm]: http://github.com/isaacs/npm
- [GitHub]: http://github.com/stephank/orona
+ [Node.js]: http://nodejs.org/
+ [git]: http://git-scm.com/
  [Socket.IO]: http://socket.io/
  [jQuery]: http://jquery.com/
  [Sizzle]: http://sizzlejs.com/
