@@ -14,7 +14,7 @@ exports.run = ->
   try
     content = fs.readFileSync process.argv[2], 'utf-8'
   catch e
-    if e.errno != process.ENOENT
+    if e.code != 'ENOENT'
       puts "I was unable to read that file."
       throw e
 
