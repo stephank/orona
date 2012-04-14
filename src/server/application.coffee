@@ -288,11 +288,6 @@ class Application
     @connectServer.use '/', redirector(options.general.base)
     @connectServer.use '/', connect.static(webroot)
 
-    # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
-    # (Servers that wrap this application will fail.)
-    @connectServer.on 'upgrade', (request, connection, initialData) =>
-      @handleWebsocket(request, connection, initialData)
-
     @games = {}
     @ircClients = []
 
@@ -348,6 +343,11 @@ class Application
 
   listen: () ->
     @httpServer = @connectServer.listen.apply @connectServer, arguments
+
+    # FIXME: There's no good way to deal with upgrades in Connect, yet. (issue #61)
+    # (Servers that wrap this application will fail.)
+    @httpServer.on 'upgrade', (request, connection, initialData) =>
+      @handleWebsocket(request, connection, initialData)
 
   shutdown: ->
     for client in @ircClients
