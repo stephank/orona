@@ -24,7 +24,7 @@ and feel free to extend it with your experiences. [Issue] reports are also welco
 
 ## Running an Orona server
 
-Currently, you need [Node.js] 0.6 and [git] to run Orona. To build and run.
+Currently, you need [Node.js] 0.6 and [git] to run Orona. To build and run:
 
     git clone https://github.com/stephank/orona.git
     cd orona
@@ -47,10 +47,6 @@ in the COPYING file.
 Some files, or parts of files, are subject to other licenses, where indicated in the files
 themselves. A short overview of those parts follows.
 
-The source file 'src/server/websocket.coffee' is a modification/rewrite based on:
-
- * [Socket.IO], © 2010 LearnBoost, MIT-licensed.
-
 All the graphic and sound files are from:
 
  * [Bolo], © 1993 Stuart Cheshire.
@@ -72,7 +68,6 @@ For the browser client, Orona also bundles:
  [Issue]: http://github.com/stephank/orona/issues
  [Node.js]: http://nodejs.org/
  [git]: http://git-scm.com/
- [Socket.IO]: http://socket.io/
  [jQuery]: http://jquery.com/
  [Sizzle]: http://sizzlejs.com/
  [jQuery UI]: http://jqueryui.com/
