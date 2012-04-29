@@ -224,19 +224,23 @@ class BaseRenderer
     @currentTool = null
     tools = $('<div id="tool-select" />').appendTo(@hud)
     for toolType in ['forest', 'road', 'building', 'pillbox', 'mine']
-      toolname = "tool-#{toolType}"
-      tool = $('<input/>', type: 'radio', name: 'tool', id: toolname).appendTo(tools)
-      label = $('<label/>', for: toolname).appendTo(tools)
-      label.append $('<span/>', class: "bolo-tool bolo-#{toolname}")
-      tool.click (e) =>
-        if @currentTool == toolType
-          @currentTool = null
-          tools.find('input').removeAttr('checked')
-          tools.buttonset('refresh')
-        else
-          @currentTool = toolType
-        @world.input.focus()
+      @initHudTool(tools, toolType)
     tools.buttonset()
+
+  # Create a single build tool item.
+  initHudTool: (tools, toolType) ->
+    toolname = "tool-#{toolType}"
+    tool = $('<input/>', type: 'radio', name: 'tool', id: toolname).appendTo(tools)
+    label = $('<label/>', for: toolname).appendTo(tools)
+    label.append $('<span/>', class: "bolo-tool bolo-#{toolname}")
+    tool.click (e) =>
+      if @currentTool == toolType
+        @currentTool = null
+        tools.find('input').removeAttr('checked')
+        tools.buttonset('refresh')
+      else
+        @currentTool = toolType
+      @world.input.focus()
 
   # Show WIP notice and Github ribbon. These are really a temporary hacks, so FIXME someday.
   initHudNotices: ->
